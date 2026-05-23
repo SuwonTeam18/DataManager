@@ -30,7 +30,6 @@
         {
             pnlWorkspace = new Panel();
             tlpWorkspace = new TableLayoutPanel();
-            picTubImage = new PictureBox();
             panel2 = new Panel();
             picAngle = new PictureBox();
             picThrottle = new PictureBox();
@@ -47,6 +46,7 @@
             btnFastPrev = new Button();
             btnPrev = new Button();
             lblRecordNumber = new Label();
+            picTubImage = new PictureBox();
             panel1 = new Panel();
             txtTub = new TextBox();
             btnLoadTub = new Button();
@@ -63,11 +63,11 @@
             btnSetLeft = new Button();
             pnlGraph = new Panel();
             tlpWorkspace.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)picTubImage).BeginInit();
             panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picAngle).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picThrottle).BeginInit();
             panel3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)picTubImage).BeginInit();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trkRecord).BeginInit();
             pnlTools.SuspendLayout();
@@ -89,23 +89,13 @@
             tlpWorkspace.Controls.Add(panel2, 0, 0);
             tlpWorkspace.Controls.Add(panel3, 2, 0);
             tlpWorkspace.Controls.Add(picTubImage, 1, 0);
-            tlpWorkspace.Dock = DockStyle.Fill;
+            tlpWorkspace.Dock = DockStyle.Top;
             tlpWorkspace.Location = new Point(0, 53);
             tlpWorkspace.Name = "tlpWorkspace";
             tlpWorkspace.RowCount = 1;
             tlpWorkspace.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tlpWorkspace.Size = new Size(947, 638);
             tlpWorkspace.TabIndex = 0;
-            // 
-            // picTubImage
-            // 
-            picTubImage.BackColor = Color.Black;
-            picTubImage.Location = new Point(325, 3);
-            picTubImage.Name = "picTubImage";
-            picTubImage.Size = new Size(342, 276);
-            picTubImage.SizeMode = PictureBoxSizeMode.Zoom;
-            picTubImage.TabIndex = 3;
-            picTubImage.TabStop = false;
             // 
             // panel2
             // 
@@ -116,16 +106,18 @@
             panel2.Controls.Add(lblRecordInfo);
             panel2.Controls.Add(lblAngleValue);
             panel2.Controls.Add(lblThrottleValue);
+            panel2.Dock = DockStyle.Fill;
             panel2.Location = new Point(3, 3);
             panel2.Name = "panel2";
-            panel2.Size = new Size(316, 276);
+            panel2.Size = new Size(316, 632);
             panel2.TabIndex = 2;
             // 
             // picAngle
             // 
-            picAngle.Location = new Point(95, 171);
+            picAngle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            picAngle.Location = new Point(92, 201);
             picAngle.Name = "picAngle";
-            picAngle.Size = new Size(223, 105);
+            picAngle.Size = new Size(223, 116);
             picAngle.SizeMode = PictureBoxSizeMode.StretchImage;
             picAngle.TabIndex = 12;
             picAngle.TabStop = false;
@@ -133,9 +125,10 @@
             // 
             // picThrottle
             // 
-            picThrottle.Location = new Point(92, 36);
+            picThrottle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            picThrottle.Location = new Point(92, 46);
             picThrottle.Name = "picThrottle";
-            picThrottle.Size = new Size(221, 126);
+            picThrottle.Size = new Size(221, 141);
             picThrottle.SizeMode = PictureBoxSizeMode.StretchImage;
             picThrottle.TabIndex = 11;
             picThrottle.TabStop = false;
@@ -145,9 +138,9 @@
             lblThrottle.BackColor = Color.FromArgb(80, 80, 80);
             lblThrottle.Font = new Font("맑은 고딕", 18F, FontStyle.Regular, GraphicsUnit.Point, 129);
             lblThrottle.ForeColor = Color.White;
-            lblThrottle.Location = new Point(-3, 36);
+            lblThrottle.Location = new Point(0, 46);
             lblThrottle.Name = "lblThrottle";
-            lblThrottle.Size = new Size(90, 126);
+            lblThrottle.Size = new Size(90, 141);
             lblThrottle.TabIndex = 4;
             lblThrottle.Text = "속도";
             lblThrottle.TextAlign = ContentAlignment.MiddleCenter;
@@ -157,9 +150,9 @@
             lblAngle.BackColor = Color.FromArgb(80, 80, 80);
             lblAngle.Font = new Font("맑은 고딕", 18F, FontStyle.Regular, GraphicsUnit.Point, 129);
             lblAngle.ForeColor = Color.White;
-            lblAngle.Location = new Point(-1, 168);
+            lblAngle.Location = new Point(3, 201);
             lblAngle.Name = "lblAngle";
-            lblAngle.Size = new Size(88, 108);
+            lblAngle.Size = new Size(88, 116);
             lblAngle.TabIndex = 2;
             lblAngle.Text = "각도";
             lblAngle.TextAlign = ContentAlignment.MiddleCenter;
@@ -181,7 +174,7 @@
             lblAngleValue.BackColor = Color.Transparent;
             lblAngleValue.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
             lblAngleValue.ForeColor = Color.White;
-            lblAngleValue.Location = new Point(95, 168);
+            lblAngleValue.Location = new Point(99, 170);
             lblAngleValue.Name = "lblAngleValue";
             lblAngleValue.Size = new Size(200, 28);
             lblAngleValue.TabIndex = 13;
@@ -207,9 +200,10 @@
             panel3.Controls.Add(btnFastPrev);
             panel3.Controls.Add(btnPrev);
             panel3.Controls.Add(lblRecordNumber);
+            panel3.Dock = DockStyle.Fill;
             panel3.Location = new Point(673, 3);
             panel3.Name = "panel3";
-            panel3.Size = new Size(271, 276);
+            panel3.Size = new Size(271, 632);
             panel3.TabIndex = 4;
             // 
             // cmbSpeed
@@ -302,6 +296,16 @@
             lblRecordNumber.Text = "기록 000000";
             lblRecordNumber.TextAlign = ContentAlignment.MiddleCenter;
             // 
+            // picTubImage
+            // 
+            picTubImage.BackColor = Color.Black;
+            picTubImage.Location = new Point(325, 3);
+            picTubImage.Name = "picTubImage";
+            picTubImage.Size = new Size(342, 317);
+            picTubImage.SizeMode = PictureBoxSizeMode.Zoom;
+            picTubImage.TabIndex = 3;
+            picTubImage.TabStop = false;
+            // 
             // panel1
             // 
             panel1.Controls.Add(txtTub);
@@ -371,9 +375,9 @@
             pnlTools.Controls.Add(btnSetRight);
             pnlTools.Controls.Add(btnSetLeft);
             pnlTools.Dock = DockStyle.Bottom;
-            pnlTools.Location = new Point(0, 547);
+            pnlTools.Location = new Point(0, 381);
             pnlTools.Name = "pnlTools";
-            pnlTools.Size = new Size(947, 144);
+            pnlTools.Size = new Size(947, 113);
             pnlTools.TabIndex = 3;
             // 
             // textBox3
@@ -448,27 +452,27 @@
             // 
             pnlGraph.BackColor = Color.Black;
             pnlGraph.Dock = DockStyle.Bottom;
-            pnlGraph.Location = new Point(0, 335);
+            pnlGraph.Location = new Point(0, 494);
             pnlGraph.Name = "pnlGraph";
-            pnlGraph.Size = new Size(947, 212);
+            pnlGraph.Size = new Size(947, 197);
             pnlGraph.TabIndex = 4;
             // 
             // ucTubManager
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            Controls.Add(pnlGraph);
             Controls.Add(pnlTools);
+            Controls.Add(pnlGraph);
             Controls.Add(tlpWorkspace);
             Controls.Add(panel1);
             Name = "ucTubManager";
             Size = new Size(947, 691);
             tlpWorkspace.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)picTubImage).EndInit();
             panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)picAngle).EndInit();
             ((System.ComponentModel.ISupportInitialize)picThrottle).EndInit();
             panel3.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)picTubImage).EndInit();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)trkRecord).EndInit();
