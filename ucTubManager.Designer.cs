@@ -36,10 +36,8 @@
             btnLoadCarDirectory = new Button();
             trkRecord = new TrackBar();
             pnlTools = new Panel();
-            lblAngleValue = new Label();
             textBox3 = new TextBox();
             btnSetFillter = new Button();
-            lblThrottleValue = new Label();
             btnReroadTub = new Button();
             btnRestore = new Button();
             btnDelete = new Button();
@@ -61,6 +59,7 @@
             picAngle = new PictureBox();
             panel3 = new Panel();
             panel2 = new Panel();
+            pnlCenter = new Panel();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trkRecord).BeginInit();
             pnlTools.SuspendLayout();
@@ -69,6 +68,7 @@
             ((System.ComponentModel.ISupportInitialize)picAngle).BeginInit();
             panel3.SuspendLayout();
             panel2.SuspendLayout();
+            pnlCenter.SuspendLayout();
             SuspendLayout();
             // 
             // pnlWorkspace
@@ -80,6 +80,7 @@
             // 
             // panel1
             // 
+            panel1.BackColor = Color.FromArgb(40, 40, 40);
             panel1.Controls.Add(txtTub);
             panel1.Controls.Add(btnLoadTub);
             panel1.Controls.Add(txtCarDirectory);
@@ -130,6 +131,7 @@
             // 
             // trkRecord
             // 
+            trkRecord.BackColor = Color.DarkGray;
             trkRecord.Dock = DockStyle.Top;
             trkRecord.Location = new Point(0, 0);
             trkRecord.Name = "trkRecord";
@@ -138,10 +140,9 @@
             // 
             // pnlTools
             // 
-            pnlTools.Controls.Add(lblAngleValue);
+            pnlTools.BackColor = Color.FromArgb(40, 40, 40);
             pnlTools.Controls.Add(textBox3);
             pnlTools.Controls.Add(btnSetFillter);
-            pnlTools.Controls.Add(lblThrottleValue);
             pnlTools.Controls.Add(trkRecord);
             pnlTools.Controls.Add(btnReroadTub);
             pnlTools.Controls.Add(btnRestore);
@@ -149,73 +150,53 @@
             pnlTools.Controls.Add(btnSetRight);
             pnlTools.Controls.Add(btnSetLeft);
             pnlTools.Dock = DockStyle.Bottom;
-            pnlTools.Location = new Point(0, 381);
+            pnlTools.Location = new Point(0, 386);
             pnlTools.Name = "pnlTools";
             pnlTools.Size = new Size(947, 113);
             pnlTools.TabIndex = 3;
             // 
-            // lblAngleValue
-            // 
-            lblAngleValue.BackColor = Color.Transparent;
-            lblAngleValue.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            lblAngleValue.ForeColor = Color.White;
-            lblAngleValue.Location = new Point(58, 33);
-            lblAngleValue.Name = "lblAngleValue";
-            lblAngleValue.Size = new Size(34, 12);
-            lblAngleValue.TabIndex = 13;
-            lblAngleValue.TextAlign = ContentAlignment.MiddleLeft;
-            // 
             // textBox3
             // 
+            textBox3.BackColor = Color.WhiteSmoke;
             textBox3.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            textBox3.Location = new Point(154, 112);
+            textBox3.ForeColor = Color.White;
+            textBox3.Location = new Point(158, 87);
             textBox3.Name = "textBox3";
-            textBox3.Size = new Size(778, 29);
+            textBox3.Size = new Size(786, 29);
             textBox3.TabIndex = 7;
             // 
             // btnSetFillter
             // 
-            btnSetFillter.Location = new Point(308, 73);
+            btnSetFillter.Location = new Point(308, 51);
             btnSetFillter.Name = "btnSetFillter";
-            btnSetFillter.Size = new Size(144, 37);
+            btnSetFillter.Size = new Size(151, 30);
             btnSetFillter.TabIndex = 6;
             btnSetFillter.Text = "필터 적용";
             btnSetFillter.UseVisualStyleBackColor = true;
             // 
-            // lblThrottleValue
-            // 
-            lblThrottleValue.BackColor = Color.Transparent;
-            lblThrottleValue.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            lblThrottleValue.ForeColor = Color.White;
-            lblThrottleValue.Location = new Point(13, 35);
-            lblThrottleValue.Name = "lblThrottleValue";
-            lblThrottleValue.Size = new Size(22, 10);
-            lblThrottleValue.TabIndex = 14;
-            lblThrottleValue.TextAlign = ContentAlignment.MiddleLeft;
-            // 
             // btnReroadTub
             // 
-            btnReroadTub.Location = new Point(778, 73);
+            btnReroadTub.Location = new Point(778, 51);
             btnReroadTub.Name = "btnReroadTub";
-            btnReroadTub.Size = new Size(154, 37);
+            btnReroadTub.Size = new Size(166, 30);
             btnReroadTub.TabIndex = 5;
             btnReroadTub.Text = "새로고침 🔄";
             btnReroadTub.UseVisualStyleBackColor = true;
             // 
             // btnRestore
             // 
-            btnRestore.Location = new Point(620, 73);
+            btnRestore.Location = new Point(620, 51);
             btnRestore.Name = "btnRestore";
-            btnRestore.Size = new Size(152, 37);
+            btnRestore.Size = new Size(152, 30);
             btnRestore.TabIndex = 4;
             btnRestore.Text = "복원 ↩️";
             btnRestore.UseVisualStyleBackColor = true;
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(465, 73);
+            btnDelete.Location = new Point(465, 51);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(149, 37);
+            btnDelete.Size = new Size(149, 30);
             btnDelete.TabIndex = 3;
             btnDelete.Text = "삭제 🗑️";
             btnDelete.UseVisualStyleBackColor = true;
@@ -225,9 +206,9 @@
             btnSetRight.BackColor = Color.FromArgb(80, 80, 80);
             btnSetRight.FlatStyle = FlatStyle.Flat;
             btnSetRight.ForeColor = Color.White;
-            btnSetRight.Location = new Point(152, 73);
+            btnSetRight.Location = new Point(158, 51);
             btnSetRight.Name = "btnSetRight";
-            btnSetRight.Size = new Size(150, 37);
+            btnSetRight.Size = new Size(144, 30);
             btnSetRight.TabIndex = 1;
             btnSetRight.Text = "우측 설정 ⚙️";
             btnSetRight.UseVisualStyleBackColor = false;
@@ -237,9 +218,9 @@
             btnSetLeft.BackColor = Color.FromArgb(80, 80, 80);
             btnSetLeft.FlatStyle = FlatStyle.Flat;
             btnSetLeft.ForeColor = Color.White;
-            btnSetLeft.Location = new Point(2, 73);
+            btnSetLeft.Location = new Point(0, 51);
             btnSetLeft.Name = "btnSetLeft";
-            btnSetLeft.Size = new Size(144, 37);
+            btnSetLeft.Size = new Size(152, 30);
             btnSetLeft.TabIndex = 0;
             btnSetLeft.Text = "좌측 설정 ⚙️";
             btnSetLeft.UseVisualStyleBackColor = false;
@@ -248,18 +229,18 @@
             // 
             pnlGraph.BackColor = Color.Black;
             pnlGraph.Dock = DockStyle.Bottom;
-            pnlGraph.Location = new Point(0, 494);
+            pnlGraph.Location = new Point(0, 499);
             pnlGraph.Name = "pnlGraph";
-            pnlGraph.Size = new Size(947, 197);
+            pnlGraph.Size = new Size(947, 192);
             pnlGraph.TabIndex = 4;
             // 
             // picTubImage
             // 
             picTubImage.BackColor = Color.Black;
             picTubImage.Dock = DockStyle.Fill;
-            picTubImage.Location = new Point(0, 0);
+            picTubImage.Location = new Point(334, 0);
             picTubImage.Name = "picTubImage";
-            picTubImage.Size = new Size(947, 691);
+            picTubImage.Size = new Size(613, 333);
             picTubImage.SizeMode = PictureBoxSizeMode.StretchImage;
             picTubImage.TabIndex = 3;
             picTubImage.TabStop = false;
@@ -361,7 +342,7 @@
             lblRecordInfo.ForeColor = Color.White;
             lblRecordInfo.Location = new Point(3, 0);
             lblRecordInfo.Name = "lblRecordInfo";
-            lblRecordInfo.Size = new Size(333, 39);
+            lblRecordInfo.Size = new Size(328, 39);
             lblRecordInfo.TabIndex = 0;
             lblRecordInfo.Text = "기록 사진";
             lblRecordInfo.TextAlign = ContentAlignment.MiddleCenter;
@@ -395,7 +376,7 @@
             picThrottle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             picThrottle.Location = new Point(115, 48);
             picThrottle.Name = "picThrottle";
-            picThrottle.Size = new Size(215, 137);
+            picThrottle.Size = new Size(216, 137);
             picThrottle.SizeMode = PictureBoxSizeMode.StretchImage;
             picThrottle.TabIndex = 11;
             picThrottle.TabStop = false;
@@ -405,7 +386,7 @@
             picAngle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             picAngle.Location = new Point(115, 191);
             picAngle.Name = "picAngle";
-            picAngle.Size = new Size(202, 118);
+            picAngle.Size = new Size(216, 133);
             picAngle.SizeMode = PictureBoxSizeMode.StretchImage;
             picAngle.TabIndex = 12;
             picAngle.TabStop = false;
@@ -418,9 +399,10 @@
             panel3.Controls.Add(picThrottle);
             panel3.Controls.Add(picAngle);
             panel3.Controls.Add(lblAngle);
-            panel3.Location = new Point(3, 52);
+            panel3.Dock = DockStyle.Left;
+            panel3.Location = new Point(0, 0);
             panel3.Name = "panel3";
-            panel3.Size = new Size(333, 329);
+            panel3.Size = new Size(334, 333);
             panel3.TabIndex = 4;
             // 
             // panel2
@@ -433,21 +415,30 @@
             panel2.Controls.Add(cmbSpeed);
             panel2.Controls.Add(btnPrev);
             panel2.Dock = DockStyle.Right;
-            panel2.Location = new Point(661, 53);
+            panel2.Location = new Point(655, 0);
             panel2.Name = "panel2";
-            panel2.Size = new Size(286, 328);
+            panel2.Size = new Size(292, 333);
             panel2.TabIndex = 2;
+            // 
+            // pnlCenter
+            // 
+            pnlCenter.Controls.Add(panel2);
+            pnlCenter.Controls.Add(picTubImage);
+            pnlCenter.Controls.Add(panel3);
+            pnlCenter.Dock = DockStyle.Fill;
+            pnlCenter.Location = new Point(0, 53);
+            pnlCenter.Name = "pnlCenter";
+            pnlCenter.Size = new Size(947, 333);
+            pnlCenter.TabIndex = 5;
             // 
             // ucTubManager
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            Controls.Add(panel2);
+            Controls.Add(pnlCenter);
             Controls.Add(pnlTools);
             Controls.Add(pnlGraph);
-            Controls.Add(panel3);
             Controls.Add(panel1);
-            Controls.Add(picTubImage);
             Name = "ucTubManager";
             Size = new Size(947, 691);
             panel1.ResumeLayout(false);
@@ -460,6 +451,7 @@
             ((System.ComponentModel.ISupportInitialize)picAngle).EndInit();
             panel3.ResumeLayout(false);
             panel2.ResumeLayout(false);
+            pnlCenter.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -495,8 +487,7 @@
         private PictureBox picThrottle;
         private PictureBox picAngle;
         private Panel panel3;
-        private Label lblThrottleValue;
         private Panel panel2;
-        private Label lblAngleValue;
+        private Panel pnlCenter;
     }
 }

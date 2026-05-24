@@ -167,7 +167,7 @@
             // 
             // pnlTop
             // 
-            pnlTop.BackColor = Color.FromArgb(64, 64, 64);
+            pnlTop.BackColor = Color.FromArgb(40, 40, 40);
             pnlTop.Controls.Add(cmbTop2);
             pnlTop.Controls.Add(cmbTop1);
             pnlTop.Controls.Add(cmbChoosePilot);
@@ -199,7 +199,7 @@
             // 
             // tlpMain
             // 
-            tlpMain.BackColor = Color.FromArgb(64, 64, 64);
+            tlpMain.BackColor = Color.FromArgb(40, 40, 40);
             tlpMain.ColumnCount = 2;
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 49.6695F));
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50.3305F));
@@ -249,6 +249,8 @@
             // 
             // pnlRecordLeft
             // 
+            pnlRecordLeft.BackColor = Color.FromArgb(64, 64, 64);
+            pnlRecordLeft.BorderStyle = BorderStyle.FixedSingle;
             pnlRecordLeft.Controls.Add(tlpLeft);
             pnlRecordLeft.Dock = DockStyle.Fill;
             pnlRecordLeft.Location = new Point(9, 277);
@@ -273,7 +275,7 @@
             tlpLeft.RowCount = 2;
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            tlpLeft.Size = new Size(508, 81);
+            tlpLeft.Size = new Size(506, 79);
             tlpLeft.TabIndex = 0;
             // 
             // prgLeftAngle
@@ -286,7 +288,7 @@
             // 
             // prgLeftThrottle
             // 
-            prgLeftThrottle.Location = new Point(92, 43);
+            prgLeftThrottle.Location = new Point(92, 42);
             prgLeftThrottle.Name = "prgLeftThrottle";
             prgLeftThrottle.Size = new Size(100, 23);
             prgLeftThrottle.Style = ProgressBarStyle.Continuous;
@@ -296,7 +298,7 @@
             // 
             lblLeftThrottle.AutoSize = true;
             lblLeftThrottle.ForeColor = Color.White;
-            lblLeftThrottle.Location = new Point(3, 40);
+            lblLeftThrottle.Location = new Point(3, 39);
             lblLeftThrottle.Name = "lblLeftThrottle";
             lblLeftThrottle.Size = new Size(75, 15);
             lblLeftThrottle.TabIndex = 2;
@@ -314,6 +316,8 @@
             // 
             // pnlRecordRight
             // 
+            pnlRecordRight.BackColor = Color.FromArgb(64, 64, 64);
+            pnlRecordRight.BorderStyle = BorderStyle.FixedSingle;
             pnlRecordRight.Controls.Add(tlpRight);
             pnlRecordRight.Dock = DockStyle.Fill;
             pnlRecordRight.Location = new Point(535, 277);
@@ -340,7 +344,7 @@
             tlpRight.RowCount = 2;
             tlpRight.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             tlpRight.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            tlpRight.Size = new Size(515, 81);
+            tlpRight.Size = new Size(513, 79);
             tlpRight.TabIndex = 0;
             // 
             // lblRightAngle
@@ -365,7 +369,7 @@
             // 
             lblRightThrottle.AutoSize = true;
             lblRightThrottle.ForeColor = Color.White;
-            lblRightThrottle.Location = new Point(3, 40);
+            lblRightThrottle.Location = new Point(3, 39);
             lblRightThrottle.Name = "lblRightThrottle";
             lblRightThrottle.Size = new Size(73, 15);
             lblRightThrottle.TabIndex = 2;
@@ -373,7 +377,7 @@
             // 
             // prgRightThrottle
             // 
-            prgRightThrottle.Location = new Point(93, 43);
+            prgRightThrottle.Location = new Point(93, 42);
             prgRightThrottle.Name = "prgRightThrottle";
             prgRightThrottle.Size = new Size(100, 23);
             prgRightThrottle.Style = ProgressBarStyle.Continuous;
@@ -382,9 +386,10 @@
             // lblRightAngleValue
             // 
             lblRightAngleValue.Dock = DockStyle.Fill;
-            lblRightAngleValue.Location = new Point(438, 0);
+            lblRightAngleValue.ForeColor = Color.White;
+            lblRightAngleValue.Location = new Point(436, 0);
             lblRightAngleValue.Name = "lblRightAngleValue";
-            lblRightAngleValue.Size = new Size(74, 40);
+            lblRightAngleValue.Size = new Size(74, 39);
             lblRightAngleValue.TabIndex = 4;
             lblRightAngleValue.Text = "+00.000";
             lblRightAngleValue.TextAlign = ContentAlignment.MiddleRight;
@@ -392,9 +397,10 @@
             // lblRightThrottleValue
             // 
             lblRightThrottleValue.Dock = DockStyle.Fill;
-            lblRightThrottleValue.Location = new Point(438, 40);
+            lblRightThrottleValue.ForeColor = Color.White;
+            lblRightThrottleValue.Location = new Point(436, 39);
             lblRightThrottleValue.Name = "lblRightThrottleValue";
-            lblRightThrottleValue.Size = new Size(74, 41);
+            lblRightThrottleValue.Size = new Size(74, 40);
             lblRightThrottleValue.TabIndex = 5;
             lblRightThrottleValue.Text = "+00.598";
             lblRightThrottleValue.TextAlign = ContentAlignment.MiddleRight;
@@ -423,6 +429,7 @@
             // 
             // tlpBrightBlur
             // 
+            tlpBrightBlur.BackColor = Color.FromArgb(64, 64, 64);
             tlpBrightBlur.ColumnCount = 4;
             tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
@@ -440,6 +447,7 @@
             // 
             // pnlBrightness
             // 
+            pnlBrightness.BorderStyle = BorderStyle.FixedSingle;
             pnlBrightness.Controls.Add(trkBrightness);
             pnlBrightness.Controls.Add(lblBrightnessValue);
             pnlBrightness.Dock = DockStyle.Fill;
@@ -451,10 +459,10 @@
             // trkBrightness
             // 
             trkBrightness.Dock = DockStyle.Bottom;
-            trkBrightness.Location = new Point(0, 24);
+            trkBrightness.Location = new Point(0, 22);
             trkBrightness.Maximum = 200;
             trkBrightness.Name = "trkBrightness";
-            trkBrightness.Size = new Size(394, 45);
+            trkBrightness.Size = new Size(392, 45);
             trkBrightness.TabIndex = 0;
             trkBrightness.Value = 100;
             // 
@@ -566,7 +574,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = Color.Black;
+            BackColor = Color.Silver;
             Controls.Add(tlpMain);
             Controls.Add(pnlTop);
             Name = "ucPilotArena";

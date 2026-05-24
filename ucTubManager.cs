@@ -292,13 +292,13 @@ namespace DonkeyUi
                     {
                         // round at 4th decimal -> display 3 decimal places
                         var a = Math.Round(parsed.angle.Value, 3);
-                        lblAngleValue.Text = (a >= 0 ? "+" : string.Empty) + a.ToString("0.000", CultureInfo.InvariantCulture);
+                        //lblAngleValue.Text = (a >= 0 ? "+" : string.Empty) + a.ToString("0.000", CultureInfo.InvariantCulture);
                         _currentAngle = parsed.angle.Value;
                         picAngle.Invalidate();
                     }
                     else
                     {
-                        lblAngleValue.Text = string.Empty;
+                        //lblAngleValue.Text = string.Empty;
                         _currentAngle = null;
                         picAngle.Invalidate();
                     }
@@ -308,14 +308,14 @@ namespace DonkeyUi
                     if (parsed.throttle.HasValue)
                     {
                         var t = Math.Round(parsed.throttle.Value, 3);
-                        lblThrottleValue.Text = (t >= 0 ? "+" : string.Empty) + t.ToString("0.000", CultureInfo.InvariantCulture);
+                        //lblThrottleValue.Text = (t >= 0 ? "+" : string.Empty) + t.ToString("0.000", CultureInfo.InvariantCulture);
                         _currentThrottle = parsed.throttle.Value;
                         // request redraw of throttle picture
                         picThrottle.Invalidate();
                     }
                     else
                     {
-                        lblThrottleValue.Text = string.Empty;
+                        //lblThrottleValue.Text = string.Empty;
                         _currentThrottle = null;
                         picThrottle.Invalidate();
                     }
@@ -323,8 +323,8 @@ namespace DonkeyUi
                 else
                 {
                     // clear labels if no catalog
-                    lblAngleValue.Text = string.Empty;
-                    lblThrottleValue.Text = string.Empty;
+                    /*lblAngleValue.Text = string.Empty;
+                    lblThrottleValue.Text = string.Empty;*/
                     _currentThrottle = null;
                     picThrottle.Invalidate();
                 }
