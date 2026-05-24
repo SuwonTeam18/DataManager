@@ -291,7 +291,7 @@
             btnStartStop.ForeColor = Color.White;
             btnStartStop.Location = new Point(3, 232);
             btnStartStop.Name = "btnStartStop";
-            btnStartStop.Size = new Size(280, 92);
+            btnStartStop.Size = new Size(280, 75);
             btnStartStop.TabIndex = 4;
             btnStartStop.Text = "재생 ▶️ / 정지 ⏹️";
             btnStartStop.UseVisualStyleBackColor = false;

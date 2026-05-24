@@ -41,9 +41,6 @@
         private System.Windows.Forms.PictureBox picRight;
         private System.Windows.Forms.Panel pnlRecordLeft;
         private System.Windows.Forms.Panel pnlRecordRight;
-        // right value labels (designer-created names)
-        private System.Windows.Forms.Label lblRightAngleValue;
-        private System.Windows.Forms.Label lblRightThrottleValue;
         private System.Windows.Forms.Label lblLeftAngle;
         private System.Windows.Forms.Label lblLeftThrottle;
         private System.Windows.Forms.Label lblRightAngle;
@@ -110,8 +107,6 @@
             prgRightAngle = new ProgressBar();
             lblRightThrottle = new Label();
             prgRightThrottle = new ProgressBar();
-            lblRightAngleValue = new Label();
-            lblRightThrottleValue = new Label();
             trkTimeline = new TrackBar();
             pnlBrightBlur = new Panel();
             tlpBrightBlur = new TableLayoutPanel();
@@ -150,7 +145,6 @@
             // cmbChoosePilot
             // 
             cmbChoosePilot.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbChoosePilot.Items.AddRange(new object[] { "Choose pilot" });
             cmbChoosePilot.Location = new Point(6, 6);
             cmbChoosePilot.Name = "cmbChoosePilot";
             cmbChoosePilot.Size = new Size(180, 23);
@@ -190,6 +184,7 @@
             // 
             // cmbTop1
             // 
+            cmbTop1.BackColor = SystemColors.Window;
             cmbTop1.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbTop1.Items.AddRange(new object[] { "Choose pilot" });
             cmbTop1.Location = new Point(538, 7);
@@ -261,10 +256,9 @@
             // 
             // tlpLeft
             // 
-            tlpLeft.ColumnCount = 3;
+            tlpLeft.ColumnCount = 2;
             tlpLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 89F));
             tlpLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tlpLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
             tlpLeft.Controls.Add(prgLeftAngle, 1, 0);
             tlpLeft.Controls.Add(prgLeftThrottle, 1, 1);
             tlpLeft.Controls.Add(lblLeftThrottle, 0, 1);
@@ -282,7 +276,7 @@
             // 
             prgLeftAngle.Location = new Point(92, 3);
             prgLeftAngle.Name = "prgLeftAngle";
-            prgLeftAngle.Size = new Size(100, 23);
+            prgLeftAngle.Size = new Size(411, 23);
             prgLeftAngle.Style = ProgressBarStyle.Continuous;
             prgLeftAngle.TabIndex = 1;
             // 
@@ -290,7 +284,7 @@
             // 
             prgLeftThrottle.Location = new Point(92, 42);
             prgLeftThrottle.Name = "prgLeftThrottle";
-            prgLeftThrottle.Size = new Size(100, 23);
+            prgLeftThrottle.Size = new Size(411, 23);
             prgLeftThrottle.Style = ProgressBarStyle.Continuous;
             prgLeftThrottle.TabIndex = 3;
             // 
@@ -300,9 +294,9 @@
             lblLeftThrottle.ForeColor = Color.White;
             lblLeftThrottle.Location = new Point(3, 39);
             lblLeftThrottle.Name = "lblLeftThrottle";
-            lblLeftThrottle.Size = new Size(75, 15);
+            lblLeftThrottle.Size = new Size(83, 15);
             lblLeftThrottle.TabIndex = 2;
-            lblLeftThrottle.Text = "pilot/throttle";
+            lblLeftThrottle.Text = "자율주행 속도";
             // 
             // lblLeftAngle
             // 
@@ -310,9 +304,9 @@
             lblLeftAngle.ForeColor = Color.White;
             lblLeftAngle.Location = new Point(3, 0);
             lblLeftAngle.Name = "lblLeftAngle";
-            lblLeftAngle.Size = new Size(65, 15);
+            lblLeftAngle.Size = new Size(83, 15);
             lblLeftAngle.TabIndex = 0;
-            lblLeftAngle.Text = "pilot/angle";
+            lblLeftAngle.Text = "자율주행 각도";
             // 
             // pnlRecordRight
             // 
@@ -328,16 +322,14 @@
             // 
             // tlpRight
             // 
-            tlpRight.ColumnCount = 3;
+            tlpRight.ColumnCount = 2;
             tlpRight.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90F));
             tlpRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tlpRight.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
+            tlpRight.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
             tlpRight.Controls.Add(lblRightAngle, 0, 0);
             tlpRight.Controls.Add(prgRightAngle, 1, 0);
             tlpRight.Controls.Add(lblRightThrottle, 0, 1);
             tlpRight.Controls.Add(prgRightThrottle, 1, 1);
-            tlpRight.Controls.Add(lblRightAngleValue, 2, 0);
-            tlpRight.Controls.Add(lblRightThrottleValue, 2, 1);
             tlpRight.Dock = DockStyle.Fill;
             tlpRight.Location = new Point(6, 6);
             tlpRight.Name = "tlpRight";
@@ -353,15 +345,15 @@
             lblRightAngle.ForeColor = Color.White;
             lblRightAngle.Location = new Point(3, 0);
             lblRightAngle.Name = "lblRightAngle";
-            lblRightAngle.Size = new Size(63, 15);
+            lblRightAngle.Size = new Size(71, 15);
             lblRightAngle.TabIndex = 0;
-            lblRightAngle.Text = "user/angle";
+            lblRightAngle.Text = "사용자 각도";
             // 
             // prgRightAngle
             // 
             prgRightAngle.Location = new Point(93, 3);
             prgRightAngle.Name = "prgRightAngle";
-            prgRightAngle.Size = new Size(100, 23);
+            prgRightAngle.Size = new Size(417, 23);
             prgRightAngle.Style = ProgressBarStyle.Continuous;
             prgRightAngle.TabIndex = 1;
             // 
@@ -371,39 +363,17 @@
             lblRightThrottle.ForeColor = Color.White;
             lblRightThrottle.Location = new Point(3, 39);
             lblRightThrottle.Name = "lblRightThrottle";
-            lblRightThrottle.Size = new Size(73, 15);
+            lblRightThrottle.Size = new Size(71, 15);
             lblRightThrottle.TabIndex = 2;
-            lblRightThrottle.Text = "user/throttle";
+            lblRightThrottle.Text = "사용자 속도";
             // 
             // prgRightThrottle
             // 
             prgRightThrottle.Location = new Point(93, 42);
             prgRightThrottle.Name = "prgRightThrottle";
-            prgRightThrottle.Size = new Size(100, 23);
+            prgRightThrottle.Size = new Size(417, 23);
             prgRightThrottle.Style = ProgressBarStyle.Continuous;
             prgRightThrottle.TabIndex = 3;
-            // 
-            // lblRightAngleValue
-            // 
-            lblRightAngleValue.Dock = DockStyle.Fill;
-            lblRightAngleValue.ForeColor = Color.White;
-            lblRightAngleValue.Location = new Point(436, 0);
-            lblRightAngleValue.Name = "lblRightAngleValue";
-            lblRightAngleValue.Size = new Size(74, 39);
-            lblRightAngleValue.TabIndex = 4;
-            lblRightAngleValue.Text = "+00.000";
-            lblRightAngleValue.TextAlign = ContentAlignment.MiddleRight;
-            // 
-            // lblRightThrottleValue
-            // 
-            lblRightThrottleValue.Dock = DockStyle.Fill;
-            lblRightThrottleValue.ForeColor = Color.White;
-            lblRightThrottleValue.Location = new Point(436, 39);
-            lblRightThrottleValue.Name = "lblRightThrottleValue";
-            lblRightThrottleValue.Size = new Size(74, 40);
-            lblRightThrottleValue.TabIndex = 5;
-            lblRightThrottleValue.Text = "+00.598";
-            lblRightThrottleValue.TextAlign = ContentAlignment.MiddleRight;
             // 
             // trkTimeline
             // 
@@ -430,13 +400,12 @@
             // tlpBrightBlur
             // 
             tlpBrightBlur.BackColor = Color.FromArgb(64, 64, 64);
-            tlpBrightBlur.ColumnCount = 4;
+            tlpBrightBlur.ColumnCount = 2;
             tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
             tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
+            tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
             tlpBrightBlur.Controls.Add(pnlBrightness, 0, 0);
-            tlpBrightBlur.Controls.Add(pnlBlur, 2, 0);
+            tlpBrightBlur.Controls.Add(pnlBlur, 1, 0);
             tlpBrightBlur.Dock = DockStyle.Fill;
             tlpBrightBlur.Location = new Point(6, 6);
             tlpBrightBlur.Name = "tlpBrightBlur";
@@ -453,7 +422,7 @@
             pnlBrightness.Dock = DockStyle.Fill;
             pnlBrightness.Location = new Point(3, 3);
             pnlBrightness.Name = "pnlBrightness";
-            pnlBrightness.Size = new Size(394, 69);
+            pnlBrightness.Size = new Size(514, 69);
             pnlBrightness.TabIndex = 0;
             // 
             // trkBrightness
@@ -462,7 +431,7 @@
             trkBrightness.Location = new Point(0, 22);
             trkBrightness.Maximum = 200;
             trkBrightness.Name = "trkBrightness";
-            trkBrightness.Size = new Size(392, 45);
+            trkBrightness.Size = new Size(512, 45);
             trkBrightness.TabIndex = 0;
             trkBrightness.Value = 100;
             // 
@@ -473,9 +442,9 @@
             lblBrightnessValue.ForeColor = Color.White;
             lblBrightnessValue.Location = new Point(0, 0);
             lblBrightnessValue.Name = "lblBrightnessValue";
-            lblBrightnessValue.Size = new Size(90, 15);
+            lblBrightnessValue.Size = new Size(31, 15);
             lblBrightnessValue.TabIndex = 1;
-            lblBrightnessValue.Text = "Brightness 1.00";
+            lblBrightnessValue.Text = "밝기";
             // 
             // pnlBlur
             // 
@@ -484,7 +453,7 @@
             pnlBlur.Dock = DockStyle.Fill;
             pnlBlur.Location = new Point(523, 3);
             pnlBlur.Name = "pnlBlur";
-            pnlBlur.Size = new Size(394, 69);
+            pnlBlur.Size = new Size(515, 69);
             pnlBlur.TabIndex = 2;
             // 
             // trkBlur
@@ -493,7 +462,7 @@
             trkBlur.Location = new Point(0, 24);
             trkBlur.Maximum = 100;
             trkBlur.Name = "trkBlur";
-            trkBlur.Size = new Size(394, 45);
+            trkBlur.Size = new Size(515, 45);
             trkBlur.TabIndex = 0;
             // 
             // lblBlurValue
@@ -503,9 +472,9 @@
             lblBlurValue.ForeColor = Color.White;
             lblBlurValue.Location = new Point(0, 0);
             lblBlurValue.Name = "lblBlurValue";
-            lblBlurValue.Size = new Size(56, 15);
+            lblBlurValue.Size = new Size(59, 15);
             lblBlurValue.TabIndex = 1;
-            lblBlurValue.Text = "Blur 0.00";
+            lblBlurValue.Text = "흐림 효과";
             // 
             // lblRecordNumber
             // 

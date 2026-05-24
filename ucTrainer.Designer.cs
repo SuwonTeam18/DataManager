@@ -75,9 +75,9 @@
             lblTrainPilot.ForeColor = Color.White;
             lblTrainPilot.Location = new Point(12, 12);
             lblTrainPilot.Name = "lblTrainPilot";
-            lblTrainPilot.Size = new Size(61, 15);
+            lblTrainPilot.Size = new Size(71, 15);
             lblTrainPilot.TabIndex = 0;
-            lblTrainPilot.Text = "Train pilot";
+            lblTrainPilot.Text = "주행 데이터";
             // 
             // lblModelType
             // 
@@ -85,9 +85,9 @@
             lblModelType.ForeColor = Color.White;
             lblModelType.Location = new Point(12, 36);
             lblModelType.Name = "lblModelType";
-            lblModelType.Size = new Size(68, 15);
+            lblModelType.Size = new Size(59, 15);
             lblModelType.TabIndex = 1;
-            lblModelType.Text = "Model type";
+            lblModelType.Text = "모델 종류";
             // 
             // cmbModelType
             // 
@@ -104,9 +104,9 @@
             lblComment.ForeColor = Color.White;
             lblComment.Location = new Point(280, 36);
             lblComment.Name = "lblComment";
-            lblComment.Size = new Size(61, 15);
+            lblComment.Size = new Size(31, 15);
             lblComment.TabIndex = 3;
-            lblComment.Text = "Comment";
+            lblComment.Text = "설명";
             // 
             // txtComment
             // 
@@ -123,7 +123,7 @@
             btnTrain.Name = "btnTrain";
             btnTrain.Size = new Size(120, 28);
             btnTrain.TabIndex = 5;
-            btnTrain.Text = "Train";
+            btnTrain.Text = "학습 시작";
             btnTrain.UseVisualStyleBackColor = false;
             // 
             // dgvTrains
@@ -143,20 +143,20 @@
             // colName
             // 
             colName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            colName.HeaderText = "Name";
+            colName.HeaderText = "데이터명";
             colName.Name = "colName";
             colName.ReadOnly = true;
             // 
             // colType
             // 
-            colType.HeaderText = "Type";
+            colType.HeaderText = "모델";
             colType.Name = "colType";
             colType.ReadOnly = true;
             colType.Width = 140;
             // 
             // colTime
             // 
-            colTime.HeaderText = "Time";
+            colTime.HeaderText = "학습시간";
             colTime.Name = "colTime";
             colTime.ReadOnly = true;
             colTime.Width = 180;
@@ -164,7 +164,7 @@
             // colComment
             // 
             colComment.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            colComment.HeaderText = "Comment";
+            colComment.HeaderText = "설명";
             colComment.Name = "colComment";
             colComment.ReadOnly = true;
             // 
