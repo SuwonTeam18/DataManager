@@ -340,9 +340,9 @@
             lblRecordInfo.BackColor = Color.FromArgb(80, 80, 80);
             lblRecordInfo.Font = new Font("맑은 고딕", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
             lblRecordInfo.ForeColor = Color.White;
-            lblRecordInfo.Location = new Point(3, 0);
+            lblRecordInfo.Location = new Point(3, 1);
             lblRecordInfo.Name = "lblRecordInfo";
-            lblRecordInfo.Size = new Size(328, 39);
+            lblRecordInfo.Size = new Size(328, 44);
             lblRecordInfo.TabIndex = 0;
             lblRecordInfo.Text = "기록 사진";
             lblRecordInfo.TextAlign = ContentAlignment.MiddleCenter;
