@@ -39,7 +39,7 @@
             // 
             // pnlContent
             // 
-            pnlContent.BackColor = Color.LightGray;
+            pnlContent.BackColor = Color.White;
             pnlContent.Dock = DockStyle.Fill;
             pnlContent.Location = new Point(0, 0);
             pnlContent.Name = "pnlContent";
@@ -107,7 +107,6 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = Color.FromArgb(40, 40, 40);
             ClientSize = new Size(947, 726);
             Controls.Add(pnlTopMenu);
             Controls.Add(pnlContent);

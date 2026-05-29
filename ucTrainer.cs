@@ -147,7 +147,7 @@ namespace DonkeyUi
                 { "rnn",         "시계열 모델 (이전 주행 흐름을 기억해 학습)" },
                 { "3d",          "3D 시계열 모델 (연속된 사진들을 묶어서 학습)" },
 
-            
+
                 { "memory",      "메모리 모델 (이전 조작 이력이 기록된 데이터 필요)" },
                 { "behavior",    "행동 규칙 모델 (주행 모드/상태 값 데이터 필요)" },
                 { "localizer",   "위치 추정 모델 (로봇의 현재 좌표 데이터 필요)" },
@@ -447,7 +447,7 @@ namespace DonkeyUi
             _presets.Remove(_activePreset);
             lstPresets.Items.Remove(_activePreset);
             _activePreset = "";
-          
+
             SavePresetsToDisk();
         }
         private void BtnSaveDefault_Click(object sender, EventArgs e)
@@ -486,10 +486,10 @@ namespace DonkeyUi
             dgvConfig.Rows.Clear();
             foreach (var entry in p.ConfigRows)
                 dgvConfig.Rows.Add(false, entry.Key, entry.Value);
-            
+
         }
 
-        
+
 
         private void SavePresetsToDisk()
         {
@@ -655,7 +655,7 @@ namespace DonkeyUi
 
                     if (exitCode == 0)
                     {
-                        
+
                         AppendLog("─────────────────────────────────────────");
                         AppendLog("✔ 학습 완료!");
                     }
@@ -1116,8 +1116,8 @@ namespace DonkeyUi
             }
         }
 
-        
-        
+
+
 
         public void InitModelWatcher(string mycarPath)
         {
@@ -1136,7 +1136,7 @@ namespace DonkeyUi
                 };
                 _modelWatcher.Created += (s, e) => RefreshModelList(mycarPath);
                 _modelWatcher.Deleted += (s, e) => RefreshModelList(mycarPath);
-                
+
             }
             catch { }
 

@@ -558,11 +558,11 @@
             // 
             trkBrightness.Dock = DockStyle.Bottom;
             trkBrightness.Location = new Point(0, 27);
-            trkBrightness.Maximum = 200;
+            trkBrightness.Maximum = 100;
+            trkBrightness.Minimum = -100;
             trkBrightness.Name = "trkBrightness";
             trkBrightness.Size = new Size(527, 45);
             trkBrightness.TabIndex = 0;
-            trkBrightness.Value = 100;
             // 
             // lblBrightnessValue
             // 
