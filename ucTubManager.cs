@@ -57,6 +57,9 @@ namespace DonkeyUi
             btnLoadTub.Click += BtnLoadTub_Click;
             trkRecord.Scroll += TrkRecord_Scroll;
             trkRecord.ValueChanged += TrkRecord_ValueChanged;
+            // Allow user input to jump to a specific record
+            txtRecordNumber.KeyDown += TxtRecordNumber_KeyDown;
+            txtRecordNumber.Leave += TxtRecordNumber_Leave;
 
             _prevTimer = new System.Windows.Forms.Timer { Interval = 100 };
             _nextTimer = new System.Windows.Forms.Timer { Interval = 100 };
@@ -106,14 +109,60 @@ namespace DonkeyUi
             btnStartStop.Click += BtnStartStop_Click;
 
             if (cmbSpeed.Items.Count == 0)
-                cmbSpeed.Items.AddRange(new object[] { "0.25", "0.50", "0.75", "1.00", "1.25", "1.50", "1.75", "2.00" });
-            cmbSpeed.Text = "1.00";
+                cmbSpeed.Items.AddRange(new object[] { "0.25x", "0.50x", "0.75x", "1.00x", "1.25x", "1.50x", "1.75x", "2.00x" });
+            cmbSpeed.Text = "1.00x";
             cmbSpeed.SelectedIndexChanged += (s, e) => UpdatePlaybackIntervalFromCombo();
             cmbSpeed.TextChanged += (s, e) => UpdatePlaybackIntervalFromCombo();
             UpdatePlaybackIntervalFromCombo();
 
             picThrottle.Paint += PicThrottle_Paint;
             picAngle.Paint += PicAngle_Paint;
+        }
+
+        private void TxtRecordNumber_Leave(object? sender, EventArgs e)
+        {
+            TryNavigateToRecordFromText();
+        }
+
+        private void TxtRecordNumber_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                TryNavigateToRecordFromText();
+            }
+        }
+
+        private void TryNavigateToRecordFromText()
+        {
+            try
+            {
+                var txt = txtRecordNumber.Text ?? string.Empty;
+                // find digits in the text
+                var m = System.Text.RegularExpressions.Regex.Match(txt, "(\\d+)");
+                if (!m.Success) return;
+                if (!int.TryParse(m.Groups[1].Value, out var num)) return;
+                if (num <= 0) num = 1;
+                var targetIndex = num - 1;
+                if (_imageFiles == null || _imageFiles.Count == 0)
+                {
+                    txtRecordNumber.Text = "기록 000000";
+                    return;
+                }
+                if (targetIndex < 0) targetIndex = 0;
+                if (targetIndex >= _imageFiles.Count) targetIndex = _imageFiles.Count - 1;
+                if (trkRecord.Enabled)
+                {
+                    trkRecord.Value = targetIndex;
+                    // Update textbox to show normalized value immediately; SetCurrentIndex will also refresh it.
+                    txtRecordNumber.Text = $"기록 {(targetIndex + 1):D6}";
+                }
+                else
+                {
+                    SetCurrentIndex(targetIndex);
+                }
+            }
+            catch { }
         }
 
         // ════════════════════════════════════════════════════════════
@@ -123,7 +172,7 @@ namespace DonkeyUi
         private void BtnLoadCarDirectory_Click(object? sender, EventArgs e)
         {
             using var dlg = new FolderBrowserDialog();
-            dlg.Description = "Select car directory";
+            dlg.Description = "차량 폴더 열기";
             dlg.UseDescriptionForTitle = true;
             if (dlg.ShowDialog() == DialogResult.OK)
             {
@@ -135,7 +184,7 @@ namespace DonkeyUi
         private void BtnLoadTub_Click(object? sender, EventArgs e)
         {
             using var dlg = new OpenFileDialog();
-            dlg.Title = "Select tub file";
+            dlg.Title = "주행 데이터 열기";
             dlg.Filter = "Tub files (*.json;*.csv;*.jpg;*.jpeg;*.png)|*.json;*.csv;*.jpg;*.jpeg;*.png|All files (*.*)|*.*";
             dlg.CheckFileExists = true;
             dlg.Multiselect = false;
@@ -203,7 +252,7 @@ namespace DonkeyUi
                 picTubImage.Image?.Dispose();
                 picTubImage.Image = null;
                 _currentIndex = -1;
-                lblRecordNumber.Text = "기록 000000";
+                txtRecordNumber.Text = "기록 000000";
                 _catalogLines.Clear();
                 _currentThrottle = null;
                 _currentAngle = null;
@@ -229,7 +278,7 @@ namespace DonkeyUi
                 picTubImage.Image?.Dispose();
                 picTubImage.Image = new Bitmap(img);
 
-                lblRecordNumber.Text = $"기록 {(_currentIndex + 1):D6}";
+                txtRecordNumber.Text = $"기록 {(_currentIndex + 1):D6}";
 
                 double? angle = null;
                 double? throttle = null;

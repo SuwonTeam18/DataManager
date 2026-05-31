@@ -32,9 +32,23 @@
             pnlWorkspace = new Panel();
             tlpWorkspace = new TableLayoutPanel();
             panel2 = new Panel();
+            lblRecordInfo = new Label();
+            lblThrottle = new Label();
+            picThrottle = new PictureBox();
+            picAngle = new PictureBox();
+            lblAngle = new Label();
             picTubImage = new PictureBox();
             panel3 = new Panel();
+            cmbSpeed = new ComboBox();
+            btnFastNext = new Button();
+            btnNext = new Button();
+            btnStartStop = new Button();
+            btnFastPrev = new Button();
+            btnPrev = new Button();
+            txtRecordNumber = new TextBox();
             panel1 = new Panel();
+            btnLoadTub = new Button();
+            btnLoadCarDirectory = new Button();
             txtTub = new TextBox();
             txtCarDirectory = new TextBox();
             trkRecord = new TrackBar();
@@ -52,30 +66,16 @@
             contextFilter = new ContextMenuStrip(components);
             menuThrottle = new ToolStripMenuItem();
             menuAngle = new ToolStripMenuItem();
-            lblRecordInfo = new Label();
-            lblThrottle = new Label();
-            picThrottle = new PictureBox();
-            picAngle = new PictureBox();
-            lblAngle = new Label();
-            cmbSpeed = new ComboBox();
-            lblRecordNumber = new Label();
-            btnPrev = new Button();
-            btnNext = new Button();
-            btnFastNext = new Button();
-            btnFastPrev = new Button();
-            btnStartStop = new Button();
-            btnLoadTub = new Button();
-            btnLoadCarDirectory = new Button();
             tlpWorkspace.SuspendLayout();
             panel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)picThrottle).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picAngle).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picTubImage).BeginInit();
             panel3.SuspendLayout();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trkRecord).BeginInit();
             pnlTools.SuspendLayout();
             contextFilter.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)picThrottle).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picAngle).BeginInit();
             SuspendLayout();
             // 
             // pnlWorkspace
@@ -115,6 +115,62 @@
             panel2.Size = new Size(316, 279);
             panel2.TabIndex = 2;
             // 
+            // lblRecordInfo
+            // 
+            lblRecordInfo.BackColor = Color.FromArgb(80, 80, 80);
+            lblRecordInfo.Font = new Font("맑은 고딕", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            lblRecordInfo.ForeColor = Color.White;
+            lblRecordInfo.Location = new Point(-6, -48);
+            lblRecordInfo.Name = "lblRecordInfo";
+            lblRecordInfo.Size = new Size(328, 44);
+            lblRecordInfo.TabIndex = 13;
+            lblRecordInfo.Text = "기록 사진";
+            lblRecordInfo.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // lblThrottle
+            // 
+            lblThrottle.BackColor = Color.FromArgb(80, 80, 80);
+            lblThrottle.Font = new Font("맑은 고딕", 18F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            lblThrottle.ForeColor = Color.White;
+            lblThrottle.Location = new Point(-6, -1);
+            lblThrottle.Name = "lblThrottle";
+            lblThrottle.Size = new Size(106, 137);
+            lblThrottle.TabIndex = 15;
+            lblThrottle.Text = "속도";
+            lblThrottle.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // picThrottle
+            // 
+            picThrottle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            picThrottle.Location = new Point(106, -1);
+            picThrottle.Name = "picThrottle";
+            picThrottle.Size = new Size(216, 137);
+            picThrottle.SizeMode = PictureBoxSizeMode.StretchImage;
+            picThrottle.TabIndex = 16;
+            picThrottle.TabStop = false;
+            // 
+            // picAngle
+            // 
+            picAngle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            picAngle.Location = new Point(106, 142);
+            picAngle.Name = "picAngle";
+            picAngle.Size = new Size(216, 133);
+            picAngle.SizeMode = PictureBoxSizeMode.StretchImage;
+            picAngle.TabIndex = 17;
+            picAngle.TabStop = false;
+            // 
+            // lblAngle
+            // 
+            lblAngle.BackColor = Color.FromArgb(80, 80, 80);
+            lblAngle.Font = new Font("맑은 고딕", 18F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            lblAngle.ForeColor = Color.White;
+            lblAngle.Location = new Point(-6, 142);
+            lblAngle.Name = "lblAngle";
+            lblAngle.Size = new Size(106, 133);
+            lblAngle.TabIndex = 14;
+            lblAngle.Text = "각도";
+            lblAngle.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // picTubImage
             // 
             picTubImage.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
@@ -134,12 +190,108 @@
             panel3.Controls.Add(btnStartStop);
             panel3.Controls.Add(btnFastPrev);
             panel3.Controls.Add(btnPrev);
-            panel3.Controls.Add(lblRecordNumber);
+            panel3.Controls.Add(txtRecordNumber);
             panel3.Dock = DockStyle.Fill;
             panel3.Location = new Point(673, 3);
             panel3.Name = "panel3";
             panel3.Size = new Size(271, 279);
             panel3.TabIndex = 4;
+            // 
+            // cmbSpeed
+            // 
+            cmbSpeed.BackColor = Color.DimGray;
+            cmbSpeed.Font = new Font("맑은 고딕", 21.75F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            cmbSpeed.ForeColor = Color.White;
+            cmbSpeed.FormattingEnabled = true;
+            cmbSpeed.Items.AddRange(new object[] { "0.25x", "0.50x", "0.75x", "1.00x", "1.25x", "1.50x", "1.75x", "2.00x" });
+            cmbSpeed.Location = new Point(133, 9);
+            cmbSpeed.Name = "cmbSpeed";
+            cmbSpeed.Size = new Size(132, 48);
+            cmbSpeed.TabIndex = 7;
+            cmbSpeed.Text = "1.00x";
+            // 
+            // btnFastNext
+            // 
+            btnFastNext.BackColor = Color.FromArgb(80, 80, 80);
+            btnFastNext.FlatStyle = FlatStyle.Flat;
+            btnFastNext.Font = new Font("맑은 고딕", 20.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnFastNext.ForeColor = Color.White;
+            btnFastNext.Location = new Point(133, 136);
+            btnFastNext.Name = "btnFastNext";
+            btnFastNext.Size = new Size(132, 65);
+            btnFastNext.TabIndex = 6;
+            btnFastNext.Text = ">>";
+            btnFastNext.UseVisualStyleBackColor = false;
+            // 
+            // btnNext
+            // 
+            btnNext.BackColor = Color.FromArgb(80, 80, 80);
+            btnNext.FlatStyle = FlatStyle.Flat;
+            btnNext.Font = new Font("맑은 고딕", 20.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnNext.ForeColor = Color.White;
+            btnNext.Location = new Point(133, 63);
+            btnNext.Name = "btnNext";
+            btnNext.Size = new Size(132, 67);
+            btnNext.TabIndex = 5;
+            btnNext.Text = ">";
+            btnNext.UseVisualStyleBackColor = false;
+            // 
+            // btnStartStop
+            // 
+            btnStartStop.BackColor = Color.FromArgb(80, 80, 80);
+            btnStartStop.FlatStyle = FlatStyle.Flat;
+            btnStartStop.Font = new Font("맑은 고딕", 20.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnStartStop.ForeColor = Color.White;
+            btnStartStop.Location = new Point(4, 207);
+            btnStartStop.Name = "btnStartStop";
+            btnStartStop.Size = new Size(261, 68);
+            btnStartStop.TabIndex = 4;
+            btnStartStop.Text = "시작";
+            btnStartStop.UseVisualStyleBackColor = false;
+            // 
+            // btnFastPrev
+            // 
+            btnFastPrev.BackColor = Color.FromArgb(80, 80, 80);
+            btnFastPrev.FlatStyle = FlatStyle.Flat;
+            btnFastPrev.Font = new Font("맑은 고딕", 20.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnFastPrev.ForeColor = Color.White;
+            btnFastPrev.Location = new Point(4, 136);
+            btnFastPrev.Name = "btnFastPrev";
+            btnFastPrev.Size = new Size(123, 65);
+            btnFastPrev.TabIndex = 3;
+            btnFastPrev.Text = "<<";
+            btnFastPrev.UseVisualStyleBackColor = false;
+            // 
+            // btnPrev
+            // 
+            btnPrev.BackColor = Color.FromArgb(80, 80, 80);
+            btnPrev.FlatStyle = FlatStyle.Flat;
+            btnPrev.Font = new Font("맑은 고딕", 20.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnPrev.ForeColor = Color.White;
+            btnPrev.Location = new Point(4, 63);
+            btnPrev.Name = "btnPrev";
+            btnPrev.Size = new Size(123, 67);
+            btnPrev.TabIndex = 2;
+            btnPrev.Text = "<";
+            btnPrev.UseVisualStyleBackColor = false;
+            // 
+            // txtRecordNumber
+            // 
+            txtRecordNumber.BackColor = Color.FromArgb(80, 80, 80);
+            txtRecordNumber.BorderStyle = BorderStyle.None;
+            txtRecordNumber.Font = new Font("맑은 고딕", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            txtRecordNumber.ForeColor = Color.White;
+            txtRecordNumber.Location = new Point(5, 7);
+            txtRecordNumber.Multiline = true;
+            txtRecordNumber.Name = "txtRecordNumber";
+            txtRecordNumber.Size = new Size(121, 50);
+            txtRecordNumber.TabIndex = 0;
+            txtRecordNumber.Text = "기록 000000";
+            txtRecordNumber.TextAlign = HorizontalAlignment.Center;
+            txtRecordNumber.ReadOnly = false;
+            txtRecordNumber.BorderStyle = BorderStyle.FixedSingle;
+            txtRecordNumber.Leave += TxtRecordNumber_Leave;
+            txtRecordNumber.KeyDown += TxtRecordNumber_KeyDown;
             // 
             // panel1
             // 
@@ -152,6 +304,26 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(947, 59);
             panel1.TabIndex = 1;
+            // 
+            // btnLoadTub
+            // 
+            btnLoadTub.ForeColor = Color.Black;
+            btnLoadTub.Location = new Point(489, 12);
+            btnLoadTub.Name = "btnLoadTub";
+            btnLoadTub.Size = new Size(139, 33);
+            btnLoadTub.TabIndex = 5;
+            btnLoadTub.Text = "데이터 불러오기";
+            btnLoadTub.UseVisualStyleBackColor = true;
+            // 
+            // btnLoadCarDirectory
+            // 
+            btnLoadCarDirectory.ForeColor = Color.Black;
+            btnLoadCarDirectory.Location = new Point(13, 12);
+            btnLoadCarDirectory.Name = "btnLoadCarDirectory";
+            btnLoadCarDirectory.Size = new Size(139, 33);
+            btnLoadCarDirectory.TabIndex = 4;
+            btnLoadCarDirectory.Text = "차량 폴더 불러오기";
+            btnLoadCarDirectory.UseVisualStyleBackColor = true;
             // 
             // txtTub
             // 
@@ -319,172 +491,6 @@
             menuAngle.Text = "각도";
             menuAngle.Click += menuAngle_Click;
             // 
-            // lblRecordInfo
-            // 
-            lblRecordInfo.BackColor = Color.FromArgb(80, 80, 80);
-            lblRecordInfo.Font = new Font("맑은 고딕", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            lblRecordInfo.ForeColor = Color.White;
-            lblRecordInfo.Location = new Point(-6, -48);
-            lblRecordInfo.Name = "lblRecordInfo";
-            lblRecordInfo.Size = new Size(328, 44);
-            lblRecordInfo.TabIndex = 13;
-            lblRecordInfo.Text = "기록 사진";
-            lblRecordInfo.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // lblThrottle
-            // 
-            lblThrottle.BackColor = Color.FromArgb(80, 80, 80);
-            lblThrottle.Font = new Font("맑은 고딕", 18F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            lblThrottle.ForeColor = Color.White;
-            lblThrottle.Location = new Point(-6, -1);
-            lblThrottle.Name = "lblThrottle";
-            lblThrottle.Size = new Size(106, 137);
-            lblThrottle.TabIndex = 15;
-            lblThrottle.Text = "속도";
-            lblThrottle.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // picThrottle
-            // 
-            picThrottle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            picThrottle.Location = new Point(106, -1);
-            picThrottle.Name = "picThrottle";
-            picThrottle.Size = new Size(216, 137);
-            picThrottle.SizeMode = PictureBoxSizeMode.StretchImage;
-            picThrottle.TabIndex = 16;
-            picThrottle.TabStop = false;
-            // 
-            // picAngle
-            // 
-            picAngle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            picAngle.Location = new Point(106, 142);
-            picAngle.Name = "picAngle";
-            picAngle.Size = new Size(216, 133);
-            picAngle.SizeMode = PictureBoxSizeMode.StretchImage;
-            picAngle.TabIndex = 17;
-            picAngle.TabStop = false;
-            // 
-            // lblAngle
-            // 
-            lblAngle.BackColor = Color.FromArgb(80, 80, 80);
-            lblAngle.Font = new Font("맑은 고딕", 18F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            lblAngle.ForeColor = Color.White;
-            lblAngle.Location = new Point(-6, 142);
-            lblAngle.Name = "lblAngle";
-            lblAngle.Size = new Size(106, 133);
-            lblAngle.TabIndex = 14;
-            lblAngle.Text = "각도";
-            lblAngle.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // cmbSpeed
-            // 
-            cmbSpeed.BackColor = Color.DimGray;
-            cmbSpeed.Font = new Font("맑은 고딕", 21.75F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            cmbSpeed.ForeColor = Color.White;
-            cmbSpeed.FormattingEnabled = true;
-            cmbSpeed.Items.AddRange(new object[] { "0.25", "0.50", "0.75", "1.00", "1.25", "1.50", "1.75", "2.00" });
-            cmbSpeed.Location = new Point(133, 9);
-            cmbSpeed.Name = "cmbSpeed";
-            cmbSpeed.Size = new Size(132, 48);
-            cmbSpeed.TabIndex = 7;
-            cmbSpeed.Text = "1.00";
-            // 
-            // lblRecordNumber
-            // 
-            lblRecordNumber.BackColor = Color.FromArgb(80, 80, 80);
-            lblRecordNumber.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            lblRecordNumber.ForeColor = Color.White;
-            lblRecordNumber.Location = new Point(4, -1);
-            lblRecordNumber.Name = "lblRecordNumber";
-            lblRecordNumber.Size = new Size(123, 61);
-            lblRecordNumber.TabIndex = 0;
-            lblRecordNumber.Text = "기록 000000";
-            lblRecordNumber.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // btnPrev
-            // 
-            btnPrev.BackColor = Color.FromArgb(80, 80, 80);
-            btnPrev.FlatStyle = FlatStyle.Flat;
-            btnPrev.Font = new Font("맑은 고딕", 20.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            btnPrev.ForeColor = Color.White;
-            btnPrev.Location = new Point(4, 63);
-            btnPrev.Name = "btnPrev";
-            btnPrev.Size = new Size(123, 67);
-            btnPrev.TabIndex = 2;
-            btnPrev.Text = "<";
-            btnPrev.UseVisualStyleBackColor = false;
-            // 
-            // btnNext
-            // 
-            btnNext.BackColor = Color.FromArgb(80, 80, 80);
-            btnNext.FlatStyle = FlatStyle.Flat;
-            btnNext.Font = new Font("맑은 고딕", 20.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            btnNext.ForeColor = Color.White;
-            btnNext.Location = new Point(133, 63);
-            btnNext.Name = "btnNext";
-            btnNext.Size = new Size(132, 67);
-            btnNext.TabIndex = 5;
-            btnNext.Text = ">";
-            btnNext.UseVisualStyleBackColor = false;
-            // 
-            // btnFastNext
-            // 
-            btnFastNext.BackColor = Color.FromArgb(80, 80, 80);
-            btnFastNext.FlatStyle = FlatStyle.Flat;
-            btnFastNext.Font = new Font("맑은 고딕", 20.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            btnFastNext.ForeColor = Color.White;
-            btnFastNext.Location = new Point(133, 136);
-            btnFastNext.Name = "btnFastNext";
-            btnFastNext.Size = new Size(132, 65);
-            btnFastNext.TabIndex = 6;
-            btnFastNext.Text = ">>";
-            btnFastNext.UseVisualStyleBackColor = false;
-            // 
-            // btnFastPrev
-            // 
-            btnFastPrev.BackColor = Color.FromArgb(80, 80, 80);
-            btnFastPrev.FlatStyle = FlatStyle.Flat;
-            btnFastPrev.Font = new Font("맑은 고딕", 20.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            btnFastPrev.ForeColor = Color.White;
-            btnFastPrev.Location = new Point(4, 136);
-            btnFastPrev.Name = "btnFastPrev";
-            btnFastPrev.Size = new Size(123, 65);
-            btnFastPrev.TabIndex = 3;
-            btnFastPrev.Text = "<<";
-            btnFastPrev.UseVisualStyleBackColor = false;
-            // 
-            // btnStartStop
-            // 
-            btnStartStop.BackColor = Color.FromArgb(80, 80, 80);
-            btnStartStop.FlatStyle = FlatStyle.Flat;
-            btnStartStop.Font = new Font("맑은 고딕", 20.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            btnStartStop.ForeColor = Color.White;
-            btnStartStop.Location = new Point(4, 207);
-            btnStartStop.Name = "btnStartStop";
-            btnStartStop.Size = new Size(261, 68);
-            btnStartStop.TabIndex = 4;
-            btnStartStop.Text = "시작";
-            btnStartStop.UseVisualStyleBackColor = false;
-            // 
-            // btnLoadTub
-            // 
-            btnLoadTub.ForeColor = Color.Black;
-            btnLoadTub.Location = new Point(489, 12);
-            btnLoadTub.Name = "btnLoadTub";
-            btnLoadTub.Size = new Size(139, 33);
-            btnLoadTub.TabIndex = 5;
-            btnLoadTub.Text = "데이터 불러오기";
-            btnLoadTub.UseVisualStyleBackColor = true;
-            // 
-            // btnLoadCarDirectory
-            // 
-            btnLoadCarDirectory.ForeColor = Color.Black;
-            btnLoadCarDirectory.Location = new Point(13, 12);
-            btnLoadCarDirectory.Name = "btnLoadCarDirectory";
-            btnLoadCarDirectory.Size = new Size(139, 33);
-            btnLoadCarDirectory.TabIndex = 4;
-            btnLoadCarDirectory.Text = "차량 폴더 불러오기";
-            btnLoadCarDirectory.UseVisualStyleBackColor = true;
-            // 
             // ucTubManager
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -497,16 +503,17 @@
             Size = new Size(947, 691);
             tlpWorkspace.ResumeLayout(false);
             panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)picThrottle).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picAngle).EndInit();
             ((System.ComponentModel.ISupportInitialize)picTubImage).EndInit();
             panel3.ResumeLayout(false);
+            panel3.PerformLayout();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)trkRecord).EndInit();
             pnlTools.ResumeLayout(false);
             pnlTools.PerformLayout();
             contextFilter.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)picThrottle).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picAngle).EndInit();
             ResumeLayout(false);
         }
 
@@ -546,7 +553,7 @@
         private Button btnStartStop;
         private Button btnFastPrev;
         private Button btnPrev;
-        private Label lblRecordNumber;
+        private TextBox txtRecordNumber;
         private Button btnLoadTub;
         private Button btnLoadCarDirectory;
     }
