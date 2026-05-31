@@ -109,8 +109,8 @@ namespace DonkeyUi
             btnStartStop.Click += BtnStartStop_Click;
 
             if (cmbSpeed.Items.Count == 0)
-                cmbSpeed.Items.AddRange(new object[] { "0.25x", "0.50x", "0.75x", "1.00x", "1.25x", "1.50x", "1.75x", "2.00x" });
-            cmbSpeed.Text = "1.00x";
+                cmbSpeed.Items.AddRange(new object[] { "0.25", "0.50", "0.75", "1.00", "1.25", "1.50", "1.75", "2.00" });
+            cmbSpeed.Text = "1.00";
             cmbSpeed.SelectedIndexChanged += (s, e) => UpdatePlaybackIntervalFromCombo();
             cmbSpeed.TextChanged += (s, e) => UpdatePlaybackIntervalFromCombo();
             UpdatePlaybackIntervalFromCombo();
@@ -619,8 +619,13 @@ namespace DonkeyUi
         private void UpdatePlaybackIntervalFromCombo()
         {
             if (cmbSpeed == null) return;
-            if (!double.TryParse(cmbSpeed.Text?.Trim(), NumberStyles.Float,
-                    CultureInfo.InvariantCulture, out var speed) || speed <= 0)
+            var text = cmbSpeed.Text?.Trim() ?? "";
+            // allow items like "1.00x" or "1.00×"
+            text = text.Replace("×", "x").Trim();
+            if (text.EndsWith("x", StringComparison.OrdinalIgnoreCase))
+                text = text.Substring(0, text.Length - 1).Trim();
+
+            if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var speed) || speed <= 0)
                 speed = 1.0;
             _playTimer.Interval = (int)Math.Max(10, Math.Round(_playBaseIntervalMs / speed));
         }
