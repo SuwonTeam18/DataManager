@@ -193,6 +193,28 @@ namespace DonkeyUi
             txtTub.Text = dlg.FileName;
             CurrentTubPath = Path.GetDirectoryName(dlg.FileName) ?? "";
 
+            try
+            {
+                // If the selected file resides in an "images" (or "image") folder, set txtCarDirectory to its parent folder
+                var dir = Path.GetDirectoryName(dlg.FileName) ?? string.Empty;
+                if (!string.IsNullOrEmpty(dir))
+                {
+                    var dinfo = new DirectoryInfo(dir);
+                    if (string.Equals(dinfo.Name, "images", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(dinfo.Name, "image", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var parent = dinfo.Parent;
+                        if (parent != null)
+                        {
+                            // include trailing directory separator to match example
+                            txtCarDirectory.Text = parent.FullName.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                                + Path.DirectorySeparatorChar;
+                        }
+                    }
+                }
+            }
+            catch { }
+
             var ext = Path.GetExtension(dlg.FileName)?.ToLowerInvariant();
             var imageExts = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
             if (!string.IsNullOrEmpty(ext) && imageExts.Contains(ext))
