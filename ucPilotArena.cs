@@ -22,6 +22,9 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         private readonly List<ComboBox> _pilotCombos = new();
         private readonly List<ComboBox> _modelCombos = new();
+        // per-slot data model so each slot (image + two combos + labels) appears/disappears as a unit
+        private class PilotSlot { public string PilotName; public string ModelType; }
+        private readonly List<PilotSlot> _pilotSlots = new();
         private readonly List<PictureBox> _displayPictureBoxes = new List<PictureBox>();
         private readonly List<Label> _aiAngleLabels = new();
         private readonly List<Label> _angleErrorLabels = new();
@@ -163,8 +166,10 @@ namespace DonkeyUi
             pnlImageArea.Resize += (s, e) => UpdateDisplay();
             ucTubManager.OnTubDataChanged += OnTubDataChanged;
 
+            // start with one pilot slot
             _pilotCombos.Clear();
             _modelCombos.Clear();
+            _pilotSlots.Clear();
             AddPilotSet();
 
             if (!string.IsNullOrEmpty(ucTubManager.CurrentTubPath))
@@ -237,36 +242,19 @@ namespace DonkeyUi
 
         private void BtnRemoveLeftPic_Click(object? sender, EventArgs e)
         {
-            if (_pilotCombos.Count <= 1) return;
-            var lastPilot = _pilotCombos[^1];
-            var lastModel = _modelCombos[^1];
-            _pilotCombos.RemoveAt(_pilotCombos.Count - 1);
-            _modelCombos.RemoveAt(_modelCombos.Count - 1);
-            lastPilot.Dispose();
-            lastModel.Dispose();
+            if (_pilotSlots.Count <= 1) return;
+            _pilotSlots.RemoveAt(_pilotSlots.Count - 1);
             UpdateDisplay();
         }
 
         private void AddPilotSet()
         {
-            if (_pilotCombos.Count >= 4) return;
+            if (_pilotSlots.Count >= 4) return;
 
-            var cmbPilot = new ComboBox();
-            cmbPilot.DropDownStyle = ComboBoxStyle.DropDownList;
-            // show current model filename as the pilot selection by default
-            string modelName = !string.IsNullOrEmpty(_modelPath) ? Path.GetFileName(_modelPath) : "model.h5";
-            cmbPilot.Items.AddRange(new string[] { modelName });
-            cmbPilot.SelectedIndex = 0;
+            string defaultPilot = "파일럿 " + (_pilotSlots.Count + 1);
+            string defaultModel = !string.IsNullOrEmpty(_modelType) ? _modelType : "linear";
 
-            var cmbModel = new ComboBox();
-            cmbModel.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbModel.Items.AddRange(new string[] { "linear", "categorical", "behavior" });
-            // select default model type if present
-            int idx = Array.FindIndex(cmbModel.Items.Cast<string>().ToArray(), s => string.Equals(s, _modelType, StringComparison.OrdinalIgnoreCase));
-            cmbModel.SelectedIndex = idx >= 0 ? idx : 0;
-
-            _pilotCombos.Add(cmbPilot);
-            _modelCombos.Add(cmbModel);
+            _pilotSlots.Add(new PilotSlot { PilotName = defaultPilot, ModelType = defaultModel });
             UpdateDisplay();
         }
 
@@ -285,7 +273,7 @@ namespace DonkeyUi
             _throttleErrorLabels.Clear();
             _avgErrorLabels.Clear();
 
-            int count = _pilotCombos.Count;
+            int count = _pilotSlots.Count;
             if (count == 0) return;
 
             int columns = 1;
@@ -304,11 +292,13 @@ namespace DonkeyUi
             // column styles
             for (int c = 0; c < columns; c++) table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / columns));
 
-            // row styles: image row larger than info row
+            // row styles: image row proportional, info row fixed height so controls (combos + labels) are visible
             for (int r = 0; r < rows; r++)
             {
-                table.RowStyles.Add(new RowStyle(SizeType.Percent, 88f / rows));
-                table.RowStyles.Add(new RowStyle(SizeType.Percent, 12f / rows));
+                // image row: take remaining proportional space
+                table.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / rows));
+                // info row: fixed height to fit two combos and labels
+                table.RowStyles.Add(new RowStyle(SizeType.Absolute, 80F));
             }
 
             for (int i = 0; i < count; i++)
@@ -323,26 +313,28 @@ namespace DonkeyUi
                 pb.BackColor = Color.Black;
                 _displayPictureBoxes.Add(pb);
 
-                // create combo panel and info labels panel
+                // create combo panel and info labels panel as a single set per slot
                 var comboPanel = new FlowLayoutPanel();
                 comboPanel.Dock = DockStyle.Fill;
                 comboPanel.FlowDirection = FlowDirection.LeftToRight;
-                // create clones of the pilot/model combo boxes so each slot has its own controls
-                ComboBox CloneCombo(ComboBox src)
-                {
-                    var cb = new ComboBox();
-                    cb.DropDownStyle = src.DropDownStyle;
-                    cb.FlatStyle = src.FlatStyle;
-                    cb.Font = src.Font;
-                    foreach (var it in src.Items) cb.Items.Add(it);
-                    try { cb.SelectedIndex = src.SelectedIndex; } catch { }
-                    return cb;
-                }
+                comboPanel.AutoSize = true;
 
-                var pilotCombo = CloneCombo(_pilotCombos[i]);
-                var modelCombo = CloneCombo(_modelCombos[i]);
+                // create pilot selection combo for this slot
+                var pilotCombo = new ComboBox();
+                pilotCombo.DropDownStyle = ComboBoxStyle.DropDownList;
                 pilotCombo.Width = 180;
+                // use the slot's current pilot name as the only/default item
+                pilotCombo.Items.Add(_pilotSlots[i].PilotName ?? ("파일럿 " + (i + 1)));
+                pilotCombo.SelectedIndex = 0;
+
+                // create model selection combo for this slot
+                var modelCombo = new ComboBox();
+                modelCombo.DropDownStyle = ComboBoxStyle.DropDownList;
                 modelCombo.Width = 120;
+                modelCombo.Items.AddRange(new string[] { "linear", "categorical", "behavior" });
+                int sel = Array.FindIndex(modelCombo.Items.Cast<string>().ToArray(), s => string.Equals(s, _pilotSlots[i].ModelType, StringComparison.OrdinalIgnoreCase));
+                modelCombo.SelectedIndex = sel >= 0 ? sel : 0;
+
                 comboPanel.Controls.Add(pilotCombo);
                 comboPanel.Controls.Add(modelCombo);
 
@@ -350,6 +342,7 @@ namespace DonkeyUi
                 infoPanel.Dock = DockStyle.Fill;
                 infoPanel.FlowDirection = FlowDirection.TopDown;
                 infoPanel.Padding = new Padding(4);
+                infoPanel.AutoSize = false;
 
                 var dataFlow = new FlowLayoutPanel();
                 dataFlow.FlowDirection = FlowDirection.LeftToRight;
@@ -383,8 +376,8 @@ namespace DonkeyUi
             }
 
             pnlImageArea.Controls.Add(table);
-            btnAddLeftPic.Enabled = _pilotCombos.Count < 4;
-            btnRemoveLeftPic.Enabled = _pilotCombos.Count > 1;
+            btnAddLeftPic.Enabled = _pilotSlots.Count < 4;
+            btnRemoveLeftPic.Enabled = _pilotSlots.Count > 1;
             RefreshAllSlots();
         }
 
