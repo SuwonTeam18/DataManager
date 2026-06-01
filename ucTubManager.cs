@@ -71,6 +71,9 @@ private int _selectEnd = -1;
             btnLoadTub.Click += BtnLoadTub_Click;
             trkRecord.Scroll += TrkRecord_Scroll;
             trkRecord.ValueChanged += TrkRecord_ValueChanged;
+            // Allow user input to jump to a specific record
+            txtRecordNumber.KeyDown += TxtRecordNumber_KeyDown;
+            txtRecordNumber.Leave += TxtRecordNumber_Leave;
 
             pnlSpeedRange.Paint += pnlSpeedRange_Paint;
 
@@ -158,6 +161,52 @@ private int _selectEnd = -1;
             picAngle.Paint += PicAngle_Paint;
         }
 
+        private void TxtRecordNumber_Leave(object? sender, EventArgs e)
+        {
+            TryNavigateToRecordFromText();
+        }
+
+        private void TxtRecordNumber_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                TryNavigateToRecordFromText();
+            }
+        }
+
+        private void TryNavigateToRecordFromText()
+        {
+            try
+            {
+                var txt = txtRecordNumber.Text ?? string.Empty;
+                // find digits in the text
+                var m = System.Text.RegularExpressions.Regex.Match(txt, "(\\d+)");
+                if (!m.Success) return;
+                if (!int.TryParse(m.Groups[1].Value, out var num)) return;
+                if (num <= 0) num = 1;
+                var targetIndex = num - 1;
+                if (_imageFiles == null || _imageFiles.Count == 0)
+                {
+                    txtRecordNumber.Text = "기록 000000";
+                    return;
+                }
+                if (targetIndex < 0) targetIndex = 0;
+                if (targetIndex >= _imageFiles.Count) targetIndex = _imageFiles.Count - 1;
+                if (trkRecord.Enabled)
+                {
+                    trkRecord.Value = targetIndex;
+                    // Update textbox to show normalized value immediately; SetCurrentIndex will also refresh it.
+                    txtRecordNumber.Text = $"기록 {(targetIndex + 1):D6}";
+                }
+                else
+                {
+                    SetCurrentIndex(targetIndex);
+                }
+            }
+            catch { }
+        }
+
         // ════════════════════════════════════════════════════════════
         // 로드
         // ════════════════════════════════════════════════════════════
@@ -165,7 +214,7 @@ private int _selectEnd = -1;
         private void BtnLoadCarDirectory_Click(object? sender, EventArgs e)
         {
             using var dlg = new FolderBrowserDialog();
-            dlg.Description = "Select car directory";
+            dlg.Description = "차량 폴더 열기";
             dlg.UseDescriptionForTitle = true;
             if (dlg.ShowDialog() == DialogResult.OK)
             {
@@ -177,7 +226,7 @@ private int _selectEnd = -1;
         private void BtnLoadTub_Click(object? sender, EventArgs e)
         {
             using var dlg = new OpenFileDialog();
-            dlg.Title = "Select tub file";
+            dlg.Title = "주행 데이터 열기";
             dlg.Filter = "Tub files (*.json;*.csv;*.jpg;*.jpeg;*.png)|*.json;*.csv;*.jpg;*.jpeg;*.png|All files (*.*)|*.*";
             dlg.CheckFileExists = true;
             dlg.Multiselect = false;
@@ -185,6 +234,28 @@ private int _selectEnd = -1;
 
             txtTub.Text = dlg.FileName;
             CurrentTubPath = Path.GetDirectoryName(dlg.FileName) ?? "";
+
+            try
+            {
+                // If the selected file resides in an "images" (or "image") folder, set txtCarDirectory to its parent folder
+                var dir = Path.GetDirectoryName(dlg.FileName) ?? string.Empty;
+                if (!string.IsNullOrEmpty(dir))
+                {
+                    var dinfo = new DirectoryInfo(dir);
+                    if (string.Equals(dinfo.Name, "images", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(dinfo.Name, "image", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var parent = dinfo.Parent;
+                        if (parent != null)
+                        {
+                            // include trailing directory separator to match example
+                            txtCarDirectory.Text = parent.FullName.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                                + Path.DirectorySeparatorChar;
+                        }
+                    }
+                }
+            }
+            catch { }
 
             var ext = Path.GetExtension(dlg.FileName)?.ToLowerInvariant();
             var imageExts = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
@@ -246,7 +317,7 @@ private int _selectEnd = -1;
                 picTubImage.Image?.Dispose();
                 picTubImage.Image = null;
                 _currentIndex = -1;
-                lblRecordNumber.Text = "기록 000000";
+                txtRecordNumber.Text = "기록 000000";
                 _catalogLines.Clear();
                 _currentThrottle = null;
                 _currentAngle = null;
@@ -272,7 +343,7 @@ private int _selectEnd = -1;
                 picTubImage.Image?.Dispose();
                 picTubImage.Image = new Bitmap(img);
 
-                lblRecordNumber.Text = $"기록 {(_currentIndex + 1):D6}";
+                txtRecordNumber.Text = $"기록 {(_currentIndex + 1):D6}";
 
                 double? angle = null;
                 double? throttle = null;
@@ -591,8 +662,13 @@ private int _selectEnd = -1;
         private void UpdatePlaybackIntervalFromCombo()
         {
             if (cmbSpeed == null) return;
-            if (!double.TryParse(cmbSpeed.Text?.Trim(), NumberStyles.Float,
-                    CultureInfo.InvariantCulture, out var speed) || speed <= 0)
+            var text = cmbSpeed.Text?.Trim() ?? "";
+            // allow items like "1.00x" or "1.00×"
+            text = text.Replace("×", "x").Trim();
+            if (text.EndsWith("x", StringComparison.OrdinalIgnoreCase))
+                text = text.Substring(0, text.Length - 1).Trim();
+
+            if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var speed) || speed <= 0)
                 speed = 1.0;
             _playTimer.Interval = (int)Math.Max(10, Math.Round(_playBaseIntervalMs / speed));
         }

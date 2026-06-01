@@ -45,7 +45,7 @@
             btnStartStop = new Button();
             btnFastPrev = new Button();
             btnPrev = new Button();
-            lblRecordNumber = new Label();
+            txtRecordNumber = new TextBox();
             panel1 = new Panel();
             btnLoadTub = new Button();
             btnLoadCarDirectory = new Button();
@@ -208,7 +208,7 @@
             panel3.Controls.Add(btnStartStop);
             panel3.Controls.Add(btnFastPrev);
             panel3.Controls.Add(btnPrev);
-            panel3.Controls.Add(lblRecordNumber);
+            panel3.Controls.Add(txtRecordNumber);
             panel3.Dock = DockStyle.Fill;
             panel3.Location = new Point(673, 3);
             panel3.Name = "panel3";
@@ -221,12 +221,12 @@
             cmbSpeed.Font = new Font("맑은 고딕", 21.75F, FontStyle.Regular, GraphicsUnit.Point, 129);
             cmbSpeed.ForeColor = Color.White;
             cmbSpeed.FormattingEnabled = true;
-            cmbSpeed.Items.AddRange(new object[] { "0.25", "0.50", "0.75", "1.00", "1.25", "1.50", "1.75", "2.00" });
+            cmbSpeed.Items.AddRange(new object[] { "0.25x", "0.50x", "0.75x", "1.00x", "1.25x", "1.50x", "1.75x", "2.00x" });
             cmbSpeed.Location = new Point(133, 9);
             cmbSpeed.Name = "cmbSpeed";
             cmbSpeed.Size = new Size(132, 48);
             cmbSpeed.TabIndex = 7;
-            cmbSpeed.Text = "1.00";
+            cmbSpeed.Text = "1.00x";
             // 
             // btnFastNext
             // 
@@ -293,17 +293,23 @@
             btnPrev.Text = "<";
             btnPrev.UseVisualStyleBackColor = false;
             // 
-            // lblRecordNumber
+            // txtRecordNumber
             // 
-            lblRecordNumber.BackColor = Color.FromArgb(80, 80, 80);
-            lblRecordNumber.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            lblRecordNumber.ForeColor = Color.White;
-            lblRecordNumber.Location = new Point(4, -1);
-            lblRecordNumber.Name = "lblRecordNumber";
-            lblRecordNumber.Size = new Size(123, 61);
-            lblRecordNumber.TabIndex = 0;
-            lblRecordNumber.Text = "기록 000000";
-            lblRecordNumber.TextAlign = ContentAlignment.MiddleCenter;
+            txtRecordNumber.BackColor = Color.FromArgb(80, 80, 80);
+            txtRecordNumber.BorderStyle = BorderStyle.None;
+            txtRecordNumber.Font = new Font("맑은 고딕", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            txtRecordNumber.ForeColor = Color.White;
+            txtRecordNumber.Location = new Point(5, 7);
+            txtRecordNumber.Multiline = true;
+            txtRecordNumber.Name = "txtRecordNumber";
+            txtRecordNumber.Size = new Size(121, 50);
+            txtRecordNumber.TabIndex = 0;
+            txtRecordNumber.Text = "기록 000000";
+            txtRecordNumber.TextAlign = HorizontalAlignment.Center;
+            txtRecordNumber.ReadOnly = false;
+            txtRecordNumber.BorderStyle = BorderStyle.FixedSingle;
+            txtRecordNumber.Leave += TxtRecordNumber_Leave;
+            txtRecordNumber.KeyDown += TxtRecordNumber_KeyDown;
             // 
             // panel1
             // 
@@ -637,6 +643,7 @@
             ((System.ComponentModel.ISupportInitialize)picAngle).EndInit();
             ((System.ComponentModel.ISupportInitialize)picTubImage).EndInit();
             panel3.ResumeLayout(false);
+            panel3.PerformLayout();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)trkRecord).EndInit();
@@ -686,7 +693,7 @@
         private Button btnStartStop;
         private Button btnFastPrev;
         private Button btnPrev;
-        private Label lblRecordNumber;
+        private TextBox txtRecordNumber;
         private Button btnLoadTub;
         private Button btnLoadCarDirectory;
         private Panel pnlSpeedRange;
