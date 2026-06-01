@@ -33,8 +33,22 @@ namespace DonkeyUi
 
         private List<string> _imageFiles = new List<string>();
         private List<string> _deletedImages = new List<string>();
+        private List<string> _allImageFiles = new List<string>();
         private Dictionary<string, int> _deletedIndexes = new Dictionary<string, int>();
         private int _currentIndex = -1;
+        private int _minX = 20;
+        private int _maxX = 815;
+        private bool _dragMin = false;
+        private bool _dragMax = false;
+        private const double SPEED_MAX = 200.0;
+        private int _angleMinX = 20;
+        private int _angleMaxX = 815;
+        private List<string> _filteredImages = new();
+        private bool _dragAngleMin = false;
+        private bool _dragAngleMax = false;
+        private int _selectStart = -1;
+private int _selectEnd = -1;
+        private const int ANGLE_MAX = 10;
         private System.Windows.Forms.Timer _prevTimer;
         private System.Windows.Forms.Timer _nextTimer;
         private System.Windows.Forms.Timer _prevInitialTimer;
@@ -61,6 +75,34 @@ namespace DonkeyUi
             txtRecordNumber.KeyDown += TxtRecordNumber_KeyDown;
             txtRecordNumber.Leave += TxtRecordNumber_Leave;
 
+            pnlSpeedRange.Paint += pnlSpeedRange_Paint;
+
+            pnlSpeedRange.MouseDown += pnlSpeedRange_MouseDown;
+            pnlSpeedRange.MouseMove += pnlSpeedRange_MouseMove;
+            pnlSpeedRange.MouseUp += pnlSpeedRange_MouseUp;
+
+            nudSpeedMin.ValueChanged += nudSpeedMin_ValueChanged;
+            nudSpeedMax.ValueChanged += nudSpeedMax_ValueChanged;
+
+            pnlAngleRange.Paint += pnlAngleRange_Paint;
+
+            pnlAngleRange.MouseDown += pnlAngleRange_MouseDown;
+            pnlAngleRange.MouseMove += pnlAngleRange_MouseMove;
+            pnlAngleRange.MouseUp += pnlAngleRange_MouseUp;
+
+            nudAngleMin.ValueChanged += nudAngleMin_ValueChanged;
+            nudAngleMax.ValueChanged += nudAngleMax_ValueChanged;
+
+            nudSpeedMin.DecimalPlaces = 3;
+            nudSpeedMax.DecimalPlaces = 3;
+
+            nudSpeedMin.Increment = 0.01M;
+            nudSpeedMax.Increment = 0.01M;
+
+            nudSpeedMin.Maximum = 1;
+            nudSpeedMax.Maximum = 1;
+
+            pnlTimeline.Paint += pnlTimeline_Paint;
             _prevTimer = new System.Windows.Forms.Timer { Interval = 100 };
             _nextTimer = new System.Windows.Forms.Timer { Interval = 100 };
             _prevTimer.Tick += (s, ea) => MovePrev();
@@ -243,6 +285,7 @@ namespace DonkeyUi
                 .ToList();
             files.Sort(StringComparer.OrdinalIgnoreCase);
             _imageFiles = files;
+            _allImageFiles = files.ToList();
             _loadedFolderPath = folder;
 
             _deletedImages.Clear();
@@ -691,10 +734,6 @@ namespace DonkeyUi
         // 삭제 / 복원 / 저장 / 필터
         // ════════════════════════════════════════════════════════════
 
-        private void btnSetFillter_Click(object sender, EventArgs e)
-        {
-            contextFilter.Show(btnSetFillter, 0, btnSetFillter.Height);
-        }
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
@@ -721,6 +760,7 @@ namespace DonkeyUi
                 picTubImage.Image = null;
             }
             UpdateDeleteStatus();
+            pnlTimeline.Invalidate();
         }
 
         private void btnRestore_Click(object sender, EventArgs e)
@@ -739,6 +779,7 @@ namespace DonkeyUi
             trkRecord.Value = restoreIndex;
             SetCurrentIndex(restoreIndex);
             UpdateDeleteStatus();
+            pnlTimeline.Invalidate();
         }
 
         private void btnReroadTub_Click(object sender, EventArgs e)
@@ -757,33 +798,70 @@ namespace DonkeyUi
 
         private void ApplyFilter(bool isThrottle)
         {
-            string input = Microsoft.VisualBasic.Interaction.InputBox("최소값 입력", "필터 설정", "0");
-            if (!double.TryParse(input, out double minValue))
+            string minInput =
+               Microsoft.VisualBasic.Interaction.InputBox(
+                   "최소값 입력", "필터 설정", "0");
+
+            string maxInput =
+                Microsoft.VisualBasic.Interaction.InputBox(
+                    "최대값 입력", "필터 설정", "999999");
+
+            if (!double.TryParse(minInput, out double minValue) ||
+                !double.TryParse(maxInput, out double maxValue))
             {
                 MessageBox.Show("숫자를 입력하세요.");
+                return;
+            }
+
+            if (minValue > maxValue)
+            {
+                MessageBox.Show("최소값이 최대값보다 클 수 없습니다.");
                 return;
             }
 
             _imageFiles = _imageFiles
                 .Where((img, idx) =>
                 {
-                    if (idx >= _catalogLines.Count) return false;
+                    if (idx >= _catalogLines.Count)
+                        return false;
+
                     var parsed = ParseCatalogLine(_catalogLines[idx]);
-                    return isThrottle
-                        ? parsed.throttle.HasValue && parsed.throttle.Value > minValue
-                        : parsed.angle.HasValue && Math.Abs(parsed.angle.Value) > minValue;
+
+                    double? value = isThrottle
+                        ? parsed.throttle
+                        : parsed.angle;
+
+                    return value.HasValue &&
+                           value.Value >= minValue &&
+                           value.Value <= maxValue;
                 })
                 .ToList();
 
             trkRecord.Minimum = 0;
             trkRecord.Maximum = Math.Max(0, _imageFiles.Count - 1);
-            if (_imageFiles.Count > 0) { trkRecord.Value = 0; SetCurrentIndex(0); }
-            MessageBox.Show("필터 적용 완료");
+
+            if (_imageFiles.Count > 0)
+            {
+                trkRecord.Value = 0;
+                SetCurrentIndex(0);
+            }
+
+            MessageBox.Show($"필터 적용 완료 ({minValue} ~ {maxValue})");
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
+            var result = MessageBox.Show(
+         "삭제된 파일이 실제로 저장되며 복구가 어려울 수 있습니다.\n그래도 저장하시겠습니까?",
+         "저장 확인",
+         MessageBoxButtons.YesNo,
+         MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes)
+                return;
+
             var toDelete = _deletedImages.ToList();
+
             int deletedCount = 0;
             foreach (string imagePath in toDelete)
             {
@@ -800,6 +878,7 @@ namespace DonkeyUi
             _deletedIndexes.Clear();
             UpdateDeleteStatus();
             MessageBox.Show($"{deletedCount}개 파일 저장 완료");
+            pnlTimeline.Invalidate();
         }
 
         // ════════════════════════════════════════════════════════════
@@ -812,6 +891,48 @@ namespace DonkeyUi
             int deleted = _deletedImages.Count;
             lblDeleteStatus.Text = $"{total}개 중 {deleted}개 삭제됨";
             lblDeleteStatus.Visible = deleted > 0;
+        }
+
+        private void pnlSpeedRange_Paint(object sender, PaintEventArgs e)
+        {
+            var g = e.Graphics;
+
+            int y = pnlSpeedRange.Height / 2;
+
+            // 전체 회색 선
+            g.DrawLine(
+                Pens.Gray,
+                20,
+                y,
+                pnlSpeedRange.Width - 20,
+                y);
+
+            // 선택된 파란 선
+            using (var pen = new Pen(Color.DodgerBlue, 4))
+            {
+                g.DrawLine(
+                    pen,
+                    _minX,
+                    y,
+                    _maxX,
+                    y);
+            }
+
+            // 최소값 손잡이
+            g.FillEllipse(
+                Brushes.DodgerBlue,
+                _minX - 8,
+                y - 8,
+                16,
+                16);
+
+            // 최대값 손잡이
+            g.FillEllipse(
+                Brushes.DodgerBlue,
+                _maxX - 8,
+                y - 8,
+                16,
+                16);
         }
 
         public string SelectedDataPath
@@ -827,5 +948,370 @@ namespace DonkeyUi
                 return imageFolder;
             }
         }
+        private void pnlSpeedRange_MouseDown(
+    object sender,
+    MouseEventArgs e)
+        {
+            if (Math.Abs(e.X - _minX) < 15)
+            {
+                _dragMin = true;
+            }
+
+            if (Math.Abs(e.X - _maxX) < 15)
+            {
+                _dragMax = true;
+            }
+        }
+        private void pnlSpeedRange_MouseUp(
+    object sender,
+    MouseEventArgs e)
+        {
+            _dragMin = false;
+            _dragMax = false;
+        }
+        private void pnlSpeedRange_MouseMove(
+    object sender,
+    MouseEventArgs e)
+        {
+            if (_dragMin)
+            {
+                _minX = e.X;
+
+                _minX = Math.Max(20, Math.Min(_minX, _maxX));
+
+                nudSpeedMin.Value =
+                    Math.Min(
+                        nudSpeedMin.Maximum,
+                        XToSpeed(_minX));
+
+                pnlSpeedRange.Invalidate();
+            }
+            if (_dragMax)
+            {
+                _maxX = e.X;
+
+                _maxX = Math.Min(815, Math.Max(_maxX, _minX));
+
+                nudSpeedMax.Value =
+                    Math.Min(
+                        nudSpeedMax.Maximum,
+                        XToSpeed(_maxX));
+
+                pnlSpeedRange.Invalidate();
+            }
+        }
+        private decimal XToSpeed(int x)
+        {
+            x = Math.Max(20, Math.Min(x, 815));
+
+            return (decimal)(
+                (double)(x - 20)
+                / (815 - 20));
+        }
+        private int SpeedToX(decimal speed)
+        {
+            return 20 + (int)(
+             (double)speed
+             * (815 - 20));
+        }
+        private void nudSpeedMin_ValueChanged(
+           object sender,
+           EventArgs e)
+        {
+            _minX = SpeedToX(nudSpeedMin.Value);
+
+            pnlSpeedRange.Invalidate();
+        }
+        private void nudSpeedMax_ValueChanged(
+           object sender,
+           EventArgs e)
+        {
+            _maxX = SpeedToX(nudSpeedMax.Value);
+
+            pnlSpeedRange.Invalidate();
+        }
+        private decimal XToAngle(int x)
+        {
+            x = Math.Max(20, Math.Min(x, 815));
+
+            return (decimal)(
+                ((double)(x - 20)
+                / (815 - 20))
+                * 20 - 10);
+        }
+        private int AngleToX(decimal angle)
+        {
+            return 20 + (int)(
+                ((double)angle + 10)
+                / 20
+                * (815 - 20));
+        }
+        private void nudAngleMin_ValueChanged(
+    object sender,
+    EventArgs e)
+        {
+            _angleMinX = AngleToX(nudAngleMin.Value);
+
+            pnlAngleRange.Invalidate();
+        }
+
+        private void nudAngleMax_ValueChanged(
+            object sender,
+            EventArgs e)
+        {
+            _angleMaxX = AngleToX(nudAngleMax.Value);
+
+            pnlAngleRange.Invalidate();
+        }
+        private void pnlAngleRange_MouseDown(
+    object sender,
+    MouseEventArgs e)
+        {
+            if (Math.Abs(e.X - _angleMinX) < 15)
+                _dragAngleMin = true;
+
+            if (Math.Abs(e.X - _angleMaxX) < 15)
+                _dragAngleMax = true;
+        }
+
+        private void pnlAngleRange_MouseUp(
+            object sender,
+            MouseEventArgs e)
+        {
+            _dragAngleMin = false;
+            _dragAngleMax = false;
+        }
+
+        private void pnlAngleRange_MouseMove(
+            object sender,
+            MouseEventArgs e)
+        {
+            if (_dragAngleMin)
+            {
+                _angleMinX = e.X;
+
+                _angleMinX = Math.Max(20,
+                    Math.Min(_angleMinX, _angleMaxX));
+
+                nudAngleMin.Value =
+                    Math.Min(
+                        nudAngleMin.Maximum,
+                        XToAngle(_angleMinX));
+
+                pnlAngleRange.Invalidate();
+            }
+
+            if (_dragAngleMax)
+            {
+                _angleMaxX = e.X;
+
+                _angleMaxX = Math.Min(
+                    815,
+                    Math.Max(_angleMaxX, _angleMinX));
+
+                nudAngleMax.Value =
+                    Math.Max(
+                        nudAngleMax.Minimum,
+                        XToAngle(_angleMaxX));
+
+                pnlAngleRange.Invalidate();
+            }
+        }
+        private void pnlAngleRange_Paint(object sender, PaintEventArgs e)
+        {
+            var g = e.Graphics;
+
+            int y = pnlAngleRange.Height / 2;
+
+            // 전체 회색 선
+            g.DrawLine(
+                Pens.Gray,
+                20,
+                y,
+                pnlAngleRange.Width - 20,
+                y);
+
+            // 선택된 파란 선
+            using (var pen = new Pen(Color.DodgerBlue, 4))
+            {
+                g.DrawLine(
+                    pen,
+                    _angleMinX,
+                    y,
+                    _angleMaxX,
+                    y);
+            }
+
+            // 최소값 손잡이
+            g.FillEllipse(
+                Brushes.DodgerBlue,
+                _angleMinX - 8,
+                y - 8,
+                16,
+                16);
+
+            // 최대값 손잡이
+            g.FillEllipse(
+                Brushes.DodgerBlue,
+                _angleMaxX - 8,
+                y - 8,
+                16,
+                16);
+        }
+
+        private void btnApplyFilter_Click(object sender, EventArgs e)
+        {
+            double speedMin = (double)nudSpeedMin.Value;
+            double speedMax = (double)nudSpeedMax.Value;
+
+            double angleMin = (double)nudAngleMin.Value / 10.0;
+            double angleMax = (double)nudAngleMax.Value / 10.0;
+            _filteredImages.Clear();
+            _imageFiles = _allImageFiles
+
+                .Where((img, idx) =>
+                {
+                    if (idx >= _catalogLines.Count)
+                        return false;
+
+                    var parsed = ParseCatalogLine(_catalogLines[idx]);
+
+                    return parsed.throttle.HasValue &&
+                           parsed.angle.HasValue &&
+                           parsed.throttle.Value >= speedMin &&
+                           parsed.throttle.Value <= speedMax &&
+                           parsed.angle.Value >= angleMin &&
+                           parsed.angle.Value <= angleMax;
+                })
+                .ToList();
+            foreach (var img in _allImageFiles)
+            {
+                if (!_imageFiles.Contains(img))
+                {
+                    _filteredImages.Add(img);
+                }
+            }
+            pnlTimeline.Invalidate();
+            trkRecord.Minimum = 0;
+            trkRecord.Maximum = Math.Max(0, _imageFiles.Count - 1);
+
+            if (_imageFiles.Count > 0)
+            {
+                trkRecord.Value = 0;
+                SetCurrentIndex(0);
+            }
+
+            MessageBox.Show(
+                $"필터 적용 완료\n남은 프레임: {_imageFiles.Count}개");
+        }
+
+        private void btnClearFilter_Click(object sender, EventArgs e)
+        {
+            _imageFiles = _allImageFiles.ToList();
+
+            trkRecord.Minimum = 0;
+            trkRecord.Maximum = Math.Max(0, _imageFiles.Count - 1);
+
+            if (_imageFiles.Count > 0)
+            {
+                trkRecord.Value = 0;
+                SetCurrentIndex(0);
+            }
+
+            MessageBox.Show("필터 해제 완료");
+            _filteredImages.Clear();
+            pnlTimeline.Invalidate();
+        }
+        private void pnlTimeline_Paint(
+           object sender,
+           PaintEventArgs e)
+        {
+
+            var g = e.Graphics;
+
+            g.Clear(Color.White);
+
+            g.FillRectangle(
+                Brushes.DodgerBlue,
+                0,
+                0,
+                pnlTimeline.Width,
+                pnlTimeline.Height);
+
+            int totalFrames = _allImageFiles.Count;
+
+            if (totalFrames == 0)
+                return;
+
+            foreach (string deletedImage in _deletedImages)
+            {
+                int index =
+                    _allImageFiles.IndexOf(deletedImage);
+
+                if (index < 0)
+                    continue;
+
+                int startX =
+                    index * pnlTimeline.Width / totalFrames;
+
+                int endX =
+                    (index + 1) * pnlTimeline.Width / totalFrames;
+
+                int width =
+                    Math.Max(1, endX - startX);
+
+                g.FillRectangle(
+                    Brushes.Red,
+                    startX,
+                    0,
+                    width,
+                    pnlTimeline.Height);
+            }
+            foreach (string filteredImage in _filteredImages)
+            {
+                int index =
+                    _allImageFiles.IndexOf(filteredImage);
+
+                if (index < 0)
+                    continue;
+
+                int startX =
+                    index * pnlTimeline.Width / totalFrames;
+
+                int endX =
+                    (index + 1) * pnlTimeline.Width / totalFrames;
+
+                int width =
+                    Math.Max(1, endX - startX);
+
+                g.FillRectangle(
+                    Brushes.Red,
+                    startX,
+                    0,
+                    width,
+                    pnlTimeline.Height);
+            }
+            if (_imageFiles.Count == 0)
+                return;
+
+            int currentX =
+                _currentIndex * pnlTimeline.Width
+                / _imageFiles.Count;
+
+            g.DrawLine(
+                Pens.Yellow,
+                currentX,
+                0,
+                currentX,
+                pnlTimeline.Height);
+        }
+        }
     }
-}
+
+
+
+
+
+
+
+

@@ -53,10 +53,22 @@
             txtCarDirectory = new TextBox();
             trkRecord = new TrackBar();
             pnlTools = new Panel();
+            pnlTimeline = new Panel();
+            btnApplyFilter = new Button();
+            btnClearFilter = new Button();
+            FilThrottle = new Label();
+            FilAngle = new Label();
+            label1 = new Label();
+            pnlAngleRange = new Panel();
+            panel6 = new Panel();
+            nudAngleMax = new NumericUpDown();
+            nudAngleMin = new NumericUpDown();
+            nudSpeedMax = new NumericUpDown();
+            nudSpeedMin = new NumericUpDown();
+            pnlSpeedRange = new Panel();
+            panel4 = new Panel();
             lblDeleteStatus = new Label();
             btnSave = new Button();
-            textBox3 = new TextBox();
-            btnSetFillter = new Button();
             btnReroadTub = new Button();
             btnRestore = new Button();
             btnDelete = new Button();
@@ -75,6 +87,12 @@
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trkRecord).BeginInit();
             pnlTools.SuspendLayout();
+            pnlAngleRange.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudAngleMax).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudAngleMin).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudSpeedMax).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudSpeedMin).BeginInit();
+            pnlSpeedRange.SuspendLayout();
             contextFilter.SuspendLayout();
             SuspendLayout();
             // 
@@ -344,17 +362,27 @@
             // trkRecord
             // 
             trkRecord.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            trkRecord.Location = new Point(2, 23);
+            trkRecord.Location = new Point(3, 6);
             trkRecord.Name = "trkRecord";
             trkRecord.Size = new Size(943, 45);
             trkRecord.TabIndex = 2;
             // 
             // pnlTools
             // 
+            pnlTools.Controls.Add(pnlTimeline);
+            pnlTools.Controls.Add(btnApplyFilter);
+            pnlTools.Controls.Add(btnClearFilter);
+            pnlTools.Controls.Add(FilThrottle);
+            pnlTools.Controls.Add(FilAngle);
+            pnlTools.Controls.Add(label1);
+            pnlTools.Controls.Add(pnlAngleRange);
+            pnlTools.Controls.Add(nudAngleMax);
+            pnlTools.Controls.Add(nudAngleMin);
+            pnlTools.Controls.Add(nudSpeedMax);
+            pnlTools.Controls.Add(nudSpeedMin);
+            pnlTools.Controls.Add(pnlSpeedRange);
             pnlTools.Controls.Add(lblDeleteStatus);
             pnlTools.Controls.Add(btnSave);
-            pnlTools.Controls.Add(textBox3);
-            pnlTools.Controls.Add(btnSetFillter);
             pnlTools.Controls.Add(trkRecord);
             pnlTools.Controls.Add(btnReroadTub);
             pnlTools.Controls.Add(btnRestore);
@@ -364,14 +392,140 @@
             pnlTools.Dock = DockStyle.Top;
             pnlTools.Location = new Point(0, 344);
             pnlTools.Name = "pnlTools";
-            pnlTools.Size = new Size(947, 164);
+            pnlTools.Size = new Size(947, 312);
             pnlTools.TabIndex = 3;
+            // 
+            // pnlTimeline
+            // 
+            pnlTimeline.Location = new Point(3, 52);
+            pnlTimeline.Name = "pnlTimeline";
+            pnlTimeline.Size = new Size(943, 45);
+            pnlTimeline.TabIndex = 20;
+            // 
+            // btnApplyFilter
+            // 
+            btnApplyFilter.Location = new Point(644, 171);
+            btnApplyFilter.Name = "btnApplyFilter";
+            btnApplyFilter.Size = new Size(115, 26);
+            btnApplyFilter.TabIndex = 19;
+            btnApplyFilter.Text = "필터 적용";
+            btnApplyFilter.UseVisualStyleBackColor = true;
+            btnApplyFilter.Click += btnApplyFilter_Click;
+            // 
+            // btnClearFilter
+            // 
+            btnClearFilter.Location = new Point(765, 171);
+            btnClearFilter.Name = "btnClearFilter";
+            btnClearFilter.Size = new Size(115, 26);
+            btnClearFilter.TabIndex = 18;
+            btnClearFilter.Text = "필터 해제";
+            btnClearFilter.UseVisualStyleBackColor = true;
+            btnClearFilter.Click += btnClearFilter_Click;
+            // 
+            // FilThrottle
+            // 
+            FilThrottle.AutoSize = true;
+            FilThrottle.BackColor = Color.FromArgb(192, 255, 255);
+            FilThrottle.Location = new Point(3, 182);
+            FilThrottle.Name = "FilThrottle";
+            FilThrottle.Size = new Size(31, 15);
+            FilThrottle.TabIndex = 17;
+            FilThrottle.Text = "속도";
+            // 
+            // FilAngle
+            // 
+            FilAngle.AutoSize = true;
+            FilAngle.BackColor = Color.FromArgb(128, 255, 128);
+            FilAngle.Location = new Point(3, 240);
+            FilAngle.Name = "FilAngle";
+            FilAngle.Size = new Size(31, 15);
+            FilAngle.TabIndex = 16;
+            FilAngle.Text = "각도";
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.BackColor = Color.WhiteSmoke;
+            label1.ForeColor = Color.Blue;
+            label1.Location = new Point(0, 158);
+            label1.Name = "label1";
+            label1.Size = new Size(59, 15);
+            label1.TabIndex = 15;
+            label1.Text = "필터 기능";
+            // 
+            // pnlAngleRange
+            // 
+            pnlAngleRange.Controls.Add(panel6);
+            pnlAngleRange.Location = new Point(59, 255);
+            pnlAngleRange.Name = "pnlAngleRange";
+            pnlAngleRange.Size = new Size(821, 37);
+            pnlAngleRange.TabIndex = 12;
+            // 
+            // panel6
+            // 
+            panel6.Location = new Point(0, 43);
+            panel6.Name = "panel6";
+            panel6.Size = new Size(835, 37);
+            panel6.TabIndex = 11;
+            // 
+            // nudAngleMax
+            // 
+            nudAngleMax.Location = new Point(886, 258);
+            nudAngleMax.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
+            nudAngleMax.Minimum = new decimal(new int[] { 10, 0, 0, int.MinValue });
+            nudAngleMax.Name = "nudAngleMax";
+            nudAngleMax.Size = new Size(59, 23);
+            nudAngleMax.TabIndex = 14;
+            nudAngleMax.Value = new decimal(new int[] { 10, 0, 0, 0 });
+            // 
+            // nudAngleMin
+            // 
+            nudAngleMin.Location = new Point(3, 258);
+            nudAngleMin.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
+            nudAngleMin.Minimum = new decimal(new int[] { 10, 0, 0, int.MinValue });
+            nudAngleMin.Name = "nudAngleMin";
+            nudAngleMin.Size = new Size(50, 23);
+            nudAngleMin.TabIndex = 13;
+            nudAngleMin.Value = new decimal(new int[] { 10, 0, 0, int.MinValue });
+            // 
+            // nudSpeedMax
+            // 
+            nudSpeedMax.Location = new Point(886, 200);
+            nudSpeedMax.Maximum = new decimal(new int[] { 200, 0, 0, 0 });
+            nudSpeedMax.Name = "nudSpeedMax";
+            nudSpeedMax.Size = new Size(59, 23);
+            nudSpeedMax.TabIndex = 12;
+            nudSpeedMax.Value = new decimal(new int[] { 200, 0, 0, 0 });
+            // 
+            // nudSpeedMin
+            // 
+            nudSpeedMin.Location = new Point(3, 200);
+            nudSpeedMin.Maximum = new decimal(new int[] { 200, 0, 0, 0 });
+            nudSpeedMin.Name = "nudSpeedMin";
+            nudSpeedMin.Size = new Size(50, 23);
+            nudSpeedMin.TabIndex = 11;
+            // 
+            // pnlSpeedRange
+            // 
+            pnlSpeedRange.Controls.Add(panel4);
+            pnlSpeedRange.Location = new Point(59, 200);
+            pnlSpeedRange.Name = "pnlSpeedRange";
+            pnlSpeedRange.Size = new Size(821, 37);
+            pnlSpeedRange.TabIndex = 10;
+            pnlSpeedRange.Paint += pnlSpeedRange_Paint;
+            // 
+            // panel4
+            // 
+            panel4.Location = new Point(0, 43);
+            panel4.Name = "panel4";
+            panel4.Size = new Size(835, 37);
+            panel4.TabIndex = 11;
             // 
             // lblDeleteStatus
             // 
             lblDeleteStatus.AutoSize = true;
             lblDeleteStatus.ForeColor = Color.FromArgb(255, 128, 128);
-            lblDeleteStatus.Location = new Point(466, 56);
+            lblDeleteStatus.Location = new Point(325, 100);
             lblDeleteStatus.Name = "lblDeleteStatus";
             lblDeleteStatus.Size = new Size(105, 15);
             lblDeleteStatus.TabIndex = 9;
@@ -380,35 +534,17 @@
             // 
             // btnSave
             // 
-            btnSave.Location = new Point(3, 113);
+            btnSave.Location = new Point(779, 117);
             btnSave.Name = "btnSave";
-            btnSave.Size = new Size(149, 29);
+            btnSave.Size = new Size(149, 38);
             btnSave.TabIndex = 8;
             btnSave.Text = "저장 💾";
             btnSave.UseVisualStyleBackColor = true;
             btnSave.Click += btnSave_Click;
             // 
-            // textBox3
-            // 
-            textBox3.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            textBox3.Location = new Point(155, 113);
-            textBox3.Name = "textBox3";
-            textBox3.Size = new Size(778, 29);
-            textBox3.TabIndex = 7;
-            // 
-            // btnSetFillter
-            // 
-            btnSetFillter.Location = new Point(316, 74);
-            btnSetFillter.Name = "btnSetFillter";
-            btnSetFillter.Size = new Size(144, 37);
-            btnSetFillter.TabIndex = 6;
-            btnSetFillter.Text = "필터 설정 🔍";
-            btnSetFillter.UseVisualStyleBackColor = true;
-            btnSetFillter.Click += btnSetFillter_Click;
-            // 
             // btnReroadTub
             // 
-            btnReroadTub.Location = new Point(779, 74);
+            btnReroadTub.Location = new Point(619, 118);
             btnReroadTub.Name = "btnReroadTub";
             btnReroadTub.Size = new Size(154, 37);
             btnReroadTub.TabIndex = 5;
@@ -418,7 +554,7 @@
             // 
             // btnRestore
             // 
-            btnRestore.Location = new Point(621, 74);
+            btnRestore.Location = new Point(461, 118);
             btnRestore.Name = "btnRestore";
             btnRestore.Size = new Size(152, 37);
             btnRestore.TabIndex = 4;
@@ -428,7 +564,7 @@
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(466, 74);
+            btnDelete.Location = new Point(306, 118);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(149, 37);
             btnDelete.TabIndex = 3;
@@ -441,7 +577,7 @@
             btnSetRight.BackColor = Color.FromArgb(80, 80, 80);
             btnSetRight.FlatStyle = FlatStyle.Flat;
             btnSetRight.ForeColor = Color.White;
-            btnSetRight.Location = new Point(153, 74);
+            btnSetRight.Location = new Point(150, 118);
             btnSetRight.Name = "btnSetRight";
             btnSetRight.Size = new Size(150, 37);
             btnSetRight.TabIndex = 1;
@@ -454,7 +590,7 @@
             btnSetLeft.BackColor = Color.FromArgb(80, 80, 80);
             btnSetLeft.FlatStyle = FlatStyle.Flat;
             btnSetLeft.ForeColor = Color.White;
-            btnSetLeft.Location = new Point(3, 74);
+            btnSetLeft.Location = new Point(0, 118);
             btnSetLeft.Name = "btnSetLeft";
             btnSetLeft.Size = new Size(144, 37);
             btnSetLeft.TabIndex = 0;
@@ -466,9 +602,9 @@
             // 
             pnlGraph.BackColor = Color.Black;
             pnlGraph.Dock = DockStyle.Fill;
-            pnlGraph.Location = new Point(0, 508);
+            pnlGraph.Location = new Point(0, 656);
             pnlGraph.Name = "pnlGraph";
-            pnlGraph.Size = new Size(947, 183);
+            pnlGraph.Size = new Size(947, 35);
             pnlGraph.TabIndex = 4;
             // 
             // contextFilter
@@ -513,6 +649,12 @@
             ((System.ComponentModel.ISupportInitialize)trkRecord).EndInit();
             pnlTools.ResumeLayout(false);
             pnlTools.PerformLayout();
+            pnlAngleRange.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)nudAngleMax).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudAngleMin).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudSpeedMax).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudSpeedMin).EndInit();
+            pnlSpeedRange.ResumeLayout(false);
             contextFilter.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -530,13 +672,11 @@
         private TrackBar trkRecord;
         private Panel pnlTools;
         private Button btnSetLeft;
-        private Button btnSetFillter;
         private Button btnReroadTub;
         private Button btnRestore;
         private Button btnDelete;
         private Button btnSetRight;
         private Panel pnlGraph;
-        private TextBox textBox3;
         private ContextMenuStrip contextFilter;
         private ToolStripMenuItem menuThrottle;
         private ToolStripMenuItem menuAngle;
@@ -556,5 +696,19 @@
         private TextBox txtRecordNumber;
         private Button btnLoadTub;
         private Button btnLoadCarDirectory;
+        private Panel pnlSpeedRange;
+        private NumericUpDown nudSpeedMax;
+        private NumericUpDown nudSpeedMin;
+        private NumericUpDown nudAngleMax;
+        private NumericUpDown nudAngleMin;
+        private Panel panel4;
+        private Panel pnlAngleRange;
+        private Panel panel6;
+        private Label label1;
+        private Label FilThrottle;
+        private Label FilAngle;
+        private Button btnApplyFilter;
+        private Button btnClearFilter;
+        private Panel pnlTimeline;
     }
 }
