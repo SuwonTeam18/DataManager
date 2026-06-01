@@ -23,6 +23,11 @@ namespace DonkeyUi
         private readonly List<ComboBox> _pilotCombos = new();
         private readonly List<ComboBox> _modelCombos = new();
         private readonly List<PictureBox> _displayPictureBoxes = new List<PictureBox>();
+        private readonly List<Label> _aiAngleLabels = new();
+        private readonly List<Label> _angleErrorLabels = new();
+        private readonly List<Label> _aiThrottleLabels = new();
+        private readonly List<Label> _throttleErrorLabels = new();
+        private readonly List<Label> _avgErrorLabels = new();
 
         // ════════════════════════════════════════════════════════════
         // 이미지/타임라인 관리
@@ -148,6 +153,9 @@ namespace DonkeyUi
             btnAddLeftPic.Click += BtnAddLeftPic_Click;
             btnRemoveLeftPic.Click += BtnRemoveLeftPic_Click;
 
+            // number of columns changed should re-layout
+            if (cmbNumColumns != null) cmbNumColumns.SelectedIndexChanged += (s, e) => UpdateDisplay();
+
             trkTimeline.Scroll += trkTimeline_Scroll;
             trkBrightness.Scroll += trkBrightness_Scroll;
             trkBlur.Scroll += trkBlur_Scroll;
@@ -245,13 +253,17 @@ namespace DonkeyUi
 
             var cmbPilot = new ComboBox();
             cmbPilot.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbPilot.Items.AddRange(new string[] { "Pilot1", "Pilot2", "Pilot3" });
+            // show current model filename as the pilot selection by default
+            string modelName = !string.IsNullOrEmpty(_modelPath) ? Path.GetFileName(_modelPath) : "model.h5";
+            cmbPilot.Items.AddRange(new string[] { modelName });
             cmbPilot.SelectedIndex = 0;
 
             var cmbModel = new ComboBox();
             cmbModel.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbModel.Items.AddRange(new string[] { "Linear", "Categorical", "Behavior" });
-            cmbModel.SelectedIndex = 0;
+            cmbModel.Items.AddRange(new string[] { "linear", "categorical", "behavior" });
+            // select default model type if present
+            int idx = Array.FindIndex(cmbModel.Items.Cast<string>().ToArray(), s => string.Equals(s, _modelType, StringComparison.OrdinalIgnoreCase));
+            cmbModel.SelectedIndex = idx >= 0 ? idx : 0;
 
             _pilotCombos.Add(cmbPilot);
             _modelCombos.Add(cmbModel);
@@ -267,36 +279,107 @@ namespace DonkeyUi
             if (pnlImageArea == null) return;
             pnlImageArea.Controls.Clear();
             _displayPictureBoxes.Clear();
+            _aiAngleLabels.Clear();
+            _angleErrorLabels.Clear();
+            _aiThrottleLabels.Clear();
+            _throttleErrorLabels.Clear();
+            _avgErrorLabels.Clear();
 
             int count = _pilotCombos.Count;
             if (count == 0) return;
 
+            int columns = 1;
+            if (cmbNumColumns != null && int.TryParse(cmbNumColumns.SelectedItem?.ToString(), out int parsed))
+                columns = Math.Clamp(parsed, 1, 4);
+
+            int rows = (int)Math.Ceiling(count / (double)columns);
+
             var table = new TableLayoutPanel();
             table.Dock = DockStyle.Fill;
-            table.ColumnCount = count;
-            table.RowCount = 2;
+            table.ColumnCount = columns;
+            table.RowCount = rows * 2; // each row has image row and info row
             table.RowStyles.Clear();
-            table.RowStyles.Add(new RowStyle(SizeType.Percent, 80f));
-            table.RowStyles.Add(new RowStyle(SizeType.Percent, 20f));
             table.ColumnStyles.Clear();
+
+            // column styles
+            for (int c = 0; c < columns; c++) table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / columns));
+
+            // row styles: image row larger than info row
+            for (int r = 0; r < rows; r++)
+            {
+                table.RowStyles.Add(new RowStyle(SizeType.Percent, 88f / rows));
+                table.RowStyles.Add(new RowStyle(SizeType.Percent, 12f / rows));
+            }
 
             for (int i = 0; i < count; i++)
             {
-                table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / count));
+                int col = i % columns;
+                int visualRow = (i / columns) * 2;
+
                 var pb = new PictureBox();
                 pb.Dock = DockStyle.Fill;
+                pb.MaximumSize = new Size(0, 1000);
                 pb.SizeMode = PictureBoxSizeMode.StretchImage;
                 pb.BackColor = Color.Black;
                 _displayPictureBoxes.Add(pb);
 
+                // create combo panel and info labels panel
                 var comboPanel = new FlowLayoutPanel();
                 comboPanel.Dock = DockStyle.Fill;
                 comboPanel.FlowDirection = FlowDirection.LeftToRight;
-                comboPanel.Controls.Add(_pilotCombos[i]);
-                comboPanel.Controls.Add(_modelCombos[i]);
+                // create clones of the pilot/model combo boxes so each slot has its own controls
+                ComboBox CloneCombo(ComboBox src)
+                {
+                    var cb = new ComboBox();
+                    cb.DropDownStyle = src.DropDownStyle;
+                    cb.FlatStyle = src.FlatStyle;
+                    cb.Font = src.Font;
+                    foreach (var it in src.Items) cb.Items.Add(it);
+                    try { cb.SelectedIndex = src.SelectedIndex; } catch { }
+                    return cb;
+                }
 
-                table.Controls.Add(pb, i, 0);
-                table.Controls.Add(comboPanel, i, 1);
+                var pilotCombo = CloneCombo(_pilotCombos[i]);
+                var modelCombo = CloneCombo(_modelCombos[i]);
+                pilotCombo.Width = 180;
+                modelCombo.Width = 120;
+                comboPanel.Controls.Add(pilotCombo);
+                comboPanel.Controls.Add(modelCombo);
+
+                var infoPanel = new FlowLayoutPanel();
+                infoPanel.Dock = DockStyle.Fill;
+                infoPanel.FlowDirection = FlowDirection.TopDown;
+                infoPanel.Padding = new Padding(4);
+
+                var dataFlow = new FlowLayoutPanel();
+                dataFlow.FlowDirection = FlowDirection.LeftToRight;
+                dataFlow.AutoSize = true;
+
+                var aiAngleLbl = new Label(); aiAngleLbl.ForeColor = Color.White; aiAngleLbl.AutoSize = true; aiAngleLbl.Text = "AI 각도 : N/A";
+                var angleErrLbl = new Label(); angleErrLbl.ForeColor = Color.LightGreen; angleErrLbl.AutoSize = true; angleErrLbl.Text = "오차 : N/A";
+                var aiThrLbl = new Label(); aiThrLbl.ForeColor = Color.White; aiThrLbl.AutoSize = true; aiThrLbl.Text = "AI 속도 : N/A";
+                var thrErrLbl = new Label(); thrErrLbl.ForeColor = Color.LightGreen; thrErrLbl.AutoSize = true; thrErrLbl.Text = "오차 : N/A";
+                var avgLbl = new Label(); avgLbl.ForeColor = Color.White; avgLbl.AutoSize = true; avgLbl.Text = "평균 오차율 : N/A";
+
+                dataFlow.Controls.Add(aiAngleLbl);
+                dataFlow.Controls.Add(angleErrLbl);
+                dataFlow.Controls.Add(new Label() { AutoSize = true, Text = "   " });
+                dataFlow.Controls.Add(aiThrLbl);
+                dataFlow.Controls.Add(thrErrLbl);
+
+                infoPanel.Controls.Add(comboPanel);
+                infoPanel.Controls.Add(dataFlow);
+                infoPanel.Controls.Add(avgLbl);
+
+                // keep references for updates
+                _aiAngleLabels.Add(aiAngleLbl);
+                _angleErrorLabels.Add(angleErrLbl);
+                _aiThrottleLabels.Add(aiThrLbl);
+                _throttleErrorLabels.Add(thrErrLbl);
+                _avgErrorLabels.Add(avgLbl);
+
+                table.Controls.Add(pb, col, visualRow);
+                table.Controls.Add(infoPanel, col, visualRow + 1);
             }
 
             pnlImageArea.Controls.Add(table);
@@ -321,6 +404,27 @@ namespace DonkeyUi
                     Bitmap bmp = BuildOverlayBitmap(_lastImagePath);
                     _displayPictureBoxes[i].Image?.Dispose();
                     _displayPictureBoxes[i].Image = bmp;
+
+                    // update data labels per slot using global human/ai values
+                    string aiAngleText = _aiAngle.HasValue ? _aiAngle.Value.ToString("+0.000;-0.000;0.000") : "N/A";
+                    string aiThrText = _aiThrottle.HasValue ? _aiThrottle.Value.ToString("+0.000;-0.000;0.000") : "N/A";
+                    double? angleErr = null, thrErr = null;
+                    if (_aiAngle.HasValue && _humanAngle.HasValue) angleErr = _aiAngle.Value - _humanAngle.Value;
+                    if (_aiThrottle.HasValue && _humanThrottle.HasValue) thrErr = _aiThrottle.Value - _humanThrottle.Value;
+
+                    if (i < _aiAngleLabels.Count) _aiAngleLabels[i].Text = "AI 각도 : " + aiAngleText;
+                    if (i < _angleErrorLabels.Count) _angleErrorLabels[i].Text = "오차 : " + (angleErr.HasValue ? angleErr.Value.ToString("+0.000;-0.000;0.000") : "N/A");
+                    if (i < _aiThrottleLabels.Count) _aiThrottleLabels[i].Text = "AI 속도 : " + aiThrText;
+                    if (i < _throttleErrorLabels.Count) _throttleErrorLabels[i].Text = "오차 : " + (thrErr.HasValue ? thrErr.Value.ToString("+0.000;-0.000;0.000") : "N/A");
+                    if (i < _avgErrorLabels.Count)
+                    {
+                        if (angleErr.HasValue && thrErr.HasValue)
+                        {
+                            double avg = (Math.Abs(angleErr.Value) + Math.Abs(thrErr.Value)) / 2.0 * 100.0;
+                            _avgErrorLabels[i].Text = "평균 오차율 : " + avg.ToString("0.0") + "%";
+                        }
+                        else _avgErrorLabels[i].Text = "평균 오차율 : N/A";
+                    }
                 }
                 catch { }
             }
