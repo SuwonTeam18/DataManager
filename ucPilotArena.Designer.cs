@@ -509,11 +509,9 @@
             tlpMain.SetColumnSpan(trkTimeline, 2);
             trkTimeline.Dock = DockStyle.Fill;
             trkTimeline.Location = new Point(9, 577);
-            trkTimeline.Maximum = 1000;
             trkTimeline.Name = "trkTimeline";
             trkTimeline.Size = new Size(1082, 14);
             trkTimeline.TabIndex = 4;
-            trkTimeline.Value = 200;
             // 
             // pnlBrightBlur
             // 
