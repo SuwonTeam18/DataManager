@@ -79,7 +79,6 @@
         // playback and graph area
         private System.Windows.Forms.TableLayoutPanel tlpPlayback;
         private System.Windows.Forms.Panel pnlGraphArea;
-        private System.Windows.Forms.TrackBar trkTimeline;
         private System.Windows.Forms.TrackBar trkBrightness;
         private System.Windows.Forms.TrackBar trkBlur;
         private System.Windows.Forms.Label lblBrightnessValue;
@@ -129,6 +128,8 @@
             cmbRankAngle = new ComboBox();
             cmbRankThrottle = new ComboBox();
             tlpMain = new TableLayoutPanel();
+            pnlTimeline = new Panel();
+            trkTimeline = new TrackBar();
             pnlImageArea = new Panel();
             flpPilotCards = new FlowLayoutPanel();
             pnlLeftContainer = new Panel();
@@ -139,7 +140,6 @@
             picLeft4 = new PictureBox();
             pnlLeftButtons = new Panel();
             picRight = new PictureBox();
-            trkTimeline = new TrackBar();
             pnlBrightBlur = new Panel();
             tlpBrightBlur = new TableLayoutPanel();
             pnlBrightness = new Panel();
@@ -182,6 +182,8 @@
             btnAddRemoveRight = new Button();
             pnlTop.SuspendLayout();
             tlpMain.SuspendLayout();
+            pnlTimeline.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)trkTimeline).BeginInit();
             pnlImageArea.SuspendLayout();
             pnlLeftContainer.SuspendLayout();
             flpLeftPics.SuspendLayout();
@@ -190,7 +192,6 @@
             ((System.ComponentModel.ISupportInitialize)picLeft3).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picLeft4).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picRight).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)trkTimeline).BeginInit();
             pnlBrightBlur.SuspendLayout();
             tlpBrightBlur.SuspendLayout();
             pnlBrightness.SuspendLayout();
@@ -335,20 +336,20 @@
             tlpMain.ColumnCount = 2;
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 49.6695F));
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50.3305F));
+            tlpMain.Controls.Add(pnlTimeline, 0, 0);
             tlpMain.Controls.Add(pnlImageArea, 0, 1);
-            tlpMain.Controls.Add(pnlLeftContainer, 0, 1);
-            tlpMain.Controls.Add(picRight, 1, 1);
-            tlpMain.Controls.Add(trkTimeline, 0, 3);
+            tlpMain.Controls.Add(pnlLeftContainer, 0, 2);
+            tlpMain.Controls.Add(picRight, 1, 2);
             tlpMain.Controls.Add(pnlBrightBlur, 0, 4);
             tlpMain.Controls.Add(pnlGraphArea, 0, 5);
             tlpMain.Dock = DockStyle.Fill;
             tlpMain.Location = new Point(0, 59);
             tlpMain.Name = "tlpMain";
             tlpMain.Padding = new Padding(6);
-            tlpMain.RowCount = 6;
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 6F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 80F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            tlpMain.RowCount = 7;
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 65F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 35F));
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 220F));
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 180F));
@@ -356,13 +357,36 @@
             tlpMain.Size = new Size(1100, 941);
             tlpMain.TabIndex = 1;
             // 
+            // pnlTimeline
+            // 
+            pnlTimeline.BackColor = Color.FromArgb(244, 243, 238);
+            pnlTimeline.BorderStyle = BorderStyle.FixedSingle;
+            tlpMain.SetColumnSpan(pnlTimeline, 2);
+            pnlTimeline.Controls.Add(trkTimeline);
+            pnlTimeline.Dock = DockStyle.Fill;
+            pnlTimeline.Location = new Point(9, 9);
+            pnlTimeline.Name = "pnlTimeline";
+            pnlTimeline.Padding = new Padding(8);
+            pnlTimeline.Size = new Size(1082, 54);
+            pnlTimeline.TabIndex = 6;
+            // 
+            // trkTimeline
+            // 
+            trkTimeline.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+            trkTimeline.Location = new Point(8, 6);
+            trkTimeline.Maximum = 1000;
+            trkTimeline.Name = "trkTimeline";
+            trkTimeline.Size = new Size(1060, 45);
+            trkTimeline.TabIndex = 4;
+            trkTimeline.Value = 200;
+            // 
             // pnlImageArea
             // 
             pnlImageArea.BackColor = Color.Black;
             tlpMain.SetColumnSpan(pnlImageArea, 2);
             pnlImageArea.Controls.Add(flpPilotCards);
             pnlImageArea.Dock = DockStyle.Fill;
-            pnlImageArea.Location = new Point(9, 388);
+            pnlImageArea.Location = new Point(9, 69);
             pnlImageArea.MinimumSize = new Size(600, 420);
             pnlImageArea.Name = "pnlImageArea";
             pnlImageArea.Size = new Size(1082, 420);
@@ -383,9 +407,9 @@
             pnlLeftContainer.Controls.Add(flpLeftPics);
             pnlLeftContainer.Controls.Add(pnlLeftButtons);
             pnlLeftContainer.Dock = DockStyle.Fill;
-            pnlLeftContainer.Location = new Point(9, 15);
+            pnlLeftContainer.Location = new Point(9, 337);
             pnlLeftContainer.Name = "pnlLeftContainer";
-            pnlLeftContainer.Size = new Size(534, 367);
+            pnlLeftContainer.Size = new Size(534, 138);
             pnlLeftContainer.TabIndex = 0;
             pnlLeftContainer.Visible = false;
             // 
@@ -400,7 +424,7 @@
             flpLeftPics.FlowDirection = FlowDirection.TopDown;
             flpLeftPics.Location = new Point(0, 49);
             flpLeftPics.Name = "flpLeftPics";
-            flpLeftPics.Size = new Size(534, 318);
+            flpLeftPics.Size = new Size(534, 89);
             flpLeftPics.TabIndex = 1;
             flpLeftPics.WrapContents = false;
             // 
@@ -465,24 +489,13 @@
             picRight.BackColor = Color.Black;
             picRight.BorderStyle = BorderStyle.FixedSingle;
             picRight.Dock = DockStyle.Fill;
-            picRight.Location = new Point(9, 481);
+            picRight.Location = new Point(549, 337);
             picRight.Name = "picRight";
-            picRight.Size = new Size(534, 30);
+            picRight.Size = new Size(542, 138);
             picRight.SizeMode = PictureBoxSizeMode.StretchImage;
             picRight.TabIndex = 1;
             picRight.TabStop = false;
             picRight.Visible = false;
-            // 
-            // trkTimeline
-            // 
-            tlpMain.SetColumnSpan(trkTimeline, 2);
-            trkTimeline.Dock = DockStyle.Fill;
-            trkTimeline.Location = new Point(9, 517);
-            trkTimeline.Maximum = 1000;
-            trkTimeline.Name = "trkTimeline";
-            trkTimeline.Size = new Size(1082, 214);
-            trkTimeline.TabIndex = 4;
-            trkTimeline.Value = 200;
             // 
             // pnlBrightBlur
             // 
@@ -490,10 +503,10 @@
             pnlBrightBlur.Controls.Add(tlpBrightBlur);
             pnlBrightBlur.Controls.Add(tlpPlayback);
             pnlBrightBlur.Dock = DockStyle.Fill;
-            pnlBrightBlur.Location = new Point(9, 737);
+            pnlBrightBlur.Location = new Point(9, 517);
             pnlBrightBlur.Name = "pnlBrightBlur";
             pnlBrightBlur.Padding = new Padding(6);
-            pnlBrightBlur.Size = new Size(1082, 174);
+            pnlBrightBlur.Size = new Size(1082, 214);
             pnlBrightBlur.TabIndex = 5;
             // 
             // tlpBrightBlur
@@ -546,6 +559,7 @@
             // 
             // pnlBlur
             // 
+            pnlBlur.BorderStyle = BorderStyle.FixedSingle;
             pnlBlur.Controls.Add(trkBlur);
             pnlBlur.Controls.Add(lblBlurValue);
             pnlBlur.Dock = DockStyle.Fill;
@@ -557,10 +571,10 @@
             // trkBlur
             // 
             trkBlur.Dock = DockStyle.Bottom;
-            trkBlur.Location = new Point(0, 45);
+            trkBlur.Location = new Point(0, 43);
             trkBlur.Maximum = 100;
             trkBlur.Name = "trkBlur";
-            trkBlur.Size = new Size(529, 45);
+            trkBlur.Size = new Size(527, 45);
             trkBlur.TabIndex = 0;
             // 
             // lblBlurValue
@@ -587,7 +601,7 @@
             tlpPlayback.Controls.Add(btnNext, 3, 0);
             tlpPlayback.Controls.Add(btnFastForward, 4, 0);
             tlpPlayback.Dock = DockStyle.Bottom;
-            tlpPlayback.Location = new Point(6, 126);
+            tlpPlayback.Location = new Point(6, 166);
             tlpPlayback.Name = "tlpPlayback";
             tlpPlayback.Padding = new Padding(6);
             tlpPlayback.RowCount = 1;
@@ -661,9 +675,9 @@
             pnlGraphArea.BorderStyle = BorderStyle.FixedSingle;
             tlpMain.SetColumnSpan(pnlGraphArea, 2);
             pnlGraphArea.Dock = DockStyle.Fill;
-            pnlGraphArea.Location = new Point(9, 917);
+            pnlGraphArea.Location = new Point(9, 737);
             pnlGraphArea.Name = "pnlGraphArea";
-            pnlGraphArea.Size = new Size(1082, 15);
+            pnlGraphArea.Size = new Size(1082, 174);
             pnlGraphArea.TabIndex = 0;
             // 
             // pnlAugmentations
@@ -922,11 +936,13 @@
             Controls.Add(tlpMain);
             Controls.Add(pnlTop);
             Name = "ucPilotArena";
-            Size = new Size(643, 654);
+            Size = new Size(795, 618);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             tlpMain.ResumeLayout(false);
-            tlpMain.PerformLayout();
+            pnlTimeline.ResumeLayout(false);
+            pnlTimeline.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)trkTimeline).EndInit();
             pnlImageArea.ResumeLayout(false);
             pnlLeftContainer.ResumeLayout(false);
             flpLeftPics.ResumeLayout(false);
@@ -935,7 +951,6 @@
             ((System.ComponentModel.ISupportInitialize)picLeft3).EndInit();
             ((System.ComponentModel.ISupportInitialize)picLeft4).EndInit();
             ((System.ComponentModel.ISupportInitialize)picRight).EndInit();
-            ((System.ComponentModel.ISupportInitialize)trkTimeline).EndInit();
             pnlBrightBlur.ResumeLayout(false);
             tlpBrightBlur.ResumeLayout(false);
             pnlBrightness.ResumeLayout(false);
@@ -970,5 +985,7 @@
         private Label lblRightAngleError;
         private Label lblRightAI_Throttle;
         private Label lblRightThrottleError;
+        private TrackBar trkTimeline;
+        private Panel pnlTimeline;
     }
 }
