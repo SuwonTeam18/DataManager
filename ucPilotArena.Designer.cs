@@ -208,7 +208,7 @@
             // 
             // pnlTop
             // 
-            pnlTop.BackColor = Color.FromArgb(40, 40, 40);
+            pnlTop.BackColor = Color.FromArgb(244, 243, 238);
             pnlTop.Controls.Add(btnRemoveLeftPic);
             pnlTop.Controls.Add(btnAddLeftPic);
             pnlTop.Controls.Add(cmbTop2);
@@ -228,8 +228,8 @@
             // 
             // btnRemoveLeftPic
             // 
-            btnRemoveLeftPic.BackColor = Color.FromArgb(64, 64, 64);
-            btnRemoveLeftPic.ForeColor = Color.White;
+            btnRemoveLeftPic.BackColor = Color.FromArgb(244, 243, 238);
+            btnRemoveLeftPic.ForeColor = Color.Black;
             btnRemoveLeftPic.Location = new Point(126, 5);
             btnRemoveLeftPic.Name = "btnRemoveLeftPic";
             btnRemoveLeftPic.Size = new Size(100, 28);
@@ -239,8 +239,8 @@
             // 
             // btnAddLeftPic
             // 
-            btnAddLeftPic.BackColor = Color.FromArgb(64, 64, 64);
-            btnAddLeftPic.ForeColor = Color.White;
+            btnAddLeftPic.BackColor = Color.FromArgb(244, 243, 238);
+            btnAddLeftPic.ForeColor = Color.Black;
             btnAddLeftPic.Location = new Point(9, 5);
             btnAddLeftPic.Name = "btnAddLeftPic";
             btnAddLeftPic.Size = new Size(100, 28);
@@ -272,25 +272,28 @@
             // lblNumColumns
             // 
             lblNumColumns.AutoSize = true;
+            lblNumColumns.BackColor = Color.White;
+            lblNumColumns.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
             lblNumColumns.ForeColor = Color.Black;
-            lblNumColumns.Location = new Point(237, 15);
+            lblNumColumns.Location = new Point(248, 15);
             lblNumColumns.Name = "lblNumColumns";
-            lblNumColumns.Size = new Size(116, 15);
+            lblNumColumns.Size = new Size(26, 21);
             lblNumColumns.TabIndex = 4;
-            lblNumColumns.Text = "Number of columns";
+            lblNumColumns.Text = "열";
             // 
             // cmbNumColumns
             // 
+            cmbNumColumns.BackColor = Color.FromArgb(244, 243, 238);
             cmbNumColumns.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbNumColumns.Items.AddRange(new object[] { "1", "2", "3", "4" });
-            cmbNumColumns.Location = new Point(249, 36);
+            cmbNumColumns.Location = new Point(280, 15);
             cmbNumColumns.Name = "cmbNumColumns";
             cmbNumColumns.Size = new Size(80, 23);
             cmbNumColumns.TabIndex = 5;
             // 
             // btnTubPlot
             // 
-            btnTubPlot.BackColor = Color.White;
+            btnTubPlot.BackColor = Color.FromArgb(244, 243, 238);
             btnTubPlot.FlatStyle = FlatStyle.System;
             btnTubPlot.ForeColor = Color.Black;
             btnTubPlot.Location = new Point(380, 15);
@@ -298,7 +301,7 @@
             btnTubPlot.Size = new Size(80, 26);
             btnTubPlot.TabIndex = 6;
             btnTubPlot.Text = "Tub plot";
-            btnTubPlot.UseVisualStyleBackColor = true;
+            btnTubPlot.UseVisualStyleBackColor = false;
             // 
             // cmbRankOverall
             // 
@@ -618,9 +621,9 @@
             // 
             // btnStop
             // 
-            btnStop.BackColor = Color.FromArgb(64, 64, 64);
+            btnStop.BackColor = Color.FromArgb(230, 242, 255);
             btnStop.Dock = DockStyle.Fill;
-            btnStop.ForeColor = Color.White;
+            btnStop.ForeColor = Color.Black;
             btnStop.Location = new Point(431, 9);
             btnStop.Name = "btnStop";
             btnStop.Size = new Size(205, 30);
