@@ -22,6 +22,9 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         private readonly List<ComboBox> _pilotCombos = new();
         private readonly List<ComboBox> _modelCombos = new();
+        // per-slot data model so each slot (image + two combos + labels) appears/disappears as a unit
+        private class PilotSlot { public string PilotName; public string ModelType; }
+        private readonly List<PilotSlot> _pilotSlots = new();
         private readonly List<PictureBox> _displayPictureBoxes = new List<PictureBox>();
         private readonly List<Label> _aiAngleLabels = new();
         private readonly List<Label> _angleErrorLabels = new();
@@ -139,12 +142,77 @@ namespace DonkeyUi
         public ucPilotArena()
         {
             InitializeComponent();
+            SetupRankControls();
+            // 파일럿 추가 버튼 호버
+            btnAddLeftPic.MouseEnter += (s, e) =>
+                btnAddLeftPic.BackColor = Color.FromArgb(14, 75, 140);
+            btnAddLeftPic.MouseLeave += (s, e) =>
+                btnAddLeftPic.BackColor = Color.FromArgb(24, 95, 165);
+
+            // 파일럿 제거 버튼 호버
+            btnRemoveLeftPic.MouseEnter += (s, e) =>
+                btnRemoveLeftPic.BackColor = Color.FromArgb(190, 190, 190);
+            btnRemoveLeftPic.MouseLeave += (s, e) =>
+                btnRemoveLeftPic.BackColor = Color.FromArgb(210, 210, 210);
+
+            // ── 재생/정지 버튼 토글 ────────────────────────────
+            bool isPlaying = false;
+
+            btnStop.Click += (s, e) =>
+            {
+                isPlaying = !isPlaying;
+
+                if (isPlaying)
+                {
+                    btnStop.Text = "정지";
+                    btnStop.BackColor = Color.FromArgb(255, 240, 240);
+                    btnStop.ForeColor = Color.FromArgb(180, 40, 40);
+                }
+                else
+                {
+                    btnStop.Text = "재생";
+                    btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                    btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                }
+            };
+
+            // ── 버튼 호버 효과 ─────────────────────────────────
+            // << >> 호버 (진한 회색)
+            foreach (Button btn in new[] { btnRewind, btnFastForward })
+            {
+                btn.MouseEnter += (s, e) =>
+                {
+                    ((Button)s).BackColor = Color.FromArgb(200, 200, 200);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+                };
+                btn.MouseLeave += (s, e) =>
+                {
+                    ((Button)s).BackColor = Color.FromArgb(224, 224, 224);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(204, 204, 204);
+                };
+            }
+
+            // < > 호버 (연한 회색)
+            foreach (Button btn in new[] { btnPrev, btnNext })
+            {
+                btn.MouseEnter += (s, e) =>
+                {
+                    ((Button)s).BackColor = Color.FromArgb(216, 216, 216);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+                };
+                btn.MouseLeave += (s, e) =>
+                {
+                    ((Button)s).BackColor = Color.FromArgb(236, 236, 236);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(221, 221, 221);
+                };
+            }
 
             try { File.WriteAllText(WinScriptFile, ScriptContent, Encoding.UTF8); } catch { }
 
             // ✅ 슬라이더 디바운스 설정 (200ms)
             _sliderDebounce.Interval = 200;
-            _sliderDebounce.Tick += (s, e) => {
+            _sliderDebounce.Tick += (s, e) =>
+            {
                 _sliderDebounce.Stop();
                 if (_imageFiles.Count > 0) ShowFrame(_currentIndex);
                 else RefreshAllSlots();
@@ -163,8 +231,10 @@ namespace DonkeyUi
             pnlImageArea.Resize += (s, e) => UpdateDisplay();
             ucTubManager.OnTubDataChanged += OnTubDataChanged;
 
+            // start with one pilot slot
             _pilotCombos.Clear();
             _modelCombos.Clear();
+            _pilotSlots.Clear();
             AddPilotSet();
 
             if (!string.IsNullOrEmpty(ucTubManager.CurrentTubPath))
@@ -237,36 +307,19 @@ namespace DonkeyUi
 
         private void BtnRemoveLeftPic_Click(object? sender, EventArgs e)
         {
-            if (_pilotCombos.Count <= 1) return;
-            var lastPilot = _pilotCombos[^1];
-            var lastModel = _modelCombos[^1];
-            _pilotCombos.RemoveAt(_pilotCombos.Count - 1);
-            _modelCombos.RemoveAt(_modelCombos.Count - 1);
-            lastPilot.Dispose();
-            lastModel.Dispose();
+            if (_pilotSlots.Count <= 1) return;
+            _pilotSlots.RemoveAt(_pilotSlots.Count - 1);
             UpdateDisplay();
         }
 
         private void AddPilotSet()
         {
-            if (_pilotCombos.Count >= 4) return;
+            if (_pilotSlots.Count >= 4) return;
 
-            var cmbPilot = new ComboBox();
-            cmbPilot.DropDownStyle = ComboBoxStyle.DropDownList;
-            // show current model filename as the pilot selection by default
-            string modelName = !string.IsNullOrEmpty(_modelPath) ? Path.GetFileName(_modelPath) : "model.h5";
-            cmbPilot.Items.AddRange(new string[] { modelName });
-            cmbPilot.SelectedIndex = 0;
+            string defaultPilot = "파일럿 " + (_pilotSlots.Count + 1);
+            string defaultModel = !string.IsNullOrEmpty(_modelType) ? _modelType : "linear";
 
-            var cmbModel = new ComboBox();
-            cmbModel.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbModel.Items.AddRange(new string[] { "linear", "categorical", "behavior" });
-            // select default model type if present
-            int idx = Array.FindIndex(cmbModel.Items.Cast<string>().ToArray(), s => string.Equals(s, _modelType, StringComparison.OrdinalIgnoreCase));
-            cmbModel.SelectedIndex = idx >= 0 ? idx : 0;
-
-            _pilotCombos.Add(cmbPilot);
-            _modelCombos.Add(cmbModel);
+            _pilotSlots.Add(new PilotSlot { PilotName = defaultPilot, ModelType = defaultModel });
             UpdateDisplay();
         }
 
@@ -285,7 +338,7 @@ namespace DonkeyUi
             _throttleErrorLabels.Clear();
             _avgErrorLabels.Clear();
 
-            int count = _pilotCombos.Count;
+            int count = _pilotSlots.Count;
             if (count == 0) return;
 
             int columns = 1;
@@ -304,11 +357,13 @@ namespace DonkeyUi
             // column styles
             for (int c = 0; c < columns; c++) table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / columns));
 
-            // row styles: image row larger than info row
+            // row styles: image row proportional, info row fixed height so controls (combos + labels) are visible
             for (int r = 0; r < rows; r++)
             {
-                table.RowStyles.Add(new RowStyle(SizeType.Percent, 88f / rows));
-                table.RowStyles.Add(new RowStyle(SizeType.Percent, 12f / rows));
+                // image row: take remaining proportional space
+                table.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / rows));
+                // info row: fixed height to fit two combos and labels
+                table.RowStyles.Add(new RowStyle(SizeType.Absolute, 80F));
             }
 
             for (int i = 0; i < count; i++)
@@ -323,26 +378,28 @@ namespace DonkeyUi
                 pb.BackColor = Color.Black;
                 _displayPictureBoxes.Add(pb);
 
-                // create combo panel and info labels panel
+                // create combo panel and info labels panel as a single set per slot
                 var comboPanel = new FlowLayoutPanel();
                 comboPanel.Dock = DockStyle.Fill;
                 comboPanel.FlowDirection = FlowDirection.LeftToRight;
-                // create clones of the pilot/model combo boxes so each slot has its own controls
-                ComboBox CloneCombo(ComboBox src)
-                {
-                    var cb = new ComboBox();
-                    cb.DropDownStyle = src.DropDownStyle;
-                    cb.FlatStyle = src.FlatStyle;
-                    cb.Font = src.Font;
-                    foreach (var it in src.Items) cb.Items.Add(it);
-                    try { cb.SelectedIndex = src.SelectedIndex; } catch { }
-                    return cb;
-                }
+                comboPanel.AutoSize = true;
 
-                var pilotCombo = CloneCombo(_pilotCombos[i]);
-                var modelCombo = CloneCombo(_modelCombos[i]);
+                // create pilot selection combo for this slot
+                var pilotCombo = new ComboBox();
+                pilotCombo.DropDownStyle = ComboBoxStyle.DropDownList;
                 pilotCombo.Width = 180;
+                // use the slot's current pilot name as the only/default item
+                pilotCombo.Items.Add(_pilotSlots[i].PilotName ?? ("파일럿 " + (i + 1)));
+                pilotCombo.SelectedIndex = 0;
+
+                // create model selection combo for this slot
+                var modelCombo = new ComboBox();
+                modelCombo.DropDownStyle = ComboBoxStyle.DropDownList;
                 modelCombo.Width = 120;
+                modelCombo.Items.AddRange(new string[] { "linear", "categorical", "behavior" });
+                int sel = Array.FindIndex(modelCombo.Items.Cast<string>().ToArray(), s => string.Equals(s, _pilotSlots[i].ModelType, StringComparison.OrdinalIgnoreCase));
+                modelCombo.SelectedIndex = sel >= 0 ? sel : 0;
+
                 comboPanel.Controls.Add(pilotCombo);
                 comboPanel.Controls.Add(modelCombo);
 
@@ -350,6 +407,7 @@ namespace DonkeyUi
                 infoPanel.Dock = DockStyle.Fill;
                 infoPanel.FlowDirection = FlowDirection.TopDown;
                 infoPanel.Padding = new Padding(4);
+                infoPanel.AutoSize = false;
 
                 var dataFlow = new FlowLayoutPanel();
                 dataFlow.FlowDirection = FlowDirection.LeftToRight;
@@ -383,8 +441,8 @@ namespace DonkeyUi
             }
 
             pnlImageArea.Controls.Add(table);
-            btnAddLeftPic.Enabled = _pilotCombos.Count < 4;
-            btnRemoveLeftPic.Enabled = _pilotCombos.Count > 1;
+            btnAddLeftPic.Enabled = _pilotSlots.Count < 4;
+            btnRemoveLeftPic.Enabled = _pilotSlots.Count > 1;
             RefreshAllSlots();
         }
 
@@ -787,5 +845,102 @@ namespace DonkeyUi
             _humanMaxThrottle = 0.0;
             _humanMinThrottle = 999.0;
         }
+        private void SetupRankControls()
+        {
+            // ── flpRankControls 배경 설정 ──────────────────────
+            flpRankControls.BackColor = Color.FromArgb(244, 243, 238);
+            flpRankControls.Padding = new Padding(6, 0, 0, 0);
+            flpRankControls.Height = 50;
+            flpRankControls.WrapContents = false;
+            flpRankControls.FlowDirection = FlowDirection.LeftToRight;
+
+            // ── 콤보박스들을 flpRankControls에서 제거 (재배치할 것임) ──
+            flpRankControls.Controls.Clear();
+
+            // ── 헤더 라벨 ──────────────────────────────────────
+            Label lblHeader = new Label();
+            lblHeader.Text = "오차율 순위";
+            lblHeader.Font = new Font("맑은 고딕", 8.5f, FontStyle.Bold);
+            lblHeader.ForeColor = Color.FromArgb(26, 95, 168);
+            lblHeader.AutoSize = true;
+            lblHeader.Margin = new Padding(4, 10, 4, 0);
+
+            // ── 헤더 구분선 ────────────────────────────────────
+            Panel sepHeader = MakeSeparator();
+
+            // ── 종합 그룹 ──────────────────────────────────────
+            Panel pnlOverall = MakeComboGroup(
+                labelText: "종합",
+                labelColor: Color.FromArgb(26, 95, 168),
+                comboBox: cmbRankOverall
+            );
+
+            Panel sep1 = MakeSeparator();
+
+            // ── 각도 그룹 ──────────────────────────────────────
+            Panel pnlAngle = MakeComboGroup(
+                labelText: "각도",
+                labelColor: Color.FromArgb(25, 122, 58),
+                comboBox: cmbRankAngle
+            );
+
+            Panel sep2 = MakeSeparator();
+
+            // ── 속도 그룹 ──────────────────────────────────────
+            Panel pnlThrottle = MakeComboGroup(
+                labelText: "속도",
+                labelColor: Color.FromArgb(200, 82, 10),
+                comboBox: cmbRankThrottle
+            );
+
+            // ── flpRankControls에 순서대로 추가 ───────────────
+            flpRankControls.Controls.Add(lblHeader);
+            flpRankControls.Controls.Add(sepHeader);
+            flpRankControls.Controls.Add(pnlOverall);
+            flpRankControls.Controls.Add(sep1);
+            flpRankControls.Controls.Add(pnlAngle);
+            flpRankControls.Controls.Add(sep2);
+            flpRankControls.Controls.Add(pnlThrottle);
+        }
+        // 라벨 + 콤보박스를 하나의 Panel로 묶어서 반환
+        private Panel MakeComboGroup(string labelText, Color labelColor, ComboBox comboBox)
+        {
+            Panel pnl = new Panel();
+            pnl.Width = 155;
+            pnl.Height = 36;
+            pnl.Margin = new Padding(0, 0, 4, 0);
+            pnl.BackColor = Color.White;
+            pnl.BorderStyle = BorderStyle.FixedSingle;
+
+            Label lbl = new Label();
+            lbl.Text = labelText;
+            lbl.Font = new Font("맑은 고딕", 8f, FontStyle.Bold);
+            lbl.ForeColor = labelColor;
+            lbl.Location = new Point(6, 10);
+            lbl.AutoSize = true;
+
+            comboBox.Location = new Point(40, 7);
+            comboBox.Width = 108;
+            comboBox.Font = new Font("맑은 고딕", 8.5f);
+            comboBox.FlatStyle = FlatStyle.Flat;
+            comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+
+            pnl.Controls.Add(lbl);
+            pnl.Controls.Add(comboBox);
+
+            return pnl;
+        }
+
+        // 세로 구분선 Panel 반환
+        private Panel MakeSeparator()
+        {
+            Panel sep = new Panel();
+            sep.Width = 1;
+            sep.Height = 22;
+            sep.Margin = new Padding(2, 7, 2, 0);
+            sep.BackColor = Color.FromArgb(180, 180, 180);
+            return sep;
+        }
+
     }
 }

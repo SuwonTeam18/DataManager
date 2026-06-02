@@ -1,4 +1,6 @@
-﻿namespace DonkeyUi
+﻿using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
+
+namespace DonkeyUi
 {
     partial class ucPilotArena
     {
@@ -50,7 +52,7 @@
         private System.Windows.Forms.PictureBox picRight;
         private System.Windows.Forms.Panel pnlImageArea;
         private System.Windows.Forms.Panel pnlLeftContainer;
-        private System.Windows.Forms.Panel pnlLeftButtons;
+        // pnlLeftButtons removed
         private System.Windows.Forms.Button btnAddLeftPic;
         private System.Windows.Forms.Button btnRemoveLeftPic;
         private System.Windows.Forms.FlowLayoutPanel flpLeftPics;
@@ -79,7 +81,6 @@
         // playback and graph area
         private System.Windows.Forms.TableLayoutPanel tlpPlayback;
         private System.Windows.Forms.Panel pnlGraphArea;
-        private System.Windows.Forms.TrackBar trkTimeline;
         private System.Windows.Forms.TrackBar trkBrightness;
         private System.Windows.Forms.TrackBar trkBlur;
         private System.Windows.Forms.Label lblBrightnessValue;
@@ -131,14 +132,7 @@
             tlpMain = new TableLayoutPanel();
             pnlImageArea = new Panel();
             flpPilotCards = new FlowLayoutPanel();
-            pnlLeftContainer = new Panel();
-            flpLeftPics = new FlowLayoutPanel();
-            picLeft = new PictureBox();
-            picLeft2 = new PictureBox();
-            picLeft3 = new PictureBox();
-            picLeft4 = new PictureBox();
-            pnlLeftButtons = new Panel();
-            picRight = new PictureBox();
+            pnlTimeline = new Panel();
             trkTimeline = new TrackBar();
             pnlBrightBlur = new Panel();
             tlpBrightBlur = new TableLayoutPanel();
@@ -155,6 +149,12 @@
             btnNext = new Button();
             btnFastForward = new Button();
             pnlGraphArea = new Panel();
+            pnlLeftContainer = new Panel();
+            flpLeftPics = new FlowLayoutPanel();
+            picLeft = new PictureBox();
+            picLeft2 = new PictureBox();
+            picLeft3 = new PictureBox();
+            picLeft4 = new PictureBox();
             pnlAugmentations = new Panel();
             tlpLeft = new TableLayoutPanel();
             flpLeftAngleData = new FlowLayoutPanel();
@@ -180,16 +180,11 @@
             lblScaleValue = new Label();
             btnAddRemoveLeft = new Button();
             btnAddRemoveRight = new Button();
+            flpRankControls = new FlowLayoutPanel();
             pnlTop.SuspendLayout();
             tlpMain.SuspendLayout();
             pnlImageArea.SuspendLayout();
-            pnlLeftContainer.SuspendLayout();
-            flpLeftPics.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)picLeft).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picLeft2).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picLeft3).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picLeft4).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picRight).BeginInit();
+            pnlTimeline.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trkTimeline).BeginInit();
             pnlBrightBlur.SuspendLayout();
             tlpBrightBlur.SuspendLayout();
@@ -198,17 +193,25 @@
             pnlBlur.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trkBlur).BeginInit();
             tlpPlayback.SuspendLayout();
+            pnlLeftContainer.SuspendLayout();
+            flpLeftPics.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)picLeft).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picLeft2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picLeft3).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picLeft4).BeginInit();
             tlpLeft.SuspendLayout();
             flpLeftAngleData.SuspendLayout();
             flpLeftThrottleData.SuspendLayout();
             tlpRight.SuspendLayout();
             flpRightAngleData.SuspendLayout();
             flpRightThrottleData.SuspendLayout();
+            flpRankControls.SuspendLayout();
             SuspendLayout();
             // 
             // pnlTop
             // 
-            pnlTop.BackColor = Color.FromArgb(40, 40, 40);
+            pnlTop.BackColor = Color.FromArgb(244, 243, 238);
+            pnlTop.BorderStyle = BorderStyle.FixedSingle;
             pnlTop.Controls.Add(btnRemoveLeftPic);
             pnlTop.Controls.Add(btnAddLeftPic);
             pnlTop.Controls.Add(cmbTop2);
@@ -216,34 +219,40 @@
             pnlTop.Controls.Add(lblNumColumns);
             pnlTop.Controls.Add(cmbNumColumns);
             pnlTop.Controls.Add(btnTubPlot);
-            pnlTop.Controls.Add(cmbRankOverall);
-            pnlTop.Controls.Add(cmbRankAngle);
-            pnlTop.Controls.Add(cmbRankThrottle);
             pnlTop.Dock = DockStyle.Top;
             pnlTop.Location = new Point(0, 0);
             pnlTop.Name = "pnlTop";
             pnlTop.Padding = new Padding(6);
-            pnlTop.Size = new Size(1100, 59);
+            pnlTop.Size = new Size(1100, 44);
             pnlTop.TabIndex = 2;
             // 
             // btnRemoveLeftPic
             // 
-            btnRemoveLeftPic.BackColor = Color.FromArgb(64, 64, 64);
-            btnRemoveLeftPic.ForeColor = Color.White;
-            btnRemoveLeftPic.Location = new Point(126, 5);
+            btnRemoveLeftPic.BackColor = Color.FromArgb(210, 210, 210);
+            btnRemoveLeftPic.Cursor = Cursors.Hand;
+            btnRemoveLeftPic.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+            btnRemoveLeftPic.FlatAppearance.BorderSize = 0;
+            btnRemoveLeftPic.FlatStyle = FlatStyle.Flat;
+            btnRemoveLeftPic.Font = new Font("맑은 고딕", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnRemoveLeftPic.ForeColor = Color.FromArgb(50, 50, 50);
+            btnRemoveLeftPic.Location = new Point(108, 6);
             btnRemoveLeftPic.Name = "btnRemoveLeftPic";
-            btnRemoveLeftPic.Size = new Size(100, 28);
+            btnRemoveLeftPic.Size = new Size(110, 28);
             btnRemoveLeftPic.TabIndex = 1;
             btnRemoveLeftPic.Text = "- 파일럿 제거";
             btnRemoveLeftPic.UseVisualStyleBackColor = false;
             // 
             // btnAddLeftPic
             // 
-            btnAddLeftPic.BackColor = Color.FromArgb(64, 64, 64);
+            btnAddLeftPic.BackColor = Color.FromArgb(24, 95, 165);
+            btnAddLeftPic.Cursor = Cursors.Hand;
+            btnAddLeftPic.FlatAppearance.BorderSize = 0;
+            btnAddLeftPic.FlatStyle = FlatStyle.Flat;
+            btnAddLeftPic.Font = new Font("맑은 고딕", 9F, FontStyle.Bold, GraphicsUnit.Point, 129);
             btnAddLeftPic.ForeColor = Color.White;
-            btnAddLeftPic.Location = new Point(9, 5);
+            btnAddLeftPic.Location = new Point(8, 6);
             btnAddLeftPic.Name = "btnAddLeftPic";
-            btnAddLeftPic.Size = new Size(100, 28);
+            btnAddLeftPic.Size = new Size(110, 28);
             btnAddLeftPic.TabIndex = 0;
             btnAddLeftPic.Text = "+ 파일럿 추가";
             btnAddLeftPic.UseVisualStyleBackColor = false;
@@ -272,39 +281,47 @@
             // lblNumColumns
             // 
             lblNumColumns.AutoSize = true;
-            lblNumColumns.ForeColor = Color.Black;
-            lblNumColumns.Location = new Point(237, 15);
+            lblNumColumns.BackColor = Color.Transparent;
+            lblNumColumns.Font = new Font("맑은 고딕", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            lblNumColumns.ForeColor = Color.FromArgb(80, 80, 80);
+            lblNumColumns.Location = new Point(228, 13);
             lblNumColumns.Name = "lblNumColumns";
-            lblNumColumns.Size = new Size(116, 15);
+            lblNumColumns.Size = new Size(19, 15);
             lblNumColumns.TabIndex = 4;
-            lblNumColumns.Text = "Number of columns";
+            lblNumColumns.Text = "열";
             // 
             // cmbNumColumns
             // 
+            cmbNumColumns.BackColor = Color.White;
             cmbNumColumns.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbNumColumns.FlatStyle = FlatStyle.Flat;
+            cmbNumColumns.Font = new Font("맑은 고딕", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
             cmbNumColumns.Items.AddRange(new object[] { "1", "2", "3", "4" });
-            cmbNumColumns.Location = new Point(249, 36);
+            cmbNumColumns.Location = new Point(252, 8);
             cmbNumColumns.Name = "cmbNumColumns";
-            cmbNumColumns.Size = new Size(80, 23);
+            cmbNumColumns.Size = new Size(60, 23);
             cmbNumColumns.TabIndex = 5;
             // 
             // btnTubPlot
             // 
             btnTubPlot.BackColor = Color.White;
-            btnTubPlot.FlatStyle = FlatStyle.System;
-            btnTubPlot.ForeColor = Color.Black;
-            btnTubPlot.Location = new Point(380, 15);
+            btnTubPlot.Cursor = Cursors.Hand;
+            btnTubPlot.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+            btnTubPlot.FlatStyle = FlatStyle.Flat;
+            btnTubPlot.Font = new Font("맑은 고딕", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnTubPlot.ForeColor = Color.FromArgb(50, 50, 50);
+            btnTubPlot.Location = new Point(322, 6);
             btnTubPlot.Name = "btnTubPlot";
-            btnTubPlot.Size = new Size(80, 26);
+            btnTubPlot.Size = new Size(80, 28);
             btnTubPlot.TabIndex = 6;
             btnTubPlot.Text = "Tub plot";
-            btnTubPlot.UseVisualStyleBackColor = true;
+            btnTubPlot.UseVisualStyleBackColor = false;
             // 
             // cmbRankOverall
             // 
             cmbRankOverall.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbRankOverall.Items.AddRange(new object[] { "종합", "각도", "속도" });
-            cmbRankOverall.Location = new Point(466, 18);
+            cmbRankOverall.Location = new Point(89, 3);
             cmbRankOverall.Name = "cmbRankOverall";
             cmbRankOverall.Size = new Size(80, 23);
             cmbRankOverall.TabIndex = 7;
@@ -313,7 +330,7 @@
             // 
             cmbRankAngle.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbRankAngle.Items.AddRange(new object[] { "각도" });
-            cmbRankAngle.Location = new Point(562, 18);
+            cmbRankAngle.Location = new Point(175, 3);
             cmbRankAngle.Name = "cmbRankAngle";
             cmbRankAngle.Size = new Size(80, 23);
             cmbRankAngle.TabIndex = 8;
@@ -322,35 +339,34 @@
             // 
             cmbRankThrottle.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbRankThrottle.Items.AddRange(new object[] { "속도" });
-            cmbRankThrottle.Location = new Point(657, 18);
+            cmbRankThrottle.Location = new Point(3, 3);
             cmbRankThrottle.Name = "cmbRankThrottle";
             cmbRankThrottle.Size = new Size(80, 23);
             cmbRankThrottle.TabIndex = 9;
             // 
             // tlpMain
             // 
+            tlpMain.BackColor = Color.FromArgb(244, 243, 238);
             tlpMain.ColumnCount = 2;
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 49.6695F));
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50.3305F));
-            tlpMain.Controls.Add(pnlImageArea, 0, 1);
-            tlpMain.Controls.Add(pnlLeftContainer, 0, 1);
-            tlpMain.Controls.Add(picRight, 1, 1);
-            tlpMain.Controls.Add(trkTimeline, 0, 3);
-            tlpMain.Controls.Add(pnlBrightBlur, 0, 4);
-            tlpMain.Controls.Add(pnlGraphArea, 0, 5);
+            tlpMain.Controls.Add(pnlImageArea, 0, 0);
+            tlpMain.Controls.Add(pnlTimeline, 0, 1);
+            tlpMain.Controls.Add(pnlBrightBlur, 0, 2);
+            tlpMain.Controls.Add(pnlGraphArea, 0, 3);
+            tlpMain.Controls.Add(pnlLeftContainer, 0, 4);
             tlpMain.Dock = DockStyle.Fill;
-            tlpMain.Location = new Point(0, 59);
+            tlpMain.Location = new Point(0, 44);
             tlpMain.Name = "tlpMain";
             tlpMain.Padding = new Padding(6);
-            tlpMain.RowCount = 6;
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 6F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 80F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 220F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 180F));
+            tlpMain.RowCount = 5;
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 55.0535774F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 18.0224056F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 26.1961727F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 0.9569378F));
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tlpMain.Size = new Size(1100, 941);
+            tlpMain.Size = new Size(1100, 896);
             tlpMain.TabIndex = 1;
             // 
             // pnlImageArea
@@ -359,30 +375,260 @@
             tlpMain.SetColumnSpan(pnlImageArea, 2);
             pnlImageArea.Controls.Add(flpPilotCards);
             pnlImageArea.Dock = DockStyle.Fill;
-            pnlImageArea.Location = new Point(9, 388);
-            pnlImageArea.MinimumSize = new Size(600, 420);
+            pnlImageArea.Location = new Point(9, 9);
             pnlImageArea.Name = "pnlImageArea";
-            pnlImageArea.Size = new Size(1082, 420);
+            pnlImageArea.Size = new Size(1082, 453);
             pnlImageArea.TabIndex = 5;
             // 
             // flpPilotCards
             // 
             flpPilotCards.AutoScroll = true;
-            flpPilotCards.Dock = DockStyle.Top;
+            flpPilotCards.Dock = DockStyle.Fill;
             flpPilotCards.Location = new Point(0, 0);
             flpPilotCards.Name = "flpPilotCards";
-            flpPilotCards.Size = new Size(1082, 220);
+            flpPilotCards.Size = new Size(1082, 453);
             flpPilotCards.TabIndex = 0;
             flpPilotCards.WrapContents = false;
+            // 
+            // pnlTimeline
+            // 
+            pnlTimeline.BackColor = Color.FromArgb(244, 243, 238);
+            pnlTimeline.BorderStyle = BorderStyle.FixedSingle;
+            tlpMain.SetColumnSpan(pnlTimeline, 2);
+            pnlTimeline.Controls.Add(trkTimeline);
+            pnlTimeline.Dock = DockStyle.Fill;
+            pnlTimeline.Location = new Point(9, 468);
+            pnlTimeline.Name = "pnlTimeline";
+            pnlTimeline.Padding = new Padding(8);
+            pnlTimeline.Size = new Size(1082, 42);
+            pnlTimeline.TabIndex = 6;
+            // 
+            // trkTimeline
+            // 
+            trkTimeline.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+            trkTimeline.BackColor = Color.FromArgb(244, 243, 238);
+            trkTimeline.Location = new Point(8, 0);
+            trkTimeline.Maximum = 1000;
+            trkTimeline.Name = "trkTimeline";
+            trkTimeline.Size = new Size(1060, 45);
+            trkTimeline.TabIndex = 4;
+            trkTimeline.TickStyle = TickStyle.None;
+            trkTimeline.Value = 200;
+            // 
+            // pnlBrightBlur
+            // 
+            tlpMain.SetColumnSpan(pnlBrightBlur, 2);
+            pnlBrightBlur.Controls.Add(tlpBrightBlur);
+            pnlBrightBlur.Controls.Add(tlpPlayback);
+            pnlBrightBlur.Dock = DockStyle.Fill;
+            pnlBrightBlur.Location = new Point(9, 516);
+            pnlBrightBlur.Name = "pnlBrightBlur";
+            pnlBrightBlur.Padding = new Padding(6);
+            pnlBrightBlur.Size = new Size(1082, 144);
+            pnlBrightBlur.TabIndex = 5;
+            // 
+            // tlpBrightBlur
+            // 
+            tlpBrightBlur.BackColor = Color.FromArgb(240, 240, 240);
+            tlpBrightBlur.ColumnCount = 2;
+            tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            tlpBrightBlur.Controls.Add(pnlBrightness, 0, 0);
+            tlpBrightBlur.Controls.Add(pnlBlur, 1, 0);
+            tlpBrightBlur.Dock = DockStyle.Top;
+            tlpBrightBlur.Location = new Point(6, 6);
+            tlpBrightBlur.Name = "tlpBrightBlur";
+            tlpBrightBlur.RowCount = 1;
+            tlpBrightBlur.RowStyles.Add(new RowStyle(SizeType.Absolute, 96F));
+            tlpBrightBlur.Size = new Size(1070, 96);
+            tlpBrightBlur.TabIndex = 0;
+            // 
+            // pnlBrightness
+            // 
+            pnlBrightness.BorderStyle = BorderStyle.FixedSingle;
+            pnlBrightness.Controls.Add(trkBrightness);
+            pnlBrightness.Controls.Add(lblBrightnessValue);
+            pnlBrightness.Dock = DockStyle.Fill;
+            pnlBrightness.Location = new Point(3, 3);
+            pnlBrightness.Name = "pnlBrightness";
+            pnlBrightness.Size = new Size(529, 90);
+            pnlBrightness.TabIndex = 0;
+            // 
+            // trkBrightness
+            // 
+            trkBrightness.BackColor = Color.FromArgb(240, 240, 240);
+            trkBrightness.Dock = DockStyle.Bottom;
+            trkBrightness.Location = new Point(0, 43);
+            trkBrightness.Maximum = 100;
+            trkBrightness.Minimum = -100;
+            trkBrightness.Name = "trkBrightness";
+            trkBrightness.Size = new Size(527, 45);
+            trkBrightness.TabIndex = 0;
+            trkBrightness.TickStyle = TickStyle.None;
+            // 
+            // lblBrightnessValue
+            // 
+            lblBrightnessValue.AutoSize = true;
+            lblBrightnessValue.Dock = DockStyle.Top;
+            lblBrightnessValue.Location = new Point(0, 0);
+            lblBrightnessValue.Name = "lblBrightnessValue";
+            lblBrightnessValue.Size = new Size(31, 15);
+            lblBrightnessValue.TabIndex = 1;
+            lblBrightnessValue.Text = "밝기";
+            // 
+            // pnlBlur
+            // 
+            pnlBlur.BorderStyle = BorderStyle.FixedSingle;
+            pnlBlur.Controls.Add(trkBlur);
+            pnlBlur.Controls.Add(lblBlurValue);
+            pnlBlur.Dock = DockStyle.Fill;
+            pnlBlur.Location = new Point(538, 3);
+            pnlBlur.Name = "pnlBlur";
+            pnlBlur.Size = new Size(529, 90);
+            pnlBlur.TabIndex = 2;
+            // 
+            // trkBlur
+            // 
+            trkBlur.BackColor = Color.FromArgb(240, 240, 240);
+            trkBlur.Dock = DockStyle.Bottom;
+            trkBlur.Location = new Point(0, 43);
+            trkBlur.Maximum = 100;
+            trkBlur.Name = "trkBlur";
+            trkBlur.Size = new Size(527, 45);
+            trkBlur.TabIndex = 0;
+            trkBlur.TickStyle = TickStyle.None;
+            // 
+            // lblBlurValue
+            // 
+            lblBlurValue.AutoSize = true;
+            lblBlurValue.Dock = DockStyle.Top;
+            lblBlurValue.Location = new Point(0, 0);
+            lblBlurValue.Name = "lblBlurValue";
+            lblBlurValue.Size = new Size(59, 15);
+            lblBlurValue.TabIndex = 1;
+            lblBlurValue.Text = "흐림 효과";
+            // 
+            // tlpPlayback
+            // 
+            tlpPlayback.ColumnCount = 5;
+            tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tlpPlayback.Controls.Add(btnRewind, 0, 0);
+            tlpPlayback.Controls.Add(btnPrev, 1, 0);
+            tlpPlayback.Controls.Add(btnStop, 2, 0);
+            tlpPlayback.Controls.Add(btnNext, 3, 0);
+            tlpPlayback.Controls.Add(btnFastForward, 4, 0);
+            tlpPlayback.Dock = DockStyle.Bottom;
+            tlpPlayback.Location = new Point(6, 99);
+            tlpPlayback.Name = "tlpPlayback";
+            tlpPlayback.Padding = new Padding(6);
+            tlpPlayback.RowCount = 1;
+            tlpPlayback.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
+            tlpPlayback.Size = new Size(1070, 39);
+            tlpPlayback.TabIndex = 1;
+            // 
+            // btnRewind
+            // 
+            btnRewind.BackColor = Color.FromArgb(224, 224, 224);
+            btnRewind.Cursor = Cursors.Hand;
+            btnRewind.Dock = DockStyle.Fill;
+            btnRewind.FlatAppearance.BorderColor = Color.FromArgb(204, 204, 204);
+            btnRewind.FlatStyle = FlatStyle.Flat;
+            btnRewind.Font = new Font("맑은 고딕", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnRewind.ForeColor = Color.FromArgb(68, 68, 68);
+            btnRewind.Location = new Point(9, 9);
+            btnRewind.Name = "btnRewind";
+            btnRewind.Size = new Size(205, 30);
+            btnRewind.TabIndex = 0;
+            btnRewind.Text = "<<";
+            btnRewind.UseVisualStyleBackColor = false;
+            // 
+            // btnPrev
+            // 
+            btnPrev.BackColor = Color.FromArgb(236, 236, 236);
+            btnPrev.Cursor = Cursors.Hand;
+            btnPrev.Dock = DockStyle.Fill;
+            btnPrev.FlatAppearance.BorderColor = Color.FromArgb(221, 221, 221);
+            btnPrev.FlatStyle = FlatStyle.Flat;
+            btnPrev.Font = new Font("맑은 고딕", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnPrev.ForeColor = Color.FromArgb(85, 85, 85);
+            btnPrev.Location = new Point(220, 9);
+            btnPrev.Name = "btnPrev";
+            btnPrev.Size = new Size(205, 30);
+            btnPrev.TabIndex = 0;
+            btnPrev.Text = "<";
+            btnPrev.UseVisualStyleBackColor = false;
+            // 
+            // btnStop
+            // 
+            btnStop.BackColor = Color.FromArgb(230, 242, 255);
+            btnStop.Cursor = Cursors.Hand;
+            btnStop.Dock = DockStyle.Fill;
+            btnStop.FlatAppearance.BorderSize = 0;
+            btnStop.FlatStyle = FlatStyle.Flat;
+            btnStop.Font = new Font("맑은 고딕", 9F, FontStyle.Bold, GraphicsUnit.Point, 129);
+            btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+            btnStop.Location = new Point(431, 9);
+            btnStop.Name = "btnStop";
+            btnStop.Size = new Size(205, 30);
+            btnStop.TabIndex = 0;
+            btnStop.Text = "재생";
+            btnStop.UseVisualStyleBackColor = false;
+            // 
+            // btnNext
+            // 
+            btnNext.BackColor = Color.FromArgb(236, 236, 236);
+            btnNext.Cursor = Cursors.Hand;
+            btnNext.Dock = DockStyle.Fill;
+            btnNext.FlatAppearance.BorderColor = Color.FromArgb(221, 221, 221);
+            btnNext.FlatStyle = FlatStyle.Flat;
+            btnNext.Font = new Font("맑은 고딕", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnNext.ForeColor = Color.FromArgb(85, 85, 85);
+            btnNext.Location = new Point(642, 9);
+            btnNext.Name = "btnNext";
+            btnNext.Size = new Size(205, 30);
+            btnNext.TabIndex = 0;
+            btnNext.Text = ">";
+            btnNext.UseVisualStyleBackColor = false;
+            // 
+            // btnFastForward
+            // 
+            btnFastForward.BackColor = Color.FromArgb(224, 224, 224);
+            btnFastForward.Cursor = Cursors.Hand;
+            btnFastForward.Dock = DockStyle.Fill;
+            btnFastForward.FlatAppearance.BorderColor = Color.FromArgb(204, 204, 204);
+            btnFastForward.FlatStyle = FlatStyle.Flat;
+            btnFastForward.Font = new Font("맑은 고딕", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnFastForward.ForeColor = Color.FromArgb(68, 68, 68);
+            btnFastForward.Location = new Point(853, 9);
+            btnFastForward.Name = "btnFastForward";
+            btnFastForward.Size = new Size(208, 30);
+            btnFastForward.TabIndex = 0;
+            btnFastForward.Text = ">>";
+            btnFastForward.UseVisualStyleBackColor = false;
+            // 
+            // pnlGraphArea
+            // 
+            pnlGraphArea.BackColor = Color.FromArgb(50, 50, 50);
+            pnlGraphArea.BorderStyle = BorderStyle.FixedSingle;
+            tlpMain.SetColumnSpan(pnlGraphArea, 2);
+            pnlGraphArea.Dock = DockStyle.Fill;
+            pnlGraphArea.Location = new Point(9, 666);
+            pnlGraphArea.Name = "pnlGraphArea";
+            pnlGraphArea.Size = new Size(1082, 212);
+            pnlGraphArea.TabIndex = 0;
             // 
             // pnlLeftContainer
             // 
             pnlLeftContainer.Controls.Add(flpLeftPics);
-            pnlLeftContainer.Controls.Add(pnlLeftButtons);
             pnlLeftContainer.Dock = DockStyle.Fill;
-            pnlLeftContainer.Location = new Point(9, 15);
+            pnlLeftContainer.Location = new Point(9, 884);
             pnlLeftContainer.Name = "pnlLeftContainer";
-            pnlLeftContainer.Size = new Size(534, 367);
+            pnlLeftContainer.Size = new Size(534, 3);
             pnlLeftContainer.TabIndex = 0;
             pnlLeftContainer.Visible = false;
             // 
@@ -395,9 +641,9 @@
             flpLeftPics.Controls.Add(picLeft4);
             flpLeftPics.Dock = DockStyle.Fill;
             flpLeftPics.FlowDirection = FlowDirection.TopDown;
-            flpLeftPics.Location = new Point(0, 49);
+            flpLeftPics.Location = new Point(0, 0);
             flpLeftPics.Name = "flpLeftPics";
-            flpLeftPics.Size = new Size(534, 318);
+            flpLeftPics.Size = new Size(534, 3);
             flpLeftPics.TabIndex = 1;
             flpLeftPics.WrapContents = false;
             // 
@@ -447,221 +693,6 @@
             picLeft4.TabIndex = 13;
             picLeft4.TabStop = false;
             picLeft4.Visible = false;
-            // 
-            // pnlLeftButtons
-            // 
-            pnlLeftButtons.Dock = DockStyle.Top;
-            pnlLeftButtons.Location = new Point(0, 0);
-            pnlLeftButtons.Name = "pnlLeftButtons";
-            pnlLeftButtons.Padding = new Padding(6);
-            pnlLeftButtons.Size = new Size(534, 49);
-            pnlLeftButtons.TabIndex = 2;
-            // 
-            // picRight
-            // 
-            picRight.BackColor = Color.Black;
-            picRight.BorderStyle = BorderStyle.FixedSingle;
-            picRight.Dock = DockStyle.Fill;
-            picRight.Location = new Point(9, 481);
-            picRight.Name = "picRight";
-            picRight.Size = new Size(534, 30);
-            picRight.SizeMode = PictureBoxSizeMode.StretchImage;
-            picRight.TabIndex = 1;
-            picRight.TabStop = false;
-            picRight.Visible = false;
-            // 
-            // trkTimeline
-            // 
-            tlpMain.SetColumnSpan(trkTimeline, 2);
-            trkTimeline.Dock = DockStyle.Fill;
-            trkTimeline.Location = new Point(9, 517);
-            trkTimeline.Maximum = 1000;
-            trkTimeline.Name = "trkTimeline";
-            trkTimeline.Size = new Size(1082, 214);
-            trkTimeline.TabIndex = 4;
-            trkTimeline.Value = 200;
-            // 
-            // pnlBrightBlur
-            // 
-            tlpMain.SetColumnSpan(pnlBrightBlur, 2);
-            pnlBrightBlur.Controls.Add(tlpBrightBlur);
-            pnlBrightBlur.Controls.Add(tlpPlayback);
-            pnlBrightBlur.Dock = DockStyle.Fill;
-            pnlBrightBlur.Location = new Point(9, 737);
-            pnlBrightBlur.Name = "pnlBrightBlur";
-            pnlBrightBlur.Padding = new Padding(6);
-            pnlBrightBlur.Size = new Size(1082, 174);
-            pnlBrightBlur.TabIndex = 5;
-            // 
-            // tlpBrightBlur
-            // 
-            tlpBrightBlur.BackColor = Color.FromArgb(240, 240, 240);
-            tlpBrightBlur.ColumnCount = 2;
-            tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tlpBrightBlur.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
-            tlpBrightBlur.Controls.Add(pnlBrightness, 0, 0);
-            tlpBrightBlur.Controls.Add(pnlBlur, 1, 0);
-            tlpBrightBlur.Dock = DockStyle.Top;
-            tlpBrightBlur.Location = new Point(6, 6);
-            tlpBrightBlur.Name = "tlpBrightBlur";
-            tlpBrightBlur.RowCount = 1;
-            tlpBrightBlur.RowStyles.Add(new RowStyle(SizeType.Absolute, 96F));
-            tlpBrightBlur.Size = new Size(1070, 96);
-            tlpBrightBlur.TabIndex = 0;
-            // 
-            // pnlBrightness
-            // 
-            pnlBrightness.BorderStyle = BorderStyle.FixedSingle;
-            pnlBrightness.Controls.Add(trkBrightness);
-            pnlBrightness.Controls.Add(lblBrightnessValue);
-            pnlBrightness.Dock = DockStyle.Fill;
-            pnlBrightness.Location = new Point(3, 3);
-            pnlBrightness.Name = "pnlBrightness";
-            pnlBrightness.Size = new Size(529, 90);
-            pnlBrightness.TabIndex = 0;
-            // 
-            // trkBrightness
-            // 
-            trkBrightness.Dock = DockStyle.Bottom;
-            trkBrightness.Location = new Point(0, 43);
-            trkBrightness.Maximum = 100;
-            trkBrightness.Minimum = -100;
-            trkBrightness.Name = "trkBrightness";
-            trkBrightness.Size = new Size(527, 45);
-            trkBrightness.TabIndex = 0;
-            // 
-            // lblBrightnessValue
-            // 
-            lblBrightnessValue.AutoSize = true;
-            lblBrightnessValue.Dock = DockStyle.Top;
-            lblBrightnessValue.Location = new Point(0, 0);
-            lblBrightnessValue.Name = "lblBrightnessValue";
-            lblBrightnessValue.Size = new Size(31, 15);
-            lblBrightnessValue.TabIndex = 1;
-            lblBrightnessValue.Text = "밝기";
-            // 
-            // pnlBlur
-            // 
-            pnlBlur.Controls.Add(trkBlur);
-            pnlBlur.Controls.Add(lblBlurValue);
-            pnlBlur.Dock = DockStyle.Fill;
-            pnlBlur.Location = new Point(538, 3);
-            pnlBlur.Name = "pnlBlur";
-            pnlBlur.Size = new Size(529, 90);
-            pnlBlur.TabIndex = 2;
-            // 
-            // trkBlur
-            // 
-            trkBlur.Dock = DockStyle.Bottom;
-            trkBlur.Location = new Point(0, 45);
-            trkBlur.Maximum = 100;
-            trkBlur.Name = "trkBlur";
-            trkBlur.Size = new Size(529, 45);
-            trkBlur.TabIndex = 0;
-            // 
-            // lblBlurValue
-            // 
-            lblBlurValue.AutoSize = true;
-            lblBlurValue.Dock = DockStyle.Top;
-            lblBlurValue.Location = new Point(0, 0);
-            lblBlurValue.Name = "lblBlurValue";
-            lblBlurValue.Size = new Size(59, 15);
-            lblBlurValue.TabIndex = 1;
-            lblBlurValue.Text = "흐림 효과";
-            // 
-            // tlpPlayback
-            // 
-            tlpPlayback.ColumnCount = 5;
-            tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-            tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-            tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-            tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-            tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-            tlpPlayback.Controls.Add(btnRewind, 0, 0);
-            tlpPlayback.Controls.Add(btnPrev, 1, 0);
-            tlpPlayback.Controls.Add(btnStop, 2, 0);
-            tlpPlayback.Controls.Add(btnNext, 3, 0);
-            tlpPlayback.Controls.Add(btnFastForward, 4, 0);
-            tlpPlayback.Dock = DockStyle.Bottom;
-            tlpPlayback.Location = new Point(6, 126);
-            tlpPlayback.Name = "tlpPlayback";
-            tlpPlayback.Padding = new Padding(6);
-            tlpPlayback.RowCount = 1;
-            tlpPlayback.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
-            tlpPlayback.Size = new Size(1070, 42);
-            tlpPlayback.TabIndex = 1;
-            // 
-            // btnRewind
-            // 
-            btnRewind.BackColor = Color.FromArgb(64, 64, 64);
-            btnRewind.Dock = DockStyle.Fill;
-            btnRewind.ForeColor = Color.White;
-            btnRewind.Location = new Point(9, 9);
-            btnRewind.Name = "btnRewind";
-            btnRewind.Size = new Size(205, 30);
-            btnRewind.TabIndex = 0;
-            btnRewind.Text = "<<";
-            btnRewind.UseVisualStyleBackColor = false;
-            // 
-            // btnPrev
-            // 
-            btnPrev.BackColor = Color.FromArgb(64, 64, 64);
-            btnPrev.Dock = DockStyle.Fill;
-            btnPrev.ForeColor = Color.White;
-            btnPrev.Location = new Point(220, 9);
-            btnPrev.Name = "btnPrev";
-            btnPrev.Size = new Size(205, 30);
-            btnPrev.TabIndex = 0;
-            btnPrev.Text = "<";
-            btnPrev.UseVisualStyleBackColor = false;
-            // 
-            // btnStop
-            // 
-            btnStop.BackColor = Color.FromArgb(64, 64, 64);
-            btnStop.Dock = DockStyle.Fill;
-            btnStop.ForeColor = Color.White;
-            btnStop.Location = new Point(431, 9);
-            btnStop.Name = "btnStop";
-            btnStop.Size = new Size(205, 30);
-            btnStop.TabIndex = 0;
-            btnStop.Text = "재생/정지";
-            btnStop.UseVisualStyleBackColor = false;
-            // 
-            // btnNext
-            // 
-            btnNext.BackColor = Color.FromArgb(64, 64, 64);
-            btnNext.Dock = DockStyle.Fill;
-            btnNext.ForeColor = Color.White;
-            btnNext.Location = new Point(642, 9);
-            btnNext.Name = "btnNext";
-            btnNext.Size = new Size(205, 30);
-            btnNext.TabIndex = 0;
-            btnNext.Text = ">";
-            btnNext.UseVisualStyleBackColor = false;
-            // 
-            // btnFastForward
-            // 
-            btnFastForward.BackColor = Color.FromArgb(64, 64, 64);
-            btnFastForward.Dock = DockStyle.Fill;
-            btnFastForward.ForeColor = Color.White;
-            btnFastForward.Location = new Point(853, 9);
-            btnFastForward.Name = "btnFastForward";
-            btnFastForward.Size = new Size(208, 30);
-            btnFastForward.TabIndex = 0;
-            btnFastForward.Text = ">>";
-            btnFastForward.UseVisualStyleBackColor = false;
-            // 
-            // pnlGraphArea
-            // 
-            pnlGraphArea.BackColor = Color.FromArgb(50, 50, 50);
-            pnlGraphArea.BorderStyle = BorderStyle.FixedSingle;
-            tlpMain.SetColumnSpan(pnlGraphArea, 2);
-            pnlGraphArea.Dock = DockStyle.Fill;
-            pnlGraphArea.Location = new Point(9, 917);
-            pnlGraphArea.Name = "pnlGraphArea";
-            pnlGraphArea.Size = new Size(1082, 15);
-            pnlGraphArea.TabIndex = 0;
             // 
             // pnlAugmentations
             // 
@@ -909,29 +940,35 @@
             btnAddRemoveRight.Size = new Size(75, 23);
             btnAddRemoveRight.TabIndex = 0;
             // 
+            // flpRankControls
+            // 
+            flpRankControls.Controls.Add(cmbRankThrottle);
+            flpRankControls.Controls.Add(cmbRankOverall);
+            flpRankControls.Controls.Add(cmbRankAngle);
+            flpRankControls.Dock = DockStyle.Top;
+            flpRankControls.Location = new Point(0, 44);
+            flpRankControls.Name = "flpRankControls";
+            flpRankControls.Size = new Size(1100, 80);
+            flpRankControls.TabIndex = 3;
+            // 
             // ucPilotArena
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             AutoScroll = true;
-            AutoScrollMinSize = new Size(1100, 1000);
+            AutoScrollMinSize = new Size(1100, 940);
             BackColor = SystemColors.Control;
+            Controls.Add(flpRankControls);
             Controls.Add(tlpMain);
             Controls.Add(pnlTop);
             Name = "ucPilotArena";
-            Size = new Size(677, 688);
+            Size = new Size(655, 467);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             tlpMain.ResumeLayout(false);
-            tlpMain.PerformLayout();
             pnlImageArea.ResumeLayout(false);
-            pnlLeftContainer.ResumeLayout(false);
-            flpLeftPics.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)picLeft).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picLeft2).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picLeft3).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picLeft4).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picRight).EndInit();
+            pnlTimeline.ResumeLayout(false);
+            pnlTimeline.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)trkTimeline).EndInit();
             pnlBrightBlur.ResumeLayout(false);
             tlpBrightBlur.ResumeLayout(false);
@@ -942,6 +979,12 @@
             pnlBlur.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)trkBlur).EndInit();
             tlpPlayback.ResumeLayout(false);
+            pnlLeftContainer.ResumeLayout(false);
+            flpLeftPics.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)picLeft).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picLeft2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picLeft3).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picLeft4).EndInit();
             tlpLeft.ResumeLayout(false);
             tlpLeft.PerformLayout();
             flpLeftAngleData.ResumeLayout(false);
@@ -954,6 +997,7 @@
             flpRightAngleData.PerformLayout();
             flpRightThrottleData.ResumeLayout(false);
             flpRightThrottleData.PerformLayout();
+            flpRankControls.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -967,5 +1011,8 @@
         private Label lblRightAngleError;
         private Label lblRightAI_Throttle;
         private Label lblRightThrottleError;
+        private TrackBar trkTimeline;
+        private Panel pnlTimeline;
+        private FlowLayoutPanel flpRankControls;
     }
 }
