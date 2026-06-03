@@ -682,14 +682,18 @@ private int _selectEnd = -1;
         {
             if (_imageFiles.Count == 0) return;
             _isPlaying = true;
-            btnStartStop.Text = "정지 ⏹️";
+            btnStartStop.Text = "⏹ 정지";
+            btnStartStop.BackColor = Color.FromArgb(180, 40, 40);
+            btnStartStop.FlatAppearance.BorderSize = 0;
             _playTimer.Start();
         }
 
         private void StopPlayback()
         {
             _isPlaying = false;
-            btnStartStop.Text = "시작 ▶️";
+            btnStartStop.Text = "▶ 재생";
+            btnStartStop.BackColor = Color.FromArgb(24, 95, 165);
+            btnStartStop.FlatAppearance.BorderSize = 0;
             _playTimer.Stop();
         }
 
@@ -1305,6 +1309,7 @@ private int _selectEnd = -1;
                 currentX,
                 pnlTimeline.Height);
         }
+
         }
     }
 
