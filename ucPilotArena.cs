@@ -608,6 +608,16 @@ namespace DonkeyUi
 
         private void RefreshAllSlots() { for (int i = 0; i < _displayPictureBoxes.Count; i++) RefreshSlot(i); }
 
+        private (double? angle, double? throttle) GetCurrentHumanValues()
+        {
+            if (_graphHumanAngles != null && _graphHumanThrottles != null &&
+                _currentIndex >= 0 && _currentIndex < _graphHumanAngles.Count)
+            {
+                return (_graphHumanAngles[_currentIndex], _graphHumanThrottles[_currentIndex]);
+            }
+            return (_humanAngle, _humanThrottle);
+        }
+
         private void RefreshSlot(int i)
         {
             if (i >= _pilotSlots.Count || i >= _displayPictureBoxes.Count) return;
@@ -635,13 +645,15 @@ namespace DonkeyUi
 
             try
             {
+                var (currentHumanAngle, currentHumanThrottle) = GetCurrentHumanValues();
+
                 var bmp = BuildOverlayBitmap(_lastImagePath, finalAiAngle, finalAiThrottle);
                 var oldImg = _displayPictureBoxes[i].Image;
                 _displayPictureBoxes[i].Image = bmp;
                 oldImg?.Dispose();
 
-                double? angleErr = (finalAiAngle.HasValue && _humanAngle.HasValue) ? (finalAiAngle.Value - _humanAngle.Value) * 100.0 : null;
-                double? thrErr = (finalAiThrottle.HasValue && _humanThrottle.HasValue) ? (finalAiThrottle.Value - _humanThrottle.Value) * 100.0 : null;
+                double? angleErr = (finalAiAngle.HasValue && currentHumanAngle.HasValue) ? (finalAiAngle.Value - currentHumanAngle.Value) * 100.0 : null;
+                double? thrErr = (finalAiThrottle.HasValue && currentHumanThrottle.HasValue) ? (finalAiThrottle.Value - currentHumanThrottle.Value) * 100.0 : null;
 
                 string aiAngleText = finalAiAngle.HasValue ? finalAiAngle.Value.ToString("+0.000;-0.000;0.000") : "N/A";
                 string aiThrText = finalAiThrottle.HasValue ? finalAiThrottle.Value.ToString("+0.000;-0.000;0.000") : "N/A";
@@ -674,7 +686,9 @@ namespace DonkeyUi
                 g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
                 g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
                 int w = bmp.Width, h = bmp.Height, cx = w / 2, sy = h;
-                if (_humanAngle.HasValue) { int ll = CalcLineLen(_humanThrottle, h); double rad = _humanAngle.Value * 45.0 * Math.PI / 180.0; DrawStem(g, HumanColor, cx - 2, sy, rad, ll); }
+                var (currentHumanAngle, currentHumanThrottle) = GetCurrentHumanValues();
+
+                if (currentHumanAngle.HasValue) { int ll = CalcLineLen(currentHumanThrottle, h); double rad = currentHumanAngle.Value * 45.0 * Math.PI / 180.0; DrawStem(g, HumanColor, cx - 2, sy, rad, ll); }
                 if (aiAngle.HasValue) { int ll = CalcLineLen(aiThrottle, h); double rad = aiAngle.Value * 45.0 * Math.PI / 180.0; DrawStem(g, AiColor, cx + 2, sy, rad, ll); }
                 return bmp;
             }
