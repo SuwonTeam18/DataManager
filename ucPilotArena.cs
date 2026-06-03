@@ -142,6 +142,7 @@ namespace DonkeyUi
         public ucPilotArena()
         {
             InitializeComponent();
+            InitUserValuePanel();
             SetupRankControls();
             // 파일럿 추가 버튼 호버
             btnAddLeftPic.MouseEnter += (s, e) =>
@@ -707,6 +708,7 @@ namespace DonkeyUi
             _humanAngle = angle;
             _humanThrottle = throttle;
             _lastImagePath = imagePath;
+            UpdateUserValuePanel();   
             UpdateThrottleStatistics(throttle);
 
             if (!string.IsNullOrEmpty(imagePath))
@@ -742,7 +744,7 @@ namespace DonkeyUi
                     }
                 }
             }
-
+            UpdateUserValuePanel();
             RefreshAllSlots();
         }
 
@@ -942,5 +944,9 @@ namespace DonkeyUi
             return sep;
         }
 
+        private void btnTubPlot_Click(object sender, EventArgs e)
+        {
+            BtnTubPlot_Click(sender, e);
+        }
     }
 }

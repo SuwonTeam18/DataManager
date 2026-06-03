@@ -133,8 +133,12 @@ namespace DonkeyUi
             pnlImageArea = new Panel();
             flpPilotCards = new FlowLayoutPanel();
             pnlTimeline = new Panel();
-            trkTimeline = new TrackBar();
+            tlpUserValue = new TableLayoutPanel();
             pnlBrightBlur = new Panel();
+            panel1 = new Panel();
+            tableLayoutPanel1 = new TableLayoutPanel();
+            trkTimeline = new TrackBar();
+            cmbSpeed = new ComboBox();
             tlpBrightBlur = new TableLayoutPanel();
             pnlBrightness = new Panel();
             trkBrightness = new TrackBar();
@@ -185,8 +189,10 @@ namespace DonkeyUi
             tlpMain.SuspendLayout();
             pnlImageArea.SuspendLayout();
             pnlTimeline.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)trkTimeline).BeginInit();
             pnlBrightBlur.SuspendLayout();
+            panel1.SuspendLayout();
+            tableLayoutPanel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)trkTimeline).BeginInit();
             tlpBrightBlur.SuspendLayout();
             pnlBrightness.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trkBrightness).BeginInit();
@@ -316,6 +322,7 @@ namespace DonkeyUi
             btnTubPlot.TabIndex = 6;
             btnTubPlot.Text = "Tub plot";
             btnTubPlot.UseVisualStyleBackColor = false;
+            btnTubPlot.Click += btnTubPlot_Click;
             // 
             // cmbRankOverall
             // 
@@ -361,10 +368,10 @@ namespace DonkeyUi
             tlpMain.Padding = new Padding(6);
             tlpMain.RowCount = 5;
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 55.0535774F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 18.0224056F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 26.1961727F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 0.9569378F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 163F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 26.0812588F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 17.9554386F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 1.04849279F));
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tlpMain.Size = new Size(1100, 896);
             tlpMain.TabIndex = 1;
@@ -377,7 +384,7 @@ namespace DonkeyUi
             pnlImageArea.Dock = DockStyle.Fill;
             pnlImageArea.Location = new Point(9, 9);
             pnlImageArea.Name = "pnlImageArea";
-            pnlImageArea.Size = new Size(1082, 453);
+            pnlImageArea.Size = new Size(1082, 390);
             pnlImageArea.TabIndex = 5;
             // 
             // flpPilotCards
@@ -386,7 +393,7 @@ namespace DonkeyUi
             flpPilotCards.Dock = DockStyle.Fill;
             flpPilotCards.Location = new Point(0, 0);
             flpPilotCards.Name = "flpPilotCards";
-            flpPilotCards.Size = new Size(1082, 453);
+            flpPilotCards.Size = new Size(1082, 390);
             flpPilotCards.TabIndex = 0;
             flpPilotCards.WrapContents = false;
             // 
@@ -395,37 +402,88 @@ namespace DonkeyUi
             pnlTimeline.BackColor = Color.FromArgb(244, 243, 238);
             pnlTimeline.BorderStyle = BorderStyle.FixedSingle;
             tlpMain.SetColumnSpan(pnlTimeline, 2);
-            pnlTimeline.Controls.Add(trkTimeline);
+            pnlTimeline.Controls.Add(tlpUserValue);
             pnlTimeline.Dock = DockStyle.Fill;
-            pnlTimeline.Location = new Point(9, 468);
+            pnlTimeline.Location = new Point(9, 405);
             pnlTimeline.Name = "pnlTimeline";
             pnlTimeline.Padding = new Padding(8);
-            pnlTimeline.Size = new Size(1082, 42);
+            pnlTimeline.Size = new Size(1082, 157);
             pnlTimeline.TabIndex = 6;
             // 
-            // trkTimeline
+            // tlpUserValue
             // 
-            trkTimeline.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-            trkTimeline.BackColor = Color.FromArgb(244, 243, 238);
-            trkTimeline.Location = new Point(8, 0);
-            trkTimeline.Maximum = 1000;
-            trkTimeline.Name = "trkTimeline";
-            trkTimeline.Size = new Size(1060, 45);
-            trkTimeline.TabIndex = 4;
-            trkTimeline.TickStyle = TickStyle.None;
-            trkTimeline.Value = 200;
+            tlpUserValue.ColumnCount = 2;
+            tlpUserValue.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpUserValue.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpUserValue.Dock = DockStyle.Fill;
+            tlpUserValue.Location = new Point(8, 8);
+            tlpUserValue.Name = "tlpUserValue";
+            tlpUserValue.RowCount = 3;
+            tlpUserValue.RowStyles.Add(new RowStyle(SizeType.Percent, 38.61386F));
+            tlpUserValue.RowStyles.Add(new RowStyle(SizeType.Percent, 61.38614F));
+            tlpUserValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 37F));
+            tlpUserValue.Size = new Size(1064, 139);
+            tlpUserValue.TabIndex = 0;
             // 
             // pnlBrightBlur
             // 
             tlpMain.SetColumnSpan(pnlBrightBlur, 2);
+            pnlBrightBlur.Controls.Add(panel1);
             pnlBrightBlur.Controls.Add(tlpBrightBlur);
             pnlBrightBlur.Controls.Add(tlpPlayback);
             pnlBrightBlur.Dock = DockStyle.Fill;
-            pnlBrightBlur.Location = new Point(9, 516);
+            pnlBrightBlur.Location = new Point(9, 568);
             pnlBrightBlur.Name = "pnlBrightBlur";
             pnlBrightBlur.Padding = new Padding(6);
-            pnlBrightBlur.Size = new Size(1082, 144);
+            pnlBrightBlur.Size = new Size(1082, 181);
             pnlBrightBlur.TabIndex = 5;
+            // 
+            // panel1
+            // 
+            panel1.BorderStyle = BorderStyle.FixedSingle;
+            panel1.Controls.Add(tableLayoutPanel1);
+            panel1.Dock = DockStyle.Fill;
+            panel1.Location = new Point(6, 102);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(1070, 34);
+            panel1.TabIndex = 3;
+            // 
+            // tableLayoutPanel1
+            // 
+            tableLayoutPanel1.ColumnCount = 2;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 11.1111107F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 88.8888855F));
+            tableLayoutPanel1.Controls.Add(trkTimeline, 1, 0);
+            tableLayoutPanel1.Controls.Add(cmbSpeed, 0, 0);
+            tableLayoutPanel1.Dock = DockStyle.Fill;
+            tableLayoutPanel1.Location = new Point(0, 0);
+            tableLayoutPanel1.Name = "tableLayoutPanel1";
+            tableLayoutPanel1.RowCount = 1;
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.Size = new Size(1068, 32);
+            tableLayoutPanel1.TabIndex = 2;
+            // 
+            // trkTimeline
+            // 
+            trkTimeline.BackColor = Color.FromArgb(244, 243, 238);
+            trkTimeline.Dock = DockStyle.Fill;
+            trkTimeline.Location = new Point(121, 3);
+            trkTimeline.Maximum = 1000;
+            trkTimeline.Name = "trkTimeline";
+            trkTimeline.Size = new Size(944, 26);
+            trkTimeline.TabIndex = 4;
+            trkTimeline.TickStyle = TickStyle.None;
+            trkTimeline.Value = 200;
+            // 
+            // cmbSpeed
+            // 
+            cmbSpeed.Dock = DockStyle.Fill;
+            cmbSpeed.FormattingEnabled = true;
+            cmbSpeed.Items.AddRange(new object[] { "0.25x", "0.50x", "0.75x", "1.00x", "1.25x", "1.50x", "1.75x", "2.00x" });
+            cmbSpeed.Location = new Point(3, 3);
+            cmbSpeed.Name = "cmbSpeed";
+            cmbSpeed.Size = new Size(112, 23);
+            cmbSpeed.TabIndex = 5;
             // 
             // tlpBrightBlur
             // 
@@ -523,7 +581,7 @@ namespace DonkeyUi
             tlpPlayback.Controls.Add(btnNext, 3, 0);
             tlpPlayback.Controls.Add(btnFastForward, 4, 0);
             tlpPlayback.Dock = DockStyle.Bottom;
-            tlpPlayback.Location = new Point(6, 99);
+            tlpPlayback.Location = new Point(6, 136);
             tlpPlayback.Name = "tlpPlayback";
             tlpPlayback.Padding = new Padding(6);
             tlpPlayback.RowCount = 1;
@@ -617,9 +675,9 @@ namespace DonkeyUi
             pnlGraphArea.BorderStyle = BorderStyle.FixedSingle;
             tlpMain.SetColumnSpan(pnlGraphArea, 2);
             pnlGraphArea.Dock = DockStyle.Fill;
-            pnlGraphArea.Location = new Point(9, 666);
+            pnlGraphArea.Location = new Point(9, 755);
             pnlGraphArea.Name = "pnlGraphArea";
-            pnlGraphArea.Size = new Size(1082, 212);
+            pnlGraphArea.Size = new Size(1082, 123);
             pnlGraphArea.TabIndex = 0;
             // 
             // pnlLeftContainer
@@ -962,15 +1020,17 @@ namespace DonkeyUi
             Controls.Add(tlpMain);
             Controls.Add(pnlTop);
             Name = "ucPilotArena";
-            Size = new Size(655, 467);
+            Size = new Size(722, 593);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             tlpMain.ResumeLayout(false);
             pnlImageArea.ResumeLayout(false);
             pnlTimeline.ResumeLayout(false);
-            pnlTimeline.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)trkTimeline).EndInit();
             pnlBrightBlur.ResumeLayout(false);
+            panel1.ResumeLayout(false);
+            tableLayoutPanel1.ResumeLayout(false);
+            tableLayoutPanel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)trkTimeline).EndInit();
             tlpBrightBlur.ResumeLayout(false);
             pnlBrightness.ResumeLayout(false);
             pnlBrightness.PerformLayout();
@@ -1014,5 +1074,9 @@ namespace DonkeyUi
         private TrackBar trkTimeline;
         private Panel pnlTimeline;
         private FlowLayoutPanel flpRankControls;
+        private ComboBox cmbSpeed;
+        private TableLayoutPanel tlpUserValue;
+        private TableLayoutPanel tableLayoutPanel1;
+        private Panel panel1;
     }
 }
