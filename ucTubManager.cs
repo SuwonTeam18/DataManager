@@ -227,49 +227,17 @@ namespace DonkeyUi
 
         private void BtnLoadTub_Click(object? sender, EventArgs e)
         {
-            using var dlg = new OpenFileDialog();
-            dlg.Title = "주행 데이터 열기";
-            dlg.Filter = "Tub files (*.json;*.csv;*.jpg;*.jpeg;*.png)|*.json;*.csv;*.jpg;*.jpeg;*.png|All files (*.*)|*.*";
-            dlg.CheckFileExists = true;
-            dlg.Multiselect = false;
-            if (dlg.ShowDialog() != DialogResult.OK) return;
+            using var dlg = new FolderBrowserDialog();
 
-            txtTub.Text = dlg.FileName;
-            CurrentTubPath = Path.GetDirectoryName(dlg.FileName) ?? "";
+            dlg.Description = "이미지 폴더 선택";
 
-            try
-            {
-                // If the selected file resides in an "images" (or "image") folder, set txtCarDirectory to its parent folder
-                var dir = Path.GetDirectoryName(dlg.FileName) ?? string.Empty;
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    var dinfo = new DirectoryInfo(dir);
-                    if (string.Equals(dinfo.Name, "images", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(dinfo.Name, "image", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var parent = dinfo.Parent;
-                        if (parent != null)
-                        {
-                            // include trailing directory separator to match example
-                            txtCarDirectory.Text = parent.FullName.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                                + Path.DirectorySeparatorChar;
-                        }
-                    }
-                }
-            }
-            catch { }
+            if (dlg.ShowDialog() != DialogResult.OK)
+                return;
 
-            var ext = Path.GetExtension(dlg.FileName)?.ToLowerInvariant();
-            var imageExts = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
-            if (!string.IsNullOrEmpty(ext) && imageExts.Contains(ext))
-            {
-                var folder = Path.GetDirectoryName(dlg.FileName) ?? string.Empty;
-                LoadImagesFromDirectory(folder);
-                var idx = _imageFiles.FindIndex(p =>
-                    string.Equals(Path.GetFullPath(p), Path.GetFullPath(dlg.FileName),
-                    StringComparison.OrdinalIgnoreCase));
-                if (idx >= 0) SetCurrentIndex(idx);
-            }
+            txtTub.Text = dlg.SelectedPath;
+            CurrentTubPath = dlg.SelectedPath;
+
+            LoadImagesFromDirectory(dlg.SelectedPath);
         }
 
         private void LoadImagesFromDirectory(string folder)
