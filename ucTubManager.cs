@@ -104,6 +104,21 @@ namespace DonkeyUi
             nudSpeedMin.Maximum = 1;
             nudSpeedMax.Maximum = 1;
 
+            // Recalculate handle positions when the panels resize so the full panel width is used
+            pnlSpeedRange.SizeChanged += (s, e) =>
+            {
+                _minX = SpeedToX(nudSpeedMin.Value);
+                _maxX = SpeedToX(nudSpeedMax.Value);
+                pnlSpeedRange.Invalidate();
+            };
+
+            pnlAngleRange.SizeChanged += (s, e) =>
+            {
+                _angleMinX = AngleToX(nudAngleMin.Value);
+                _angleMaxX = AngleToX(nudAngleMax.Value);
+                pnlAngleRange.Invalidate();
+            };
+
             pnlTimeline.Paint += pnlTimeline_Paint;
             _prevTimer = new System.Windows.Forms.Timer { Interval = 100 };
             _nextTimer = new System.Windows.Forms.Timer { Interval = 100 };
@@ -376,8 +391,9 @@ namespace DonkeyUi
             using (var b = new SolidBrush(Color.FromArgb(40, 40, 40)))
                 g.FillRectangle(b, rect);
 
+            // ── 중심점: 기존과 동일 ──────────────────────────────────
             var cx = rect.Left + rect.Width / 2f;
-            var cy = rect.Top + rect.Height - 15f;
+            var cy = rect.Bottom - 15f;
             var radius = Math.Min(rect.Width / 2f - 12f, rect.Height - 12f);
             if (radius <= 8) radius = Math.Min(rect.Width, rect.Height) / 2f;
             var arcRect = new RectangleF(cx - radius, cy - radius, radius * 2f, radius * 2f);
@@ -388,17 +404,21 @@ namespace DonkeyUi
 
             double tnorm;
             if (throttleVal >= -1.01 && throttleVal <= 1.01)
-                tnorm = Math.Max(-1.0, Math.Min(1.0, throttleVal));
+                tnorm = Math.Max(0.0, Math.Min(1.0, throttleVal)); // 0~1 범위 (음수 없음)
             else
             {
-                tnorm = (throttleVal * 2.0) - 1.0;
-                tnorm = Math.Max(-1.0, Math.Min(1.0, tnorm));
+                tnorm = throttleVal;
+                tnorm = Math.Max(0.0, Math.Min(1.0, tnorm));
             }
 
+            // ── 호: 9시(180°) → 0시(0°/360°) 즉 180° 범위 ──────────
+            // 9시 = 180°, 시계방향으로 증가 → 0시(360°=0°)가 최대
+            // DrawArc: 시작각 = 180°, 범위 = -180° (반시계 그리기 트릭 없이,
+            // 9시→12시→3시 = 시계방향이므로 startAngle=180, sweepAngle=-180)
             int segments = 12;
-            float segSweep = 180f / segments;
+            float totalSweep = 180f;   // 180°→0° (시계방향)
+            float segSweep = totalSweep / segments;
             float gap = 2f;
-            float drawSweep = Math.Max(1f, segSweep - gap);
             float segPenWidth = Math.Max(12f, radius * 0.18f);
 
             for (int i = 0; i < segments; i++)
@@ -407,19 +427,23 @@ namespace DonkeyUi
                 int rCol = (int)(pos * 255);
                 int gCol = (int)((1 - pos) * 255);
                 var segColor = Color.FromArgb(200, rCol, gCol, 0);
+                float startA = 180f + i * segSweep + (i == 0 ? gap / 2f : gap / 2f);
+                float sweepA = segSweep - gap;
                 using (var pen = new Pen(segColor, segPenWidth)
                 {
                     StartCap = System.Drawing.Drawing2D.LineCap.Round,
                     EndCap = System.Drawing.Drawing2D.LineCap.Round
                 })
-                    g.DrawArc(pen, arcRect, 180f + i * segSweep + gap / 2f, drawSweep);
+                    g.DrawArc(pen, arcRect, startA, sweepA);
             }
 
+            // ── 눈금선 ───────────────────────────────────────────────
             using (var tickPen = new Pen(Color.FromArgb(120, 120, 120), 1.5f))
             {
+                // 9시(180°)→0시(0°) 사이 7개 눈금
                 for (int i = 0; i <= 6; i++)
                 {
-                    var t = 180.0 - (i * 30.0);
+                    var t = 180.0 - (i * 30.0);   // 180→0 (30° 간격)
                     var rad = t * Math.PI / 180.0;
                     var inner = new PointF(
                         (float)(cx + Math.Cos(rad) * (radius - segPenWidth / 2f - 2)),
@@ -431,7 +455,17 @@ namespace DonkeyUi
                 }
             }
 
-            var angleDeg = 180.0 + ((tnorm + 1.0) / 2.0) * 180.0;
+            // ── 바늘: 9시(180°)에서 시작, tnorm=1이면 0°(3시) ──────
+            // 하지만 요청: 최대는 12시(90°↑ = -90°=270°). 
+            // 9시(180°)→12시(90° 위 = 270° CCW 기준이지만 GDI에선 -90°)
+            // GDI+ 각도: 0=3시, 90=6시, 180=9시, 270=12시
+            // 범위: 180°→270° 즉 sweepAngle = -90° (반시계) × tnorm
+            // 하지만 시계방향으로 올라간다고 했으므로:
+            // 9시(180°) → 시계방향 → 12시(270° GDI, 실제 위쪽)
+            // GDI+ 시계방향: 180°에서 증가하면 6시쪽으로 감 → 원하지 않음
+            // 따라서 9시에서 반시계 방향(각도 감소)으로 12시까지 = 180°→90°
+            // tnorm=0: 180°(9시), tnorm=1: 90°(12시)
+            var angleDeg = 180.0 + tnorm * 180.0;
             var angleRad = angleDeg * Math.PI / 180.0;
             var nx = (float)(cx + Math.Cos(angleRad) * (radius - 14));
             var ny = (float)(cy + Math.Sin(angleRad) * (radius - 14));
@@ -448,13 +482,20 @@ namespace DonkeyUi
                 EndCap = System.Drawing.Drawing2D.LineCap.Round
             })
                 g.DrawLine(pen, cx, cy, nx, ny);
+
             using (var hub = new SolidBrush(Color.White))
                 g.FillEllipse(hub, cx - 5f, cy - 5f, 10f, 10f);
 
-            var valText = hasValue ? throttleVal.ToString("0.000", CultureInfo.InvariantCulture) : "--";
-            using (var f = new Font("맑은 고딕", 10))
+            // ── 가운데 숫자 ──────────────────────────────────────────
+            var valText = hasValue ? throttleVal.ToString("+0.000;-0.000;0.000", System.Globalization.CultureInfo.InvariantCulture) : "--";
+            using (var f = new Font("맑은 고딕", 11f, FontStyle.Bold))
             using (var b = new SolidBrush(Color.White))
-                g.DrawString(valText, f, b, rect.Left + 8, rect.Top + rect.Height - 20);
+            {
+                var sz = g.MeasureString(valText, f);
+                float tx = 10f;
+                float ty = 8f;
+                g.DrawString(valText, f, b, tx, ty);
+            }
         }
 
         private void PicAngle_Paint(object? sender, PaintEventArgs e)
@@ -466,32 +507,48 @@ namespace DonkeyUi
             using (var b = new SolidBrush(Color.FromArgb(40, 40, 40)))
                 g.FillRectangle(b, rect);
 
+            // ── 중심점: 아래쪽에 배치하여 반원이 위로 펼쳐지도록 ────
             var cx = rect.Left + rect.Width / 2f;
-            var cy = rect.Top + rect.Height / 2f + 40f;
+            var cy = rect.Top + rect.Height - 20f;          // 하단 기준
             var radius = Math.Min(rect.Width / 2f - 20f, rect.Height - 20f);
             if (radius <= 6) radius = Math.Min(rect.Width, rect.Height) / 2f;
             var arcRect = new RectangleF(cx - radius, cy - radius, radius * 2f, radius * 2f);
 
-            using (var pen = new Pen(Color.FromArgb(220, 30, 144, 255), Math.Max(10f, radius * 0.14f))
+            float arcPenW = Math.Max(10f, radius * 0.14f);
+
+            // ── 반원 호: 180°(9시)→0°(3시), 즉 위쪽 반원 ───────────
+            // 왼쪽(180°) = 좌회전 최대, 0°(3시) = 우회전 최대
+            // 파란색: 좌반원(180°→270°, 즉 180°부터 -90° sweep = 왼쪽→12시)
+            // 빨간색: 우반원(270°→360°, 즉 270°부터 -90° sweep = 12시→오른쪽)
+            // GDI+: 0°=3시, 180°=9시, 270°=12시(위)
+            // 위 반원 전체 = 시작 180°, sweep -180°
+
+            // 좌측(파랑): 180° → 270° (GDI시계방향 = 9시→12시)
+            using (var pen = new Pen(Color.FromArgb(220, 30, 144, 255), arcPenW)
             {
                 StartCap = System.Drawing.Drawing2D.LineCap.Flat,
                 EndCap = System.Drawing.Drawing2D.LineCap.Flat
             })
-                g.DrawArc(pen, arcRect, 180f, 90f);
+                g.DrawArc(pen, arcRect, 180f, 90f);   // 9시→12시
 
-            using (var pen = new Pen(Color.FromArgb(220, 255, 60, 60), Math.Max(10f, radius * 0.14f))
+            // 우측(빨강): 270° → 360° (GDI시계방향 = 12시→3시)
+            using (var pen = new Pen(Color.FromArgb(220, 255, 60, 60), arcPenW)
             {
                 StartCap = System.Drawing.Drawing2D.LineCap.Flat,
                 EndCap = System.Drawing.Drawing2D.LineCap.Flat
             })
-                g.DrawArc(pen, arcRect, 270f, 90f);
+                g.DrawArc(pen, arcRect, 270f, 90f);   // 12시→3시
 
+            // ── 바늘: 12시(270° GDI = -90° 수학) 기준, 좌우로 이동 ─
+            // angle -1 → 9시(180°), angle 0 → 12시(270°), angle +1 → 3시(0°/360°)
+            // GDI 각도 = 270° + angle * 90°  (음수=좌, 양수=우)
             double angDeg = 0.0;
-            if (_currentAngle.HasValue)
-                angDeg = Math.Max(-45.0, Math.Min(45.0, _currentAngle.Value));
+            bool hasAngle = _currentAngle.HasValue;
+            if (hasAngle)
+                angDeg = Math.Max(-1.0, Math.Min(1.0, _currentAngle.Value));
 
-            var angleDeg = 270.0 - (angDeg / 45.0) * 90.0;
-            var angleRad = angleDeg * Math.PI / 180.0;
+            double gdiAngle = 270.0 + angDeg * 120.0;   // 270°±90°
+            var angleRad = gdiAngle * Math.PI / 180.0;
             var nx = (float)(cx + Math.Cos(angleRad) * (radius - 8));
             var ny = (float)(cy + Math.Sin(angleRad) * (radius - 8));
 
@@ -507,8 +564,22 @@ namespace DonkeyUi
                 EndCap = System.Drawing.Drawing2D.LineCap.Round
             })
                 g.DrawLine(pen, cx, cy, nx, ny);
+
             using (var hub = new SolidBrush(Color.Black))
                 g.FillEllipse(hub, cx - 4f, cy - 4f, 8f, 8f);
+
+            // ── 가운데 숫자 ──────────────────────────────────────────
+            var valText = hasAngle
+                ? _currentAngle!.Value.ToString("+0.000;-0.000;0.000", System.Globalization.CultureInfo.InvariantCulture)
+                : "--";
+            using (var f = new Font("맑은 고딕", 11f, FontStyle.Bold))
+            using (var b2 = new SolidBrush(Color.White))
+            {
+                var sz = g.MeasureString(valText, f);
+                float tx = 10f;
+                float ty = 8f;   // 반원 안쪽
+                g.DrawString(valText, f, b2, tx, ty);
+            }
         }
 
         // ════════════════════════════════════════════════════════════
@@ -950,8 +1021,10 @@ namespace DonkeyUi
             if (_dragMin)
             {
                 _minX = e.X;
+                int left = 20;
+                int right = Math.Max(left + 1, pnlSpeedRange.Width - 20);
 
-                _minX = Math.Max(20, Math.Min(_minX, _maxX));
+                _minX = Math.Max(left, Math.Min(_minX, _maxX));
 
                 nudSpeedMin.Value =
                     Math.Min(
@@ -963,8 +1036,10 @@ namespace DonkeyUi
             if (_dragMax)
             {
                 _maxX = e.X;
+                int left = 20;
+                int right = Math.Max(left + 1, pnlSpeedRange.Width - 20);
 
-                _maxX = Math.Min(815, Math.Max(_maxX, _minX));
+                _maxX = Math.Min(right, Math.Max(_maxX, _minX));
 
                 nudSpeedMax.Value =
                     Math.Min(
@@ -976,17 +1051,22 @@ namespace DonkeyUi
         }
         private decimal XToSpeed(int x)
         {
-            x = Math.Max(20, Math.Min(x, 815));
+            int left = 20;
+            int right = Math.Max(left + 1, pnlSpeedRange.Width - 20);
+
+            x = Math.Max(left, Math.Min(x, right));
 
             return (decimal)(
-                (double)(x - 20)
-                / (815 - 20));
+                (double)(x - left)
+                / (right - left));
         }
         private int SpeedToX(decimal speed)
         {
-            return 20 + (int)(
+            int left = 20;
+            int right = Math.Max(left + 1, pnlSpeedRange.Width - 20);
+            return left + (int)(
              (double)speed
-             * (815 - 20));
+             * (right - left));
         }
         private void nudSpeedMin_ValueChanged(
            object sender,
@@ -1006,19 +1086,24 @@ namespace DonkeyUi
         }
         private decimal XToAngle(int x)
         {
-            x = Math.Max(20, Math.Min(x, 815));
+            int left = 20;
+            int right = Math.Max(left + 1, pnlAngleRange.Width - 20);
+
+            x = Math.Max(left, Math.Min(x, right));
 
             return (decimal)(
-                ((double)(x - 20)
-                / (815 - 20))
+                ((double)(x - left)
+                / (right - left))
                 * 20 - 10);
         }
         private int AngleToX(decimal angle)
         {
-            return 20 + (int)(
+            int left = 20;
+            int right = Math.Max(left + 1, pnlAngleRange.Width - 20);
+            return left + (int)(
                 ((double)angle + 10)
                 / 20
-                * (815 - 20));
+                * (right - left));
         }
         private void nudAngleMin_ValueChanged(
     object sender,
@@ -1063,8 +1148,10 @@ namespace DonkeyUi
             if (_dragAngleMin)
             {
                 _angleMinX = e.X;
+                int left = 20;
+                int right = Math.Max(left + 1, pnlAngleRange.Width - 20);
 
-                _angleMinX = Math.Max(20,
+                _angleMinX = Math.Max(left,
                     Math.Min(_angleMinX, _angleMaxX));
 
                 nudAngleMin.Value =
@@ -1078,9 +1165,11 @@ namespace DonkeyUi
             if (_dragAngleMax)
             {
                 _angleMaxX = e.X;
+                int left = 20;
+                int right = Math.Max(left + 1, pnlAngleRange.Width - 20);
 
                 _angleMaxX = Math.Min(
-                    815,
+                    right,
                     Math.Max(_angleMaxX, _angleMinX));
 
                 nudAngleMax.Value =
@@ -1329,6 +1418,8 @@ namespace DonkeyUi
             UpdateDeleteStatus();
             pnlTimeline.Invalidate();
         }
+
+        
     }
 }
 
