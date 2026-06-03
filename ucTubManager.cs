@@ -36,6 +36,8 @@ namespace DonkeyUi
         private List<string> _allImageFiles = new List<string>();
         private Dictionary<string, int> _deletedIndexes = new Dictionary<string, int>();
         private int _currentIndex = -1;
+        private int _leftFrame = -1;
+        private int _rightFrame = -1;
         private int _minX = 20;
         private int _maxX = 815;
         private bool _dragMin = false;
@@ -47,7 +49,7 @@ namespace DonkeyUi
         private bool _dragAngleMin = false;
         private bool _dragAngleMax = false;
         private int _selectStart = -1;
-private int _selectEnd = -1;
+        private int _selectEnd = -1;
         private const int ANGLE_MAX = 10;
         private System.Windows.Forms.Timer _prevTimer;
         private System.Windows.Forms.Timer _nextTimer;
@@ -1310,8 +1312,57 @@ private int _selectEnd = -1;
                 pnlTimeline.Height);
         }
 
+        private void BtnLeftSet_Click(object sender, EventArgs e)
+        {
+            _leftFrame = trkRecord.Value + 1;
+
+            lblRange.Text =
+                $"범위 : [{_leftFrame}.{_rightFrame}]";
+        }
+
+        private void BtnRightSet_Click(object sender, EventArgs e)
+        {
+            _rightFrame = trkRecord.Value + 1;
+
+            lblRange.Text =
+                $"범위 : [{_leftFrame}.{_rightFrame}]";
+        }
+
+        private void BtnRangeDelete_Click(object sender, EventArgs e)
+        {
+            if (_leftFrame == -1 || _rightFrame == -1)
+            {
+                MessageBox.Show("범위를 먼저 설정하세요.");
+                return;
+            }
+
+            int start = Math.Min(_leftFrame, _rightFrame) - 1;
+            int end = Math.Max(_leftFrame, _rightFrame) - 1;
+
+            for (int i = end; i >= start; i--)
+            {
+                string deletedImage = _imageFiles[i];
+
+                _deletedImages.Add(deletedImage);
+                _deletedIndexes[deletedImage] = i;
+
+                _imageFiles.RemoveAt(i);
+            }
+
+            trkRecord.Maximum = Math.Max(0, _imageFiles.Count - 1);
+
+            if (_imageFiles.Count > 0)
+            {
+                _currentIndex = Math.Min(_currentIndex, _imageFiles.Count - 1);
+                trkRecord.Value = _currentIndex;
+                SetCurrentIndex(_currentIndex);
+            }
+
+            UpdateDeleteStatus();
+            pnlTimeline.Invalidate();
         }
     }
+}
 
 
 
