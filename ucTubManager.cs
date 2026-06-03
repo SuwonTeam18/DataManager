@@ -1418,6 +1418,8 @@ namespace DonkeyUi
             UpdateDeleteStatus();
             pnlTimeline.Invalidate();
         }
+
+        
     }
 }
 
