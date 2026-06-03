@@ -54,6 +54,9 @@
             txtTub = new TextBox();
             trkRecord = new TrackBar();
             pnlTools = new Panel();
+            btnClearFilter = new Button();
+            pnlFilter = new Panel();
+            tplFilter = new TableLayoutPanel();
             lblRange = new Label();
             BtnRangeDelete = new Button();
             BtnRightSet = new Button();
@@ -66,14 +69,18 @@
             pnlSpeedRange = new Panel();
             panel4 = new Panel();
             nudSpeedMax = new NumericUpDown();
-            FilThrottle = new Label();
-            nudAngleMin = new NumericUpDown();
             pnlAngleRange = new Panel();
             panel6 = new Panel();
+            nudAngleMin = new NumericUpDown();
             nudAngleMax = new NumericUpDown();
+            pnlThrottleText = new Panel();
+            FilThrottle = new Label();
+            pnlAngleText = new Panel();
             FilAngle = new Label();
+            flowLayoutPanel1 = new FlowLayoutPanel();
             btnApplyFilter = new Button();
-            btnClearFilter = new Button();
+            lblDeleteStatus = new Label();
+            pnlTimeline = new Panel();
             btnSetLeft = new Button();
             btnSetRight = new Button();
             btnDelete = new Button();
@@ -92,12 +99,17 @@
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trkRecord).BeginInit();
             pnlTools.SuspendLayout();
+            pnlFilter.SuspendLayout();
+            tplFilter.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudSpeedMin).BeginInit();
             pnlSpeedRange.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudSpeedMax).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)nudAngleMin).BeginInit();
             pnlAngleRange.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudAngleMin).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudAngleMax).BeginInit();
+            pnlThrottleText.SuspendLayout();
+            pnlAngleText.SuspendLayout();
+            flowLayoutPanel1.SuspendLayout();
             contextFilter.SuspendLayout();
             SuspendLayout();
             // 
@@ -232,7 +244,7 @@
             cmbSpeed.Font = new Font("맑은 고딕", 9F);
             cmbSpeed.ForeColor = Color.White;
             cmbSpeed.Items.AddRange(new object[] { "0.25x", "0.50x", "0.75x", "1.00x", "1.25x", "1.50x", "1.75x", "2.00x" });
-            cmbSpeed.Location = new Point(1100, 141);
+            cmbSpeed.Location = new Point(41, 108);
             cmbSpeed.Name = "cmbSpeed";
             cmbSpeed.Size = new Size(92, 23);
             cmbSpeed.TabIndex = 7;
@@ -246,7 +258,7 @@
             btnFastNext.FlatStyle = FlatStyle.Flat;
             btnFastNext.Font = new Font("맑은 고딕", 11F);
             btnFastNext.ForeColor = Color.FromArgb(200, 200, 200);
-            btnFastNext.Location = new Point(1017, 207);
+            btnFastNext.Location = new Point(963, 46);
             btnFastNext.Name = "btnFastNext";
             btnFastNext.Size = new Size(180, 32);
             btnFastNext.TabIndex = 6;
@@ -261,7 +273,7 @@
             btnNext.FlatStyle = FlatStyle.Flat;
             btnNext.Font = new Font("맑은 고딕", 11F);
             btnNext.ForeColor = Color.FromArgb(200, 200, 200);
-            btnNext.Location = new Point(796, 207);
+            btnNext.Location = new Point(733, 52);
             btnNext.Name = "btnNext";
             btnNext.Size = new Size(204, 32);
             btnNext.TabIndex = 5;
@@ -276,9 +288,9 @@
             btnStartStop.FlatStyle = FlatStyle.Flat;
             btnStartStop.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
             btnStartStop.ForeColor = Color.White;
-            btnStartStop.Location = new Point(418, 207);
+            btnStartStop.Location = new Point(193, 3);
             btnStartStop.Name = "btnStartStop";
-            btnStartStop.Size = new Size(356, 32);
+            btnStartStop.Size = new Size(196, 30);
             btnStartStop.TabIndex = 4;
             btnStartStop.Text = "▶ 재생";
             btnStartStop.UseVisualStyleBackColor = false;
@@ -291,7 +303,7 @@
             btnFastPrev.FlatStyle = FlatStyle.Flat;
             btnFastPrev.Font = new Font("맑은 고딕", 11F);
             btnFastPrev.ForeColor = Color.FromArgb(200, 200, 200);
-            btnFastPrev.Location = new Point(8, 207);
+            btnFastPrev.Location = new Point(3, 155);
             btnFastPrev.Name = "btnFastPrev";
             btnFastPrev.Size = new Size(170, 32);
             btnFastPrev.TabIndex = 3;
@@ -306,7 +318,7 @@
             btnPrev.FlatStyle = FlatStyle.Flat;
             btnPrev.Font = new Font("맑은 고딕", 11F);
             btnPrev.ForeColor = Color.FromArgb(200, 200, 200);
-            btnPrev.Location = new Point(196, 207);
+            btnPrev.Location = new Point(196, 155);
             btnPrev.Name = "btnPrev";
             btnPrev.Size = new Size(200, 32);
             btnPrev.TabIndex = 2;
@@ -383,9 +395,9 @@
             // 
             trkRecord.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             trkRecord.BackColor = Color.FromArgb(18, 25, 42);
-            trkRecord.Location = new Point(8, 141);
+            trkRecord.Location = new Point(179, 108);
             trkRecord.Name = "trkRecord";
-            trkRecord.Size = new Size(1076, 45);
+            trkRecord.Size = new Size(950, 45);
             trkRecord.TabIndex = 2;
             trkRecord.TickStyle = TickStyle.None;
             // 
@@ -393,6 +405,9 @@
             // 
             pnlTools.BackColor = Color.White;
             pnlTools.BorderStyle = BorderStyle.FixedSingle;
+            pnlTools.Controls.Add(cmbSpeed);
+            pnlTools.Controls.Add(btnClearFilter);
+            pnlTools.Controls.Add(pnlFilter);
             pnlTools.Controls.Add(lblRange);
             pnlTools.Controls.Add(BtnRangeDelete);
             pnlTools.Controls.Add(BtnRightSet);
@@ -401,23 +416,10 @@
             pnlTools.Controls.Add(lblDeleteStatus);
             pnlTools.Controls.Add(pnlTimeline);
             pnlTools.Controls.Add(trkRecord);
-            pnlTools.Controls.Add(cmbSpeed);
             pnlTools.Controls.Add(btnFastPrev);
             pnlTools.Controls.Add(btnPrev);
-            pnlTools.Controls.Add(btnStartStop);
             pnlTools.Controls.Add(btnNext);
             pnlTools.Controls.Add(btnFastNext);
-            pnlTools.Controls.Add(label1);
-            pnlTools.Controls.Add(nudSpeedMin);
-            pnlTools.Controls.Add(pnlSpeedRange);
-            pnlTools.Controls.Add(nudSpeedMax);
-            pnlTools.Controls.Add(FilThrottle);
-            pnlTools.Controls.Add(nudAngleMin);
-            pnlTools.Controls.Add(pnlAngleRange);
-            pnlTools.Controls.Add(nudAngleMax);
-            pnlTools.Controls.Add(FilAngle);
-            pnlTools.Controls.Add(btnApplyFilter);
-            pnlTools.Controls.Add(btnClearFilter);
             pnlTools.Controls.Add(btnSetLeft);
             pnlTools.Controls.Add(btnSetRight);
             pnlTools.Controls.Add(btnDelete);
@@ -427,9 +429,10 @@
             pnlTools.Dock = DockStyle.Top;
             pnlTools.Location = new Point(0, 464);
             pnlTools.Name = "pnlTools";
-            pnlTools.Size = new Size(1200, 410);
+            pnlTools.Size = new Size(1200, 412);
             pnlTools.TabIndex = 3;
             // 
+            // btnClearFilter
             // lblRange
             // 
             lblRange.AutoSize = true;
@@ -481,6 +484,240 @@
             // 
             // lblDeleteStatus
             // 
+            btnClearFilter.BackColor = Color.FromArgb(42, 58, 74);
+            btnClearFilter.Cursor = Cursors.Hand;
+            btnClearFilter.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
+            btnClearFilter.FlatStyle = FlatStyle.Flat;
+            btnClearFilter.Font = new Font("맑은 고딕", 9F);
+            btnClearFilter.ForeColor = Color.FromArgb(180, 180, 180);
+            btnClearFilter.Location = new Point(527, 162);
+            btnClearFilter.Name = "btnClearFilter";
+            btnClearFilter.Size = new Size(83, 36);
+            btnClearFilter.TabIndex = 18;
+            btnClearFilter.Text = "✕ 해제";
+            btnClearFilter.UseVisualStyleBackColor = false;
+            btnClearFilter.Click += btnClearFilter_Click;
+            // 
+            // pnlFilter
+            // 
+            pnlFilter.BorderStyle = BorderStyle.FixedSingle;
+            pnlFilter.Controls.Add(tplFilter);
+            pnlFilter.Dock = DockStyle.Bottom;
+            pnlFilter.Location = new Point(0, 250);
+            pnlFilter.Name = "pnlFilter";
+            pnlFilter.Size = new Size(1198, 160);
+            pnlFilter.TabIndex = 21;
+            // 
+            // tplFilter
+            // 
+            tplFilter.ColumnCount = 3;
+            tplFilter.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));
+            tplFilter.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 80F));
+            tplFilter.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));
+            tplFilter.Controls.Add(label1, 0, 0);
+            tplFilter.Controls.Add(nudSpeedMin, 0, 2);
+            tplFilter.Controls.Add(pnlSpeedRange, 1, 2);
+            tplFilter.Controls.Add(nudSpeedMax, 2, 2);
+            tplFilter.Controls.Add(pnlAngleRange, 1, 4);
+            tplFilter.Controls.Add(nudAngleMin, 0, 4);
+            tplFilter.Controls.Add(nudAngleMax, 2, 4);
+            tplFilter.Controls.Add(pnlThrottleText, 0, 1);
+            tplFilter.Controls.Add(pnlAngleText, 0, 3);
+            tplFilter.Controls.Add(flowLayoutPanel1, 1, 0);
+            tplFilter.Dock = DockStyle.Fill;
+            tplFilter.Location = new Point(0, 0);
+            tplFilter.Name = "tplFilter";
+            tplFilter.RowCount = 5;
+            tplFilter.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tplFilter.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
+            tplFilter.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tplFilter.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
+            tplFilter.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tplFilter.Size = new Size(1196, 158);
+            tplFilter.TabIndex = 0;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Dock = DockStyle.Fill;
+            label1.Font = new Font("맑은 고딕", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 129);
+            label1.ForeColor = Color.FromArgb(74, 158, 255);
+            label1.Location = new Point(3, 0);
+            label1.Name = "label1";
+            label1.Size = new Size(113, 39);
+            label1.TabIndex = 15;
+            label1.Text = "필터 기능";
+            // 
+            // nudSpeedMin
+            // 
+            nudSpeedMin.BackColor = Color.FromArgb(30, 45, 64);
+            nudSpeedMin.BorderStyle = BorderStyle.FixedSingle;
+            nudSpeedMin.DecimalPlaces = 3;
+            nudSpeedMin.Dock = DockStyle.Fill;
+            nudSpeedMin.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            nudSpeedMin.ForeColor = Color.White;
+            nudSpeedMin.Increment = new decimal(new int[] { 1, 0, 0, 131072 });
+            nudSpeedMin.Location = new Point(3, 61);
+            nudSpeedMin.Maximum = new decimal(new int[] { 1, 0, 0, 0 });
+            nudSpeedMin.Name = "nudSpeedMin";
+            nudSpeedMin.Size = new Size(113, 29);
+            nudSpeedMin.TabIndex = 11;
+            // 
+            // pnlSpeedRange
+            // 
+            pnlSpeedRange.BackColor = Color.FromArgb(18, 25, 42);
+            pnlSpeedRange.Controls.Add(panel4);
+            pnlSpeedRange.Dock = DockStyle.Fill;
+            pnlSpeedRange.Location = new Point(122, 61);
+            pnlSpeedRange.Name = "pnlSpeedRange";
+            pnlSpeedRange.Size = new Size(950, 33);
+            pnlSpeedRange.TabIndex = 10;
+            pnlSpeedRange.Paint += pnlSpeedRange_Paint;
+            // 
+            // panel4
+            // 
+            panel4.Location = new Point(3, 33);
+            panel4.Name = "panel4";
+            panel4.Size = new Size(1020, 22);
+            panel4.TabIndex = 11;
+            // 
+            // nudSpeedMax
+            // 
+            nudSpeedMax.BackColor = Color.FromArgb(30, 45, 64);
+            nudSpeedMax.BorderStyle = BorderStyle.FixedSingle;
+            nudSpeedMax.DecimalPlaces = 3;
+            nudSpeedMax.Dock = DockStyle.Fill;
+            nudSpeedMax.Font = new Font("맑은 고딕", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            nudSpeedMax.ForeColor = Color.White;
+            nudSpeedMax.Increment = new decimal(new int[] { 1, 0, 0, 131072 });
+            nudSpeedMax.Location = new Point(1078, 61);
+            nudSpeedMax.Maximum = new decimal(new int[] { 1, 0, 0, 0 });
+            nudSpeedMax.Name = "nudSpeedMax";
+            nudSpeedMax.Size = new Size(115, 27);
+            nudSpeedMax.TabIndex = 12;
+            nudSpeedMax.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            // 
+            // pnlAngleRange
+            // 
+            pnlAngleRange.BackColor = Color.FromArgb(18, 25, 42);
+            pnlAngleRange.Controls.Add(panel6);
+            pnlAngleRange.Dock = DockStyle.Fill;
+            pnlAngleRange.Location = new Point(122, 119);
+            pnlAngleRange.Name = "pnlAngleRange";
+            pnlAngleRange.Size = new Size(950, 36);
+            pnlAngleRange.TabIndex = 12;
+            pnlAngleRange.Paint += pnlAngleRange_Paint;
+            // 
+            // panel6
+            // 
+            panel6.Location = new Point(0, 28);
+            panel6.Name = "panel6";
+            panel6.Size = new Size(947, 22);
+            panel6.TabIndex = 11;
+            // 
+            // nudAngleMin
+            // 
+            nudAngleMin.BackColor = Color.FromArgb(30, 45, 64);
+            nudAngleMin.BorderStyle = BorderStyle.FixedSingle;
+            nudAngleMin.Dock = DockStyle.Fill;
+            nudAngleMin.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            nudAngleMin.ForeColor = Color.White;
+            nudAngleMin.Location = new Point(3, 119);
+            nudAngleMin.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
+            nudAngleMin.Minimum = new decimal(new int[] { 10, 0, 0, int.MinValue });
+            nudAngleMin.Name = "nudAngleMin";
+            nudAngleMin.Size = new Size(113, 29);
+            nudAngleMin.TabIndex = 13;
+            nudAngleMin.Value = new decimal(new int[] { 10, 0, 0, int.MinValue });
+            // 
+            // nudAngleMax
+            // 
+            nudAngleMax.BackColor = Color.FromArgb(30, 45, 64);
+            nudAngleMax.BorderStyle = BorderStyle.FixedSingle;
+            nudAngleMax.Dock = DockStyle.Fill;
+            nudAngleMax.Font = new Font("맑은 고딕", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            nudAngleMax.ForeColor = Color.White;
+            nudAngleMax.Location = new Point(1078, 119);
+            nudAngleMax.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
+            nudAngleMax.Minimum = new decimal(new int[] { 10, 0, 0, int.MinValue });
+            nudAngleMax.Name = "nudAngleMax";
+            nudAngleMax.Size = new Size(115, 27);
+            nudAngleMax.TabIndex = 14;
+            nudAngleMax.Value = new decimal(new int[] { 10, 0, 0, 0 });
+            // 
+            // pnlThrottleText
+            // 
+            pnlThrottleText.BorderStyle = BorderStyle.FixedSingle;
+            pnlThrottleText.Controls.Add(FilThrottle);
+            pnlThrottleText.Dock = DockStyle.Fill;
+            pnlThrottleText.Location = new Point(3, 42);
+            pnlThrottleText.Name = "pnlThrottleText";
+            pnlThrottleText.Size = new Size(113, 13);
+            pnlThrottleText.TabIndex = 16;
+            // 
+            // FilThrottle
+            // 
+            FilThrottle.AutoSize = true;
+            FilThrottle.Dock = DockStyle.Fill;
+            FilThrottle.Font = new Font("맑은 고딕", 8.5F);
+            FilThrottle.ForeColor = Color.FromArgb(122, 154, 187);
+            FilThrottle.Location = new Point(0, 0);
+            FilThrottle.Name = "FilThrottle";
+            FilThrottle.Size = new Size(76, 15);
+            FilThrottle.TabIndex = 17;
+            FilThrottle.Text = "속도 Throttle";
+            // 
+            // pnlAngleText
+            // 
+            pnlAngleText.BorderStyle = BorderStyle.FixedSingle;
+            pnlAngleText.Controls.Add(FilAngle);
+            pnlAngleText.Dock = DockStyle.Fill;
+            pnlAngleText.Location = new Point(3, 100);
+            pnlAngleText.Name = "pnlAngleText";
+            pnlAngleText.Size = new Size(113, 13);
+            pnlAngleText.TabIndex = 17;
+            // 
+            // FilAngle
+            // 
+            FilAngle.AutoSize = true;
+            FilAngle.Dock = DockStyle.Fill;
+            FilAngle.Font = new Font("맑은 고딕", 8.5F);
+            FilAngle.ForeColor = Color.FromArgb(122, 154, 187);
+            FilAngle.Location = new Point(0, 0);
+            FilAngle.Name = "FilAngle";
+            FilAngle.Size = new Size(66, 15);
+            FilAngle.TabIndex = 16;
+            FilAngle.Text = "각도 Angle";
+            // 
+            // flowLayoutPanel1
+            // 
+            flowLayoutPanel1.Controls.Add(btnApplyFilter);
+            flowLayoutPanel1.Controls.Add(btnStartStop);
+            flowLayoutPanel1.Dock = DockStyle.Fill;
+            flowLayoutPanel1.Location = new Point(122, 3);
+            flowLayoutPanel1.Name = "flowLayoutPanel1";
+            flowLayoutPanel1.Size = new Size(950, 33);
+            flowLayoutPanel1.TabIndex = 18;
+            // 
+            // btnApplyFilter
+            // 
+            btnApplyFilter.BackColor = Color.FromArgb(24, 95, 165);
+            btnApplyFilter.Cursor = Cursors.Hand;
+            btnApplyFilter.Dock = DockStyle.Fill;
+            btnApplyFilter.FlatAppearance.BorderSize = 0;
+            btnApplyFilter.FlatStyle = FlatStyle.Flat;
+            btnApplyFilter.Font = new Font("맑은 고딕", 9F);
+            btnApplyFilter.ForeColor = Color.White;
+            btnApplyFilter.Location = new Point(3, 3);
+            btnApplyFilter.Name = "btnApplyFilter";
+            btnApplyFilter.Size = new Size(184, 30);
+            btnApplyFilter.TabIndex = 19;
+            btnApplyFilter.Text = "✔ 필터 적용";
+            btnApplyFilter.UseVisualStyleBackColor = false;
+            btnApplyFilter.Click += btnApplyFilter_Click;
+            // 
+            // lblDeleteStatus
+            // 
             lblDeleteStatus.AutoSize = true;
             lblDeleteStatus.Font = new Font("맑은 고딕", 9F);
             lblDeleteStatus.ForeColor = Color.FromArgb(255, 100, 100);
@@ -498,162 +735,6 @@
             pnlTimeline.Name = "pnlTimeline";
             pnlTimeline.Size = new Size(1184, 22);
             pnlTimeline.TabIndex = 20;
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
-            label1.ForeColor = Color.FromArgb(74, 158, 255);
-            label1.Location = new Point(8, 244);
-            label1.Name = "label1";
-            label1.Size = new Size(59, 15);
-            label1.TabIndex = 15;
-            label1.Text = "필터 기능";
-            // 
-            // nudSpeedMin
-            // 
-            nudSpeedMin.BackColor = Color.FromArgb(30, 45, 64);
-            nudSpeedMin.BorderStyle = BorderStyle.FixedSingle;
-            nudSpeedMin.DecimalPlaces = 3;
-            nudSpeedMin.Font = new Font("맑은 고딕", 8.5F);
-            nudSpeedMin.ForeColor = Color.White;
-            nudSpeedMin.Increment = new decimal(new int[] { 1, 0, 0, 131072 });
-            nudSpeedMin.Location = new Point(8, 284);
-            nudSpeedMin.Maximum = new decimal(new int[] { 1, 0, 0, 0 });
-            nudSpeedMin.Name = "nudSpeedMin";
-            nudSpeedMin.Size = new Size(90, 23);
-            nudSpeedMin.TabIndex = 11;
-            // 
-            // pnlSpeedRange
-            // 
-            pnlSpeedRange.BackColor = Color.FromArgb(18, 25, 42);
-            pnlSpeedRange.Controls.Add(panel4);
-            pnlSpeedRange.Location = new Point(104, 284);
-            pnlSpeedRange.Name = "pnlSpeedRange";
-            pnlSpeedRange.Size = new Size(980, 22);
-            pnlSpeedRange.TabIndex = 10;
-            pnlSpeedRange.Paint += pnlSpeedRange_Paint;
-            // 
-            // panel4
-            // 
-            panel4.Location = new Point(0, 28);
-            panel4.Name = "panel4";
-            panel4.Size = new Size(1020, 22);
-            panel4.TabIndex = 11;
-            // 
-            // nudSpeedMax
-            // 
-            nudSpeedMax.BackColor = Color.FromArgb(30, 45, 64);
-            nudSpeedMax.BorderStyle = BorderStyle.FixedSingle;
-            nudSpeedMax.DecimalPlaces = 3;
-            nudSpeedMax.Font = new Font("맑은 고딕", 8.5F);
-            nudSpeedMax.ForeColor = Color.White;
-            nudSpeedMax.Increment = new decimal(new int[] { 1, 0, 0, 131072 });
-            nudSpeedMax.Location = new Point(1100, 283);
-            nudSpeedMax.Maximum = new decimal(new int[] { 1, 0, 0, 0 });
-            nudSpeedMax.Name = "nudSpeedMax";
-            nudSpeedMax.Size = new Size(86, 23);
-            nudSpeedMax.TabIndex = 12;
-            nudSpeedMax.Value = new decimal(new int[] { 1, 0, 0, 0 });
-            // 
-            // FilThrottle
-            // 
-            FilThrottle.AutoSize = true;
-            FilThrottle.Font = new Font("맑은 고딕", 8.5F);
-            FilThrottle.ForeColor = Color.FromArgb(122, 154, 187);
-            FilThrottle.Location = new Point(8, 266);
-            FilThrottle.Name = "FilThrottle";
-            FilThrottle.Size = new Size(76, 15);
-            FilThrottle.TabIndex = 17;
-            FilThrottle.Text = "속도 Throttle";
-            // 
-            // nudAngleMin
-            // 
-            nudAngleMin.BackColor = Color.FromArgb(30, 45, 64);
-            nudAngleMin.BorderStyle = BorderStyle.FixedSingle;
-            nudAngleMin.Font = new Font("맑은 고딕", 8.5F);
-            nudAngleMin.ForeColor = Color.White;
-            nudAngleMin.Location = new Point(8, 332);
-            nudAngleMin.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
-            nudAngleMin.Minimum = new decimal(new int[] { 10, 0, 0, int.MinValue });
-            nudAngleMin.Name = "nudAngleMin";
-            nudAngleMin.Size = new Size(90, 23);
-            nudAngleMin.TabIndex = 13;
-            nudAngleMin.Value = new decimal(new int[] { 10, 0, 0, int.MinValue });
-            // 
-            // pnlAngleRange
-            // 
-            pnlAngleRange.BackColor = Color.FromArgb(18, 25, 42);
-            pnlAngleRange.Controls.Add(panel6);
-            pnlAngleRange.Location = new Point(104, 332);
-            pnlAngleRange.Name = "pnlAngleRange";
-            pnlAngleRange.Size = new Size(980, 22);
-            pnlAngleRange.TabIndex = 12;
-            pnlAngleRange.Paint += pnlAngleRange_Paint;
-            // 
-            // panel6
-            // 
-            panel6.Location = new Point(0, 28);
-            panel6.Name = "panel6";
-            panel6.Size = new Size(1020, 22);
-            panel6.TabIndex = 11;
-            // 
-            // nudAngleMax
-            // 
-            nudAngleMax.BackColor = Color.FromArgb(30, 45, 64);
-            nudAngleMax.BorderStyle = BorderStyle.FixedSingle;
-            nudAngleMax.Font = new Font("맑은 고딕", 8.5F);
-            nudAngleMax.ForeColor = Color.White;
-            nudAngleMax.Location = new Point(1100, 331);
-            nudAngleMax.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
-            nudAngleMax.Minimum = new decimal(new int[] { 10, 0, 0, int.MinValue });
-            nudAngleMax.Name = "nudAngleMax";
-            nudAngleMax.Size = new Size(86, 23);
-            nudAngleMax.TabIndex = 14;
-            nudAngleMax.Value = new decimal(new int[] { 10, 0, 0, 0 });
-            // 
-            // FilAngle
-            // 
-            FilAngle.AutoSize = true;
-            FilAngle.Font = new Font("맑은 고딕", 8.5F);
-            FilAngle.ForeColor = Color.FromArgb(122, 154, 187);
-            FilAngle.Location = new Point(8, 314);
-            FilAngle.Name = "FilAngle";
-            FilAngle.Size = new Size(66, 15);
-            FilAngle.TabIndex = 16;
-            FilAngle.Text = "각도 Angle";
-            // 
-            // btnApplyFilter
-            // 
-            btnApplyFilter.BackColor = Color.FromArgb(24, 95, 165);
-            btnApplyFilter.Cursor = Cursors.Hand;
-            btnApplyFilter.FlatAppearance.BorderSize = 0;
-            btnApplyFilter.FlatStyle = FlatStyle.Flat;
-            btnApplyFilter.Font = new Font("맑은 고딕", 9F);
-            btnApplyFilter.ForeColor = Color.White;
-            btnApplyFilter.Location = new Point(8, 362);
-            btnApplyFilter.Name = "btnApplyFilter";
-            btnApplyFilter.Size = new Size(100, 26);
-            btnApplyFilter.TabIndex = 19;
-            btnApplyFilter.Text = "✔ 필터 적용";
-            btnApplyFilter.UseVisualStyleBackColor = false;
-            btnApplyFilter.Click += btnApplyFilter_Click;
-            // 
-            // btnClearFilter
-            // 
-            btnClearFilter.BackColor = Color.FromArgb(42, 58, 74);
-            btnClearFilter.Cursor = Cursors.Hand;
-            btnClearFilter.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
-            btnClearFilter.FlatStyle = FlatStyle.Flat;
-            btnClearFilter.Font = new Font("맑은 고딕", 9F);
-            btnClearFilter.ForeColor = Color.FromArgb(180, 180, 180);
-            btnClearFilter.Location = new Point(114, 362);
-            btnClearFilter.Name = "btnClearFilter";
-            btnClearFilter.Size = new Size(80, 26);
-            btnClearFilter.TabIndex = 18;
-            btnClearFilter.Text = "✕ 해제";
-            btnClearFilter.UseVisualStyleBackColor = false;
-            btnClearFilter.Click += btnClearFilter_Click;
             // 
             // btnSetLeft
             // 
@@ -756,9 +837,9 @@
             pnlGraph.BackColor = Color.White;
             pnlGraph.BorderStyle = BorderStyle.FixedSingle;
             pnlGraph.Dock = DockStyle.Fill;
-            pnlGraph.Location = new Point(0, 874);
+            pnlGraph.Location = new Point(0, 876);
             pnlGraph.Name = "pnlGraph";
-            pnlGraph.Size = new Size(1200, 126);
+            pnlGraph.Size = new Size(1200, 124);
             pnlGraph.TabIndex = 4;
             // 
             // contextFilter
@@ -785,6 +866,8 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            AutoScroll = true;
+            AutoScrollMinSize = new Size(1200, 1000);
             BackColor = Color.FromArgb(18, 25, 42);
             Controls.Add(pnlGraph);
             Controls.Add(pnlTools);
@@ -803,12 +886,20 @@
             ((System.ComponentModel.ISupportInitialize)trkRecord).EndInit();
             pnlTools.ResumeLayout(false);
             pnlTools.PerformLayout();
+            pnlFilter.ResumeLayout(false);
+            tplFilter.ResumeLayout(false);
+            tplFilter.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nudSpeedMin).EndInit();
             pnlSpeedRange.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)nudSpeedMax).EndInit();
-            ((System.ComponentModel.ISupportInitialize)nudAngleMin).EndInit();
             pnlAngleRange.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)nudAngleMin).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudAngleMax).EndInit();
+            pnlThrottleText.ResumeLayout(false);
+            pnlThrottleText.PerformLayout();
+            pnlAngleText.ResumeLayout(false);
+            pnlAngleText.PerformLayout();
+            flowLayoutPanel1.ResumeLayout(false);
             contextFilter.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -850,9 +941,7 @@
         private Button btnLoadTub;
         private Button btnLoadCarDirectory;
         private Panel pnlSpeedRange;
-        private NumericUpDown nudSpeedMax;
         private NumericUpDown nudSpeedMin;
-        private NumericUpDown nudAngleMax;
         private NumericUpDown nudAngleMin;
         private Panel panel4;
         private Panel pnlAngleRange;
@@ -863,6 +952,13 @@
         private Button btnApplyFilter;
         private Button btnClearFilter;
         private Panel pnlTimeline;
+        private Panel pnlFilter;
+        private TableLayoutPanel tplFilter;
+        private NumericUpDown nudSpeedMax;
+        private NumericUpDown nudAngleMax;
+        private Panel pnlThrottleText;
+        private Panel pnlAngleText;
+        private FlowLayoutPanel flowLayoutPanel1;
         private Label IblRange;
         private Button BtnRightSet;
         private Button BtnLeftSet;
