@@ -15,6 +15,22 @@ namespace DonkeyUi
         public Form1()
         {
             InitializeComponent();
+            // Ensure pilot arena timeline changes update the tub manager instance
+            try
+            {
+                ucPilotArena.OnTimelineIndexChanged += (idx) =>
+                {
+                    try
+                    {
+                        // Prefer path-based sync to avoid index/order mismatches between controls
+                        var path = _pilotArena.GetImagePathAt(idx);
+                        if (!string.IsNullOrEmpty(path)) _tubManager.ShowImageAndSelectByPath(path);
+                        else _tubManager.SetExternalIndex(idx);
+                    }
+                    catch { }
+                };
+            }
+            catch { }
         }
 
         private void LoadControl(UserControl uc)
