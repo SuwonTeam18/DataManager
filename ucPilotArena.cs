@@ -17,6 +17,8 @@ namespace DonkeyUi
 {
     public partial class ucPilotArena : UserControl
     {
+        // Event to notify external components when timeline index changes
+        public static event Action<int>? OnTimelineIndexChanged;
         // ════════════════════════════════════════════════════════════
         // 파일럿 세트 관리
         // ════════════════════════════════════════════════════════════
@@ -68,6 +70,11 @@ namespace DonkeyUi
 
         // ✅ 슬라이더 디바운스 타이머
         private System.Windows.Forms.Timer _sliderDebounce = new System.Windows.Forms.Timer();
+        private bool _suppressTimelineNotify = false;
+        private bool _suppressOnTubDataChangedTimelineSet = false;
+        // ✅ 타임라인 이동 디바운스 타이머
+        private System.Windows.Forms.Timer _timelineDebounce = new System.Windows.Forms.Timer();
+        private int _pendingTimelineIndex = -1;
 
         private static readonly Color HumanColor = Color.FromArgb(255, 255, 87, 34);
         private static readonly Color AiColor = Color.FromArgb(255, 0, 176, 255);
@@ -226,6 +233,21 @@ namespace DonkeyUi
             if (cmbNumColumns != null) cmbNumColumns.SelectedIndexChanged += (s, e) => UpdateDisplay();
 
             trkTimeline.Scroll += trkTimeline_Scroll;
+            // 타임라인 디바운스 설정 (200ms)
+            _timelineDebounce.Interval = 200;
+            _timelineDebounce.Tick += (s, e) => {
+                _timelineDebounce.Stop();
+                if (_pendingTimelineIndex >= 0)
+                {
+                    int idx = _pendingTimelineIndex;
+                    _pendingTimelineIndex = -1;
+                    // 한 번만 적용
+                    _suppressTimelineNotify = true; // 루프 방지
+                    _currentIndex = idx;
+                    ShowFrame(_currentIndex);
+                    try { OnTimelineIndexChanged?.Invoke(_currentIndex); } catch { }
+                }
+            };
             trkBrightness.Scroll += trkBrightness_Scroll;
             trkBlur.Scroll += trkBlur_Scroll;
 
@@ -575,10 +597,61 @@ namespace DonkeyUi
             catch { }
         }
 
+        // Return image path at specified index
+        public string? GetImagePathAt(int idx)
+        {
+            if (this.InvokeRequired)
+            {
+                return (string?)this.Invoke(new Func<int, string?>(GetImagePathAt), idx);
+            }
+            if (_imageFiles == null || _imageFiles.Count == 0) return null;
+            if (idx < 0 || idx >= _imageFiles.Count) return null;
+            return _imageFiles[idx];
+        }
+
         private void trkTimeline_Scroll(object sender, EventArgs e)
         {
-            _currentIndex = trkTimeline.Value;
-            ShowFrame(_currentIndex);
+            // If this change was programmatic, ignore to avoid loops
+            if (_suppressTimelineNotify)
+            {
+                _suppressTimelineNotify = false;
+                return;
+            }
+            // Debounce timeline moves to avoid heavy repeated processing
+            _pendingTimelineIndex = trkTimeline.Value;
+            _timelineDebounce.Stop();
+            _timelineDebounce.Start();
+        }
+
+        private void ShowFrameByPath(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
+            try
+            {
+                using var fs = File.OpenRead(path);
+                using var rawImg = Image.FromStream(fs);
+                using var bright = MakeBrightness(rawImg, trkBrightness.Value);
+                var processed = MakeBlur(bright, trkBlur.Value);
+
+                if (_displayPictureBoxes.Count > 0)
+                {
+                    _displayPictureBoxes[0].Image?.Dispose();
+                    _displayPictureBoxes[0].Image = new Bitmap(processed);
+                }
+                processed.Dispose();
+                _lastImagePath = path;
+            }
+            catch { }
+        }
+
+        private IEnumerable<Control> FindControlsRecursive(Control.ControlCollection cols)
+        {
+            foreach (Control c in cols)
+            {
+                yield return c;
+                foreach (var child in FindControlsRecursive(c.Controls))
+                    yield return child;
+            }
         }
 
         // ✅ 슬라이더는 디바운스 — 멈추고 200ms 후에만 처리
@@ -744,6 +817,21 @@ namespace DonkeyUi
                     }
                 }
             }
+
+            // Update timeline range to match incoming tub total count
+            try
+            {
+                trkTimeline.Minimum = 0;
+                trkTimeline.Maximum = Math.Max(0, totalCount - 1);
+                // Safely set value without triggering scroll handling loop
+                if (currentIndex >= 0 && currentIndex <= trkTimeline.Maximum)
+                {
+                    _suppressTimelineNotify = true;
+                    trkTimeline.Value = currentIndex;
+                }
+            }
+            catch { }
+
             UpdateUserValuePanel();
             RefreshAllSlots();
         }
