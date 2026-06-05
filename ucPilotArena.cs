@@ -212,7 +212,8 @@ namespace DonkeyUi
 
             // 슬라이더 디바운스 (200ms)
             _sliderDebounce.Interval = 200;
-            _sliderDebounce.Tick += (s, e) => {
+            _sliderDebounce.Tick += (s, e) =>
+            {
                 _sliderDebounce.Stop();
                 if (_imageFiles.Count > 0 && !string.IsNullOrEmpty(_lastImagePath))
                 {
@@ -223,7 +224,8 @@ namespace DonkeyUi
 
             // [파일1 추가] 타임라인 디바운스 (200ms)
             _timelineDebounce.Interval = 200;
-            _timelineDebounce.Tick += (s, e) => {
+            _timelineDebounce.Tick += (s, e) =>
+            {
                 _timelineDebounce.Stop();
                 if (_pendingTimelineIndex < 0) return;
 
@@ -378,7 +380,8 @@ namespace DonkeyUi
             slot.PythonProc = proc;
 
             string pythonErrorLog = "";
-            _ = Task.Run(async () => {
+            _ = Task.Run(async () =>
+            {
                 try { while (!proc.HasExited && !proc.StandardError.EndOfStream) { string err = await proc.StandardError.ReadLineAsync(); if (!string.IsNullOrEmpty(err)) { pythonErrorLog += err + "\n"; Debug.WriteLine($"[stderr] {err}"); } } } catch { }
             });
 
@@ -1023,7 +1026,8 @@ namespace DonkeyUi
             _rdoErrAngle.CheckedChanged += (s, e) => { if (_rdoErrAngle.Checked && _pnlErrorOptions.Visible) { _graphMode = GraphMode.ErrorAngle; updateLegend(); _graphDrawPanel?.Invalidate(); } };
             _rdoErrThrottle.CheckedChanged += (s, e) => { if (_rdoErrThrottle.Checked && _pnlErrorOptions.Visible) { _graphMode = GraphMode.ErrorThrottle; updateLegend(); _graphDrawPanel?.Invalidate(); } };
 
-            _btnGenerateFilteredGraph.Click += (s, e) => {
+            _btnGenerateFilteredGraph.Click += (s, e) =>
+            {
                 _graphBrightness = trkBrightness.Value;
                 _graphBlur = trkBlur.Value;
                 _lblGraphFilterStatus.Text = $"필터값 - 밝기: {_graphBrightness}, 흐림: {_graphBlur}";
@@ -1322,7 +1326,8 @@ namespace DonkeyUi
                     var p2 = Directory.GetFiles(tubFolder, "catalog_*", SearchOption.TopDirectoryOnly);
                     var catalogFiles = p1.Union(p2).Distinct()
                         .Where(f => !Directory.Exists(f))
-                        .OrderBy(p => {
+                        .OrderBy(p =>
+                        {
                             var fn = Path.GetFileNameWithoutExtension(p);
                             var m = System.Text.RegularExpressions.Regex.Match(fn, @"\d+");
                             return m.Success ? int.Parse(m.Value) : int.MaxValue;
@@ -1456,7 +1461,8 @@ namespace DonkeyUi
 
             if (!token.IsCancellationRequested && !this.IsDisposed && this.IsHandleCreated)
             {
-                this.BeginInvoke(() => {
+                this.BeginInvoke(() =>
+                {
                     RefreshAllSlots();
                     int n = _graphHumanAngles.Count;
                     if (n >= 2 && _graphDrawPanel != null)
@@ -1477,17 +1483,110 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         private void SetupRankControls()
         {
-            flpRankControls.BackColor = Color.FromArgb(244, 243, 238); flpRankControls.Padding = new Padding(6, 0, 0, 0);
-            flpRankControls.Height = 50; flpRankControls.WrapContents = false; flpRankControls.FlowDirection = FlowDirection.LeftToRight;
+            flpRankControls.BackColor = Color.FromArgb(244, 243, 238);
+            flpRankControls.Padding = new Padding(6, 0, 0, 0);
+            flpRankControls.Height = 50;
+            flpRankControls.WrapContents = false;
+            flpRankControls.FlowDirection = FlowDirection.LeftToRight;
             flpRankControls.Controls.Clear();
-            Label lblHeader = new Label { Text = "오차율 순위", Font = new Font("맑은 고딕", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(26, 95, 168), AutoSize = true, Margin = new Padding(4, 10, 4, 0) };
+
+            // ── 헤더 라벨 ──
+            Label lblHeader = new Label
+            {
+                Text = "오차율 순위",
+                Font = new Font("맑은 고딕", 8.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(26, 95, 168),
+                AutoSize = true,
+                Margin = new Padding(4, 12, 4, 0)
+            };
+
+            // ── 분류 선택 콤보박스 1개 ──
+            var cmbRankType = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 80,
+                Font = new Font("맑은 고딕", 8.5f),
+                Margin = new Padding(0, 10, 8, 0)
+            };
+            cmbRankType.Items.AddRange(new object[] { "종합", "각도", "속도" });
+            cmbRankType.SelectedIndex = 0;
+
+            // ── 순위 패널 (1~3위를 가로로 표시) ──
+            var pnlRanks = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                AutoSize = true,
+                WrapContents = false,
+                Margin = new Padding(0, 6, 0, 0)
+            };
+
+            // 순위 라벨 3개 생성
+            var rankLabels = new Label[3];
+            Color[] medalColors = 
+            {
+                Color.FromArgb(212, 175, 55),  // 1위 금
+                Color.FromArgb(160, 160, 160), // 2위 은
+                Color.FromArgb(176, 101, 48)   // 3위 동
+            };
+
+            string[] medals = { "🥇", "🥈", "🥉" };
+
+            for (int i = 0; i < 3; i++)
+            {
+                var lbl = new Label
+                {
+                    Text = $"{i + 1}위  -",
+                    Font = new Font("맑은 고딕", 8.5f, FontStyle.Bold),
+                    ForeColor = medalColors[i],
+                    AutoSize = false,
+                    Width = 260,
+                    Height = 36,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    BackColor = Color.White,
+                    Margin = new Padding(0, 0, 4, 0),
+                    Padding = new Padding(6, 0, 0, 0)
+                };
+                rankLabels[i] = lbl;
+                pnlRanks.Controls.Add(lbl);
+            }
+
+            // ── 콤보 변경 시 순위 갱신 ──
+            Action refreshRanks = () =>
+            {
+                // 어떤 콤보박스 기준으로 정렬할지 결정
+                ComboBox srcCombo = cmbRankType.SelectedIndex switch
+                {
+                    1 => cmbRankAngle,
+                    2 => cmbRankThrottle,
+                    _ => cmbRankOverall
+                };
+
+                // srcCombo 아이템을 순서대로 읽어서 1~3위 표시
+                // (기존 cmbRankOverall/Angle/Throttle에 모델명이 순위대로 들어있다고 가정)
+                string[] medals = { "🥇", "🥈", "🥉" };
+                for (int i = 0; i < 3; i++)
+                {
+                    string modelName = (srcCombo.Items.Count > i)
+                        ? srcCombo.Items[i]?.ToString() ?? "-"
+                        : "-";
+                    rankLabels[i].Text = $"{medals[i]} {i + 1}위  {modelName}";
+                }
+            };
+
+            cmbRankType.SelectedIndexChanged += (s, e) => refreshRanks();
+
+            // 기존 숨겨진 콤보박스들(cmbRankOverall 등)의 아이템이 바뀔 때도 갱신
+            cmbRankOverall.SelectedIndexChanged += (s, e) => refreshRanks();
+            cmbRankAngle.SelectedIndexChanged += (s, e) => refreshRanks();
+            cmbRankThrottle.SelectedIndexChanged += (s, e) => refreshRanks();
+
             flpRankControls.Controls.Add(lblHeader);
             flpRankControls.Controls.Add(MakeSeparator());
-            flpRankControls.Controls.Add(MakeComboGroup("종합", Color.FromArgb(26, 95, 168), cmbRankOverall));
-            flpRankControls.Controls.Add(MakeSeparator());
-            flpRankControls.Controls.Add(MakeComboGroup("각도", Color.FromArgb(25, 122, 58), cmbRankAngle));
-            flpRankControls.Controls.Add(MakeSeparator());
-            flpRankControls.Controls.Add(MakeComboGroup("속도", Color.FromArgb(200, 82, 10), cmbRankThrottle));
+            flpRankControls.Controls.Add(cmbRankType);
+            flpRankControls.Controls.Add(pnlRanks);
+
+            refreshRanks();
         }
 
         private Panel MakeComboGroup(string labelText, Color labelColor, ComboBox comboBox)

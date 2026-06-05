@@ -327,7 +327,7 @@ namespace DonkeyUi
             // cmbRankOverall
             // 
             cmbRankOverall.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbRankOverall.Items.AddRange(new object[] { "종합", "각도", "속도" });
+            cmbRankOverall.Items.AddRange(new object[] { "종합" });
             cmbRankOverall.Location = new Point(89, 3);
             cmbRankOverall.Name = "cmbRankOverall";
             cmbRankOverall.Size = new Size(80, 23);
@@ -1020,7 +1020,7 @@ namespace DonkeyUi
             Controls.Add(tlpMain);
             Controls.Add(pnlTop);
             Name = "ucPilotArena";
-            Size = new Size(834, 502);
+            Size = new Size(864, 509);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             tlpMain.ResumeLayout(false);

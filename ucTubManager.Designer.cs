@@ -2,30 +2,16 @@
 {
     partial class ucTubManager
     {
-        /// <summary> 
-        /// 필수 디자이너 변수입니다.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary> 
-        /// 사용 중인 모든 리소스를 정리합니다.
-        /// </summary>
-        /// <param name="disposing">관리되는 리소스를 삭제해야 하면 true이고, 그렇지 않으면 false입니다.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
-            {
                 components.Dispose();
-            }
             base.Dispose(disposing);
         }
 
         #region 구성 요소 디자이너에서 생성한 코드
-
-        /// <summary> 
-        /// 디자이너 지원에 필요한 메서드입니다. 
-        /// 이 메서드의 내용을 코드 편집기로 수정하지 마세요.
-        /// </summary>
 
         private void InitializeComponent()
         {
@@ -116,9 +102,9 @@
             // 
             // tlpWorkspace
             // 
-            tlpWorkspace.BackColor = Color.FromArgb(18, 25, 42);
+            tlpWorkspace.BackColor = Color.FromArgb(244, 243, 238);
             tlpWorkspace.ColumnCount = 2;
-            tlpWorkspace.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210F));
+            tlpWorkspace.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220F));
             tlpWorkspace.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tlpWorkspace.Controls.Add(panel2, 0, 0);
             tlpWorkspace.Controls.Add(picTubImage, 1, 0);
@@ -132,7 +118,7 @@
             // 
             // panel2
             // 
-            panel2.BackColor = Color.White;
+            panel2.BackColor = Color.FromArgb(244, 243, 238);
             panel2.BorderStyle = BorderStyle.FixedSingle;
             panel2.Controls.Add(lblThrottle);
             panel2.Controls.Add(picThrottle);
@@ -143,14 +129,14 @@
             panel2.Dock = DockStyle.Fill;
             panel2.Location = new Point(3, 3);
             panel2.Name = "panel2";
-            panel2.Size = new Size(204, 414);
+            panel2.Size = new Size(214, 414);
             panel2.TabIndex = 2;
             // 
             // lblThrottle
             // 
-            lblThrottle.BackColor = Color.FromArgb(18, 25, 42);
+            lblThrottle.BackColor = Color.FromArgb(244, 243, 238);
             lblThrottle.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
-            lblThrottle.ForeColor = Color.FromArgb(122, 154, 187);
+            lblThrottle.ForeColor = Color.FromArgb(80, 80, 80);
             lblThrottle.Location = new Point(4, 4);
             lblThrottle.Name = "lblThrottle";
             lblThrottle.Size = new Size(200, 18);
@@ -159,7 +145,7 @@
             // 
             // picThrottle
             // 
-            picThrottle.BackColor = Color.FromArgb(18, 25, 42);
+            picThrottle.BackColor = Color.FromArgb(40, 40, 40);
             picThrottle.Location = new Point(4, 22);
             picThrottle.Name = "picThrottle";
             picThrottle.Size = new Size(200, 140);
@@ -169,9 +155,9 @@
             // 
             // lblAngle
             // 
-            lblAngle.BackColor = Color.FromArgb(18, 25, 42);
+            lblAngle.BackColor = Color.FromArgb(244, 243, 238);
             lblAngle.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
-            lblAngle.ForeColor = Color.FromArgb(122, 154, 187);
+            lblAngle.ForeColor = Color.FromArgb(80, 80, 80);
             lblAngle.Location = new Point(4, 168);
             lblAngle.Name = "lblAngle";
             lblAngle.Size = new Size(200, 18);
@@ -180,10 +166,10 @@
             // 
             // txtRecordNumber
             // 
-            txtRecordNumber.BackColor = Color.FromArgb(30, 45, 64);
+            txtRecordNumber.BackColor = Color.White;
             txtRecordNumber.BorderStyle = BorderStyle.FixedSingle;
             txtRecordNumber.Font = new Font("맑은 고딕", 11F, FontStyle.Bold);
-            txtRecordNumber.ForeColor = Color.White;
+            txtRecordNumber.ForeColor = Color.FromArgb(30, 30, 30);
             txtRecordNumber.Location = new Point(4, 353);
             txtRecordNumber.Name = "txtRecordNumber";
             txtRecordNumber.Size = new Size(195, 27);
@@ -194,7 +180,7 @@
             // 
             // picAngle
             // 
-            picAngle.BackColor = Color.FromArgb(18, 25, 42);
+            picAngle.BackColor = Color.FromArgb(40, 40, 40);
             picAngle.Location = new Point(4, 186);
             picAngle.Name = "picAngle";
             picAngle.Size = new Size(200, 140);
@@ -204,9 +190,9 @@
             // 
             // lblRecordInfo
             // 
-            lblRecordInfo.BackColor = Color.FromArgb(18, 25, 42);
+            lblRecordInfo.BackColor = Color.FromArgb(244, 243, 238);
             lblRecordInfo.Font = new Font("맑은 고딕", 9F);
-            lblRecordInfo.ForeColor = Color.FromArgb(122, 154, 187);
+            lblRecordInfo.ForeColor = Color.FromArgb(120, 120, 120);
             lblRecordInfo.Location = new Point(4, 332);
             lblRecordInfo.Name = "lblRecordInfo";
             lblRecordInfo.Size = new Size(200, 18);
@@ -217,9 +203,9 @@
             // 
             picTubImage.BackColor = Color.Black;
             picTubImage.Dock = DockStyle.Fill;
-            picTubImage.Location = new Point(213, 3);
+            picTubImage.Location = new Point(223, 3);
             picTubImage.Name = "picTubImage";
-            picTubImage.Size = new Size(984, 414);
+            picTubImage.Size = new Size(974, 414);
             picTubImage.SizeMode = PictureBoxSizeMode.Zoom;
             picTubImage.TabIndex = 3;
             picTubImage.TabStop = false;
@@ -233,90 +219,90 @@
             // 
             // cmbSpeed
             // 
-            cmbSpeed.BackColor = Color.FromArgb(30, 45, 64);
+            cmbSpeed.BackColor = Color.White;
             cmbSpeed.FlatStyle = FlatStyle.Flat;
             cmbSpeed.Font = new Font("맑은 고딕", 9F);
-            cmbSpeed.ForeColor = Color.White;
+            cmbSpeed.ForeColor = Color.FromArgb(50, 50, 50);
             cmbSpeed.Items.AddRange(new object[] { "0.25x", "0.50x", "0.75x", "1.00x", "1.25x", "1.50x", "1.75x", "2.00x" });
-            cmbSpeed.Location = new Point(41, 108);
+            cmbSpeed.Location = new Point(8, 60);
             cmbSpeed.Name = "cmbSpeed";
-            cmbSpeed.Size = new Size(92, 23);
+            cmbSpeed.Size = new Size(140, 23);
             cmbSpeed.TabIndex = 7;
             cmbSpeed.Text = "1.0x";
             // 
             // btnFastNext
             // 
-            btnFastNext.BackColor = Color.FromArgb(30, 45, 64);
+            btnFastNext.BackColor = Color.FromArgb(224, 224, 224);
             btnFastNext.Cursor = Cursors.Hand;
-            btnFastNext.FlatAppearance.BorderColor = Color.FromArgb(42, 74, 106);
+            btnFastNext.FlatAppearance.BorderColor = Color.FromArgb(204, 204, 204);
             btnFastNext.FlatStyle = FlatStyle.Flat;
-            btnFastNext.Font = new Font("맑은 고딕", 11F);
-            btnFastNext.ForeColor = Color.FromArgb(200, 200, 200);
-            btnFastNext.Location = new Point(963, 46);
+            btnFastNext.Font = new Font("맑은 고딕", 9F);
+            btnFastNext.ForeColor = Color.FromArgb(68, 68, 68);
+            btnFastNext.Location = new Point(956, 100);
             btnFastNext.Name = "btnFastNext";
-            btnFastNext.Size = new Size(180, 32);
+            btnFastNext.Size = new Size(236, 32);
             btnFastNext.TabIndex = 6;
-            btnFastNext.Text = "⏭";
+            btnFastNext.Text = ">>";
             btnFastNext.UseVisualStyleBackColor = false;
             // 
             // btnNext
             // 
-            btnNext.BackColor = Color.FromArgb(30, 45, 64);
+            btnNext.BackColor = Color.FromArgb(236, 236, 236);
             btnNext.Cursor = Cursors.Hand;
-            btnNext.FlatAppearance.BorderColor = Color.FromArgb(42, 74, 106);
+            btnNext.FlatAppearance.BorderColor = Color.FromArgb(221, 221, 221);
             btnNext.FlatStyle = FlatStyle.Flat;
-            btnNext.Font = new Font("맑은 고딕", 11F);
-            btnNext.ForeColor = Color.FromArgb(200, 200, 200);
-            btnNext.Location = new Point(733, 52);
+            btnNext.Font = new Font("맑은 고딕", 9F);
+            btnNext.ForeColor = Color.FromArgb(85, 85, 85);
+            btnNext.Location = new Point(730, 100);
             btnNext.Name = "btnNext";
-            btnNext.Size = new Size(204, 32);
+            btnNext.Size = new Size(220, 32);
             btnNext.TabIndex = 5;
-            btnNext.Text = "⏩";
+            btnNext.Text = ">";
             btnNext.UseVisualStyleBackColor = false;
             // 
             // btnStartStop
             // 
-            btnStartStop.BackColor = Color.FromArgb(24, 95, 165);
+            btnStartStop.BackColor = Color.FromArgb(230, 242, 255);
             btnStartStop.Cursor = Cursors.Hand;
             btnStartStop.FlatAppearance.BorderSize = 0;
             btnStartStop.FlatStyle = FlatStyle.Flat;
             btnStartStop.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
-            btnStartStop.ForeColor = Color.White;
-            btnStartStop.Location = new Point(193, 3);
+            btnStartStop.ForeColor = Color.FromArgb(24, 95, 165);
+            btnStartStop.Location = new Point(460, 100);
             btnStartStop.Name = "btnStartStop";
-            btnStartStop.Size = new Size(196, 30);
+            btnStartStop.Size = new Size(264, 33);
             btnStartStop.TabIndex = 4;
             btnStartStop.Text = "▶ 재생";
             btnStartStop.UseVisualStyleBackColor = false;
             // 
             // btnFastPrev
             // 
-            btnFastPrev.BackColor = Color.FromArgb(30, 45, 64);
+            btnFastPrev.BackColor = Color.FromArgb(224, 224, 224);
             btnFastPrev.Cursor = Cursors.Hand;
-            btnFastPrev.FlatAppearance.BorderColor = Color.FromArgb(42, 74, 106);
+            btnFastPrev.FlatAppearance.BorderColor = Color.FromArgb(204, 204, 204);
             btnFastPrev.FlatStyle = FlatStyle.Flat;
-            btnFastPrev.Font = new Font("맑은 고딕", 11F);
-            btnFastPrev.ForeColor = Color.FromArgb(200, 200, 200);
-            btnFastPrev.Location = new Point(3, 155);
+            btnFastPrev.Font = new Font("맑은 고딕", 9F);
+            btnFastPrev.ForeColor = Color.FromArgb(68, 68, 68);
+            btnFastPrev.Location = new Point(8, 100);
             btnFastPrev.Name = "btnFastPrev";
-            btnFastPrev.Size = new Size(170, 32);
+            btnFastPrev.Size = new Size(220, 32);
             btnFastPrev.TabIndex = 3;
-            btnFastPrev.Text = "⏮";
+            btnFastPrev.Text = "<<";
             btnFastPrev.UseVisualStyleBackColor = false;
             // 
             // btnPrev
             // 
-            btnPrev.BackColor = Color.FromArgb(30, 45, 64);
+            btnPrev.BackColor = Color.FromArgb(236, 236, 236);
             btnPrev.Cursor = Cursors.Hand;
-            btnPrev.FlatAppearance.BorderColor = Color.FromArgb(42, 74, 106);
+            btnPrev.FlatAppearance.BorderColor = Color.FromArgb(221, 221, 221);
             btnPrev.FlatStyle = FlatStyle.Flat;
-            btnPrev.Font = new Font("맑은 고딕", 11F);
-            btnPrev.ForeColor = Color.FromArgb(200, 200, 200);
-            btnPrev.Location = new Point(196, 155);
+            btnPrev.Font = new Font("맑은 고딕", 9F);
+            btnPrev.ForeColor = Color.FromArgb(85, 85, 85);
+            btnPrev.Location = new Point(234, 100);
             btnPrev.Name = "btnPrev";
-            btnPrev.Size = new Size(200, 32);
+            btnPrev.Size = new Size(220, 32);
             btnPrev.TabIndex = 2;
-            btnPrev.Text = "⏪";
+            btnPrev.Text = "<";
             btnPrev.UseVisualStyleBackColor = false;
             // 
             // panel1
@@ -340,7 +326,7 @@
             btnLoadCarDirectory.FlatAppearance.BorderSize = 0;
             btnLoadCarDirectory.FlatStyle = FlatStyle.Flat;
             btnLoadCarDirectory.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
-            btnLoadCarDirectory.ForeColor = Color.FromArgb(30, 30, 30);
+            btnLoadCarDirectory.ForeColor = Color.White;
             btnLoadCarDirectory.Location = new Point(8, 8);
             btnLoadCarDirectory.Name = "btnLoadCarDirectory";
             btnLoadCarDirectory.Size = new Size(110, 28);
@@ -358,17 +344,17 @@
             btnLoadTub.ForeColor = Color.White;
             btnLoadTub.Location = new Point(572, 8);
             btnLoadTub.Name = "btnLoadTub";
-            btnLoadTub.Size = new Size(120, 28);
+            btnLoadTub.Size = new Size(130, 28);
             btnLoadTub.TabIndex = 5;
             btnLoadTub.Text = "📂 데이터 불러오기";
             btnLoadTub.UseVisualStyleBackColor = false;
             // 
             // txtCarDirectory
             // 
-            txtCarDirectory.BackColor = Color.FromArgb(15, 30, 53);
+            txtCarDirectory.BackColor = Color.White;
             txtCarDirectory.BorderStyle = BorderStyle.FixedSingle;
             txtCarDirectory.Font = new Font("맑은 고딕", 9F);
-            txtCarDirectory.ForeColor = Color.FromArgb(122, 154, 187);
+            txtCarDirectory.ForeColor = Color.FromArgb(50, 50, 50);
             txtCarDirectory.Location = new Point(124, 10);
             txtCarDirectory.Name = "txtCarDirectory";
             txtCarDirectory.Size = new Size(440, 23);
@@ -376,28 +362,28 @@
             // 
             // txtTub
             // 
-            txtTub.BackColor = Color.FromArgb(15, 30, 53);
+            txtTub.BackColor = Color.White;
             txtTub.BorderStyle = BorderStyle.FixedSingle;
             txtTub.Font = new Font("맑은 고딕", 9F);
-            txtTub.ForeColor = Color.FromArgb(122, 154, 187);
-            txtTub.Location = new Point(698, 10);
+            txtTub.ForeColor = Color.FromArgb(50, 50, 50);
+            txtTub.Location = new Point(708, 10);
             txtTub.Name = "txtTub";
-            txtTub.Size = new Size(490, 23);
+            txtTub.Size = new Size(480, 23);
             txtTub.TabIndex = 3;
             // 
             // trkRecord
             // 
             trkRecord.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-            trkRecord.BackColor = Color.FromArgb(18, 25, 42);
-            trkRecord.Location = new Point(179, 108);
+            trkRecord.BackColor = Color.FromArgb(244, 243, 238);
+            trkRecord.Location = new Point(155, 50);
             trkRecord.Name = "trkRecord";
-            trkRecord.Size = new Size(950, 45);
+            trkRecord.Size = new Size(1037, 45);
             trkRecord.TabIndex = 2;
             trkRecord.TickStyle = TickStyle.None;
             // 
             // pnlTools
             // 
-            pnlTools.BackColor = Color.White;
+            pnlTools.BackColor = Color.FromArgb(244, 243, 238);
             pnlTools.BorderStyle = BorderStyle.FixedSingle;
             pnlTools.Controls.Add(cmbSpeed);
             pnlTools.Controls.Add(btnClearFilter);
@@ -409,6 +395,7 @@
             pnlTools.Controls.Add(btnPrev);
             pnlTools.Controls.Add(btnNext);
             pnlTools.Controls.Add(btnFastNext);
+            pnlTools.Controls.Add(btnStartStop);
             pnlTools.Controls.Add(lblRange);
             pnlTools.Controls.Add(btnSetLeft);
             pnlTools.Controls.Add(btnSetRight);
@@ -424,13 +411,14 @@
             // 
             // btnClearFilter
             // 
-            btnClearFilter.BackColor = Color.FromArgb(42, 58, 74);
+            btnClearFilter.BackColor = Color.FromArgb(210, 210, 210);
             btnClearFilter.Cursor = Cursors.Hand;
-            btnClearFilter.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
+            btnClearFilter.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+            btnClearFilter.FlatAppearance.BorderSize = 0;
             btnClearFilter.FlatStyle = FlatStyle.Flat;
             btnClearFilter.Font = new Font("맑은 고딕", 9F);
-            btnClearFilter.ForeColor = Color.FromArgb(180, 180, 180);
-            btnClearFilter.Location = new Point(527, 162);
+            btnClearFilter.ForeColor = Color.FromArgb(50, 50, 50);
+            btnClearFilter.Location = new Point(527, 200);
             btnClearFilter.Name = "btnClearFilter";
             btnClearFilter.Size = new Size(83, 36);
             btnClearFilter.TabIndex = 18;
@@ -440,6 +428,7 @@
             // 
             // pnlFilter
             // 
+            pnlFilter.BackColor = Color.FromArgb(244, 243, 238);
             pnlFilter.BorderStyle = BorderStyle.FixedSingle;
             pnlFilter.Controls.Add(tplFilter);
             pnlFilter.Dock = DockStyle.Bottom;
@@ -481,7 +470,7 @@
             label1.AutoSize = true;
             label1.Dock = DockStyle.Fill;
             label1.Font = new Font("맑은 고딕", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 129);
-            label1.ForeColor = Color.FromArgb(74, 158, 255);
+            label1.ForeColor = Color.FromArgb(24, 95, 165);
             label1.Location = new Point(3, 0);
             label1.Name = "label1";
             label1.Size = new Size(113, 39);
@@ -490,12 +479,12 @@
             // 
             // nudSpeedMin
             // 
-            nudSpeedMin.BackColor = Color.FromArgb(30, 45, 64);
+            nudSpeedMin.BackColor = Color.White;
             nudSpeedMin.BorderStyle = BorderStyle.FixedSingle;
             nudSpeedMin.DecimalPlaces = 3;
             nudSpeedMin.Dock = DockStyle.Fill;
             nudSpeedMin.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            nudSpeedMin.ForeColor = Color.White;
+            nudSpeedMin.ForeColor = Color.FromArgb(30, 30, 30);
             nudSpeedMin.Increment = new decimal(new int[] { 1, 0, 0, 131072 });
             nudSpeedMin.Location = new Point(3, 61);
             nudSpeedMin.Maximum = new decimal(new int[] { 1, 0, 0, 0 });
@@ -505,7 +494,7 @@
             // 
             // pnlSpeedRange
             // 
-            pnlSpeedRange.BackColor = Color.FromArgb(18, 25, 42);
+            pnlSpeedRange.BackColor = Color.FromArgb(244, 243, 238);
             pnlSpeedRange.Controls.Add(panel4);
             pnlSpeedRange.Dock = DockStyle.Fill;
             pnlSpeedRange.Location = new Point(122, 61);
@@ -523,12 +512,12 @@
             // 
             // nudSpeedMax
             // 
-            nudSpeedMax.BackColor = Color.FromArgb(30, 45, 64);
+            nudSpeedMax.BackColor = Color.White;
             nudSpeedMax.BorderStyle = BorderStyle.FixedSingle;
             nudSpeedMax.DecimalPlaces = 3;
             nudSpeedMax.Dock = DockStyle.Fill;
             nudSpeedMax.Font = new Font("맑은 고딕", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            nudSpeedMax.ForeColor = Color.White;
+            nudSpeedMax.ForeColor = Color.FromArgb(30, 30, 30);
             nudSpeedMax.Increment = new decimal(new int[] { 1, 0, 0, 131072 });
             nudSpeedMax.Location = new Point(1078, 61);
             nudSpeedMax.Maximum = new decimal(new int[] { 1, 0, 0, 0 });
@@ -539,7 +528,7 @@
             // 
             // pnlAngleRange
             // 
-            pnlAngleRange.BackColor = Color.FromArgb(18, 25, 42);
+            pnlAngleRange.BackColor = Color.FromArgb(244, 243, 238);
             pnlAngleRange.Controls.Add(panel6);
             pnlAngleRange.Dock = DockStyle.Fill;
             pnlAngleRange.Location = new Point(122, 119);
@@ -557,11 +546,11 @@
             // 
             // nudAngleMin
             // 
-            nudAngleMin.BackColor = Color.FromArgb(30, 45, 64);
+            nudAngleMin.BackColor = Color.White;
             nudAngleMin.BorderStyle = BorderStyle.FixedSingle;
             nudAngleMin.Dock = DockStyle.Fill;
             nudAngleMin.Font = new Font("맑은 고딕", 12F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            nudAngleMin.ForeColor = Color.White;
+            nudAngleMin.ForeColor = Color.FromArgb(30, 30, 30);
             nudAngleMin.Location = new Point(3, 119);
             nudAngleMin.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
             nudAngleMin.Minimum = new decimal(new int[] { 10, 0, 0, int.MinValue });
@@ -572,11 +561,11 @@
             // 
             // nudAngleMax
             // 
-            nudAngleMax.BackColor = Color.FromArgb(30, 45, 64);
+            nudAngleMax.BackColor = Color.White;
             nudAngleMax.BorderStyle = BorderStyle.FixedSingle;
             nudAngleMax.Dock = DockStyle.Fill;
             nudAngleMax.Font = new Font("맑은 고딕", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            nudAngleMax.ForeColor = Color.White;
+            nudAngleMax.ForeColor = Color.FromArgb(30, 30, 30);
             nudAngleMax.Location = new Point(1078, 119);
             nudAngleMax.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
             nudAngleMax.Minimum = new decimal(new int[] { 10, 0, 0, int.MinValue });
@@ -600,7 +589,7 @@
             FilThrottle.AutoSize = true;
             FilThrottle.Dock = DockStyle.Fill;
             FilThrottle.Font = new Font("맑은 고딕", 8.5F);
-            FilThrottle.ForeColor = Color.FromArgb(122, 154, 187);
+            FilThrottle.ForeColor = Color.FromArgb(80, 80, 80);
             FilThrottle.Location = new Point(0, 0);
             FilThrottle.Name = "FilThrottle";
             FilThrottle.Size = new Size(76, 15);
@@ -622,7 +611,7 @@
             FilAngle.AutoSize = true;
             FilAngle.Dock = DockStyle.Fill;
             FilAngle.Font = new Font("맑은 고딕", 8.5F);
-            FilAngle.ForeColor = Color.FromArgb(122, 154, 187);
+            FilAngle.ForeColor = Color.FromArgb(80, 80, 80);
             FilAngle.Location = new Point(0, 0);
             FilAngle.Name = "FilAngle";
             FilAngle.Size = new Size(66, 15);
@@ -632,7 +621,6 @@
             // flowLayoutPanel1
             // 
             flowLayoutPanel1.Controls.Add(btnApplyFilter);
-            flowLayoutPanel1.Controls.Add(btnStartStop);
             flowLayoutPanel1.Dock = DockStyle.Fill;
             flowLayoutPanel1.Location = new Point(122, 3);
             flowLayoutPanel1.Name = "flowLayoutPanel1";
@@ -650,7 +638,7 @@
             btnApplyFilter.ForeColor = Color.White;
             btnApplyFilter.Location = new Point(3, 3);
             btnApplyFilter.Name = "btnApplyFilter";
-            btnApplyFilter.Size = new Size(184, 30);
+            btnApplyFilter.Size = new Size(184, 0);
             btnApplyFilter.TabIndex = 19;
             btnApplyFilter.Text = "✔ 필터 적용";
             btnApplyFilter.UseVisualStyleBackColor = false;
@@ -660,8 +648,8 @@
             // 
             lblDeleteStatus.AutoSize = true;
             lblDeleteStatus.Font = new Font("맑은 고딕", 9F);
-            lblDeleteStatus.ForeColor = Color.FromArgb(255, 100, 100);
-            lblDeleteStatus.Location = new Point(8, 6);
+            lblDeleteStatus.ForeColor = Color.FromArgb(200, 60, 60);
+            lblDeleteStatus.Location = new Point(8, 30);
             lblDeleteStatus.Name = "lblDeleteStatus";
             lblDeleteStatus.Size = new Size(150, 15);
             lblDeleteStatus.TabIndex = 9;
@@ -670,10 +658,10 @@
             // 
             // pnlTimeline
             // 
-            pnlTimeline.BackColor = Color.FromArgb(74, 158, 255);
-            pnlTimeline.Location = new Point(8, 24);
+            pnlTimeline.BackColor = Color.FromArgb(24, 95, 165);
+            pnlTimeline.Location = new Point(8, 8);
             pnlTimeline.Name = "pnlTimeline";
-            pnlTimeline.Size = new Size(1184, 22);
+            pnlTimeline.Size = new Size(1184, 18);
             pnlTimeline.TabIndex = 20;
             // 
             // lblRange
@@ -681,7 +669,7 @@
             lblRange.AutoSize = true;
             lblRange.Font = new Font("맑은 고딕", 9F);
             lblRange.ForeColor = Color.FromArgb(80, 80, 80);
-            lblRange.Location = new Point(740, 168);
+            lblRange.Location = new Point(8, 144);
             lblRange.Name = "lblRange";
             lblRange.Size = new Size(55, 15);
             lblRange.TabIndex = 22;
@@ -689,13 +677,14 @@
             // 
             // btnSetLeft
             // 
-            btnSetLeft.BackColor = Color.FromArgb(42, 58, 74);
+            btnSetLeft.BackColor = Color.FromArgb(210, 210, 210);
             btnSetLeft.Cursor = Cursors.Hand;
-            btnSetLeft.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
+            btnSetLeft.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+            btnSetLeft.FlatAppearance.BorderSize = 0;
             btnSetLeft.FlatStyle = FlatStyle.Flat;
             btnSetLeft.Font = new Font("맑은 고딕", 9F);
-            btnSetLeft.ForeColor = Color.FromArgb(180, 180, 180);
-            btnSetLeft.Location = new Point(8, 52);
+            btnSetLeft.ForeColor = Color.FromArgb(50, 50, 50);
+            btnSetLeft.Location = new Point(8, 162);
             btnSetLeft.Name = "btnSetLeft";
             btnSetLeft.Size = new Size(100, 26);
             btnSetLeft.TabIndex = 0;
@@ -705,13 +694,14 @@
             // 
             // btnSetRight
             // 
-            btnSetRight.BackColor = Color.FromArgb(42, 58, 74);
+            btnSetRight.BackColor = Color.FromArgb(210, 210, 210);
             btnSetRight.Cursor = Cursors.Hand;
-            btnSetRight.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
+            btnSetRight.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+            btnSetRight.FlatAppearance.BorderSize = 0;
             btnSetRight.FlatStyle = FlatStyle.Flat;
             btnSetRight.Font = new Font("맑은 고딕", 9F);
-            btnSetRight.ForeColor = Color.FromArgb(180, 180, 180);
-            btnSetRight.Location = new Point(114, 52);
+            btnSetRight.ForeColor = Color.FromArgb(50, 50, 50);
+            btnSetRight.Location = new Point(114, 162);
             btnSetRight.Name = "btnSetRight";
             btnSetRight.Size = new Size(100, 26);
             btnSetRight.TabIndex = 1;
@@ -727,7 +717,7 @@
             btnDelete.FlatStyle = FlatStyle.Flat;
             btnDelete.Font = new Font("맑은 고딕", 9F);
             btnDelete.ForeColor = Color.FromArgb(50, 50, 50);
-            btnDelete.Location = new Point(220, 52);
+            btnDelete.Location = new Point(220, 162);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(90, 26);
             btnDelete.TabIndex = 3;
@@ -737,13 +727,14 @@
             // 
             // btnRestore
             // 
-            btnRestore.BackColor = Color.FromArgb(42, 58, 74);
+            btnRestore.BackColor = Color.FromArgb(210, 210, 210);
             btnRestore.Cursor = Cursors.Hand;
-            btnRestore.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
+            btnRestore.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+            btnRestore.FlatAppearance.BorderSize = 0;
             btnRestore.FlatStyle = FlatStyle.Flat;
             btnRestore.Font = new Font("맑은 고딕", 9F);
-            btnRestore.ForeColor = Color.FromArgb(180, 180, 180);
-            btnRestore.Location = new Point(316, 52);
+            btnRestore.ForeColor = Color.FromArgb(50, 50, 50);
+            btnRestore.Location = new Point(316, 162);
             btnRestore.Name = "btnRestore";
             btnRestore.Size = new Size(80, 26);
             btnRestore.TabIndex = 4;
@@ -753,13 +744,14 @@
             // 
             // btnReroadTub
             // 
-            btnReroadTub.BackColor = Color.FromArgb(42, 58, 74);
+            btnReroadTub.BackColor = Color.FromArgb(210, 210, 210);
             btnReroadTub.Cursor = Cursors.Hand;
-            btnReroadTub.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
+            btnReroadTub.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+            btnReroadTub.FlatAppearance.BorderSize = 0;
             btnReroadTub.FlatStyle = FlatStyle.Flat;
             btnReroadTub.Font = new Font("맑은 고딕", 9F);
-            btnReroadTub.ForeColor = Color.FromArgb(180, 180, 180);
-            btnReroadTub.Location = new Point(402, 52);
+            btnReroadTub.ForeColor = Color.FromArgb(50, 50, 50);
+            btnReroadTub.Location = new Point(402, 162);
             btnReroadTub.Name = "btnReroadTub";
             btnReroadTub.Size = new Size(100, 26);
             btnReroadTub.TabIndex = 5;
@@ -775,7 +767,7 @@
             btnSave.FlatStyle = FlatStyle.Flat;
             btnSave.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
-            btnSave.Location = new Point(508, 52);
+            btnSave.Location = new Point(508, 162);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(90, 26);
             btnSave.TabIndex = 8;
@@ -785,7 +777,7 @@
             // 
             // pnlGraph
             // 
-            pnlGraph.BackColor = Color.White;
+            pnlGraph.BackColor = Color.FromArgb(244, 243, 238);
             pnlGraph.BorderStyle = BorderStyle.FixedSingle;
             pnlGraph.Dock = DockStyle.Fill;
             pnlGraph.Location = new Point(0, 876);
@@ -819,7 +811,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             AutoScroll = true;
             AutoScrollMinSize = new Size(1200, 1000);
-            BackColor = Color.FromArgb(18, 25, 42);
+            BackColor = Color.FromArgb(244, 243, 238);
             Controls.Add(pnlGraph);
             Controls.Add(pnlTools);
             Controls.Add(tlpWorkspace);
@@ -854,62 +846,63 @@
             contextFilter.ResumeLayout(false);
             ResumeLayout(false);
         }
+
         #endregion
 
         private Panel pnlWorkspace;
         private TableLayoutPanel tlpWorkspace;
         private Panel panel1;
+        private Button btnLoadCarDirectory;
+        private Button btnLoadTub;
         private TextBox txtCarDirectory;
         private TextBox txtTub;
         private Panel panel2;
-        private PictureBox picTubImage;
-        private Panel panel3;
-        private TrackBar trkRecord;
-        private Panel pnlTools;
-        private Button btnSetLeft;
-        private Button btnReroadTub;
-        private Button btnRestore;
-        private Button btnDelete;
-        private Button btnSetRight;
-        private Panel pnlGraph;
-        private ContextMenuStrip contextFilter;
-        private ToolStripMenuItem menuThrottle;
-        private ToolStripMenuItem menuAngle;
-        private Button btnSave;
-        private Label lblDeleteStatus;
-        private Label lblRecordInfo;
         private Label lblThrottle;
         private PictureBox picThrottle;
-        private PictureBox picAngle;
         private Label lblAngle;
+        private TextBox txtRecordNumber;
+        private PictureBox picAngle;
+        private Label lblRecordInfo;
+        private PictureBox picTubImage;
+        private Panel panel3;
         private ComboBox cmbSpeed;
         private Button btnFastNext;
         private Button btnNext;
         private Button btnStartStop;
         private Button btnFastPrev;
         private Button btnPrev;
-        private TextBox txtRecordNumber;
-        private Button btnLoadTub;
-        private Button btnLoadCarDirectory;
-        private Panel pnlSpeedRange;
-        private NumericUpDown nudSpeedMin;
-        private NumericUpDown nudAngleMin;
-        private Panel panel4;
-        private Panel pnlAngleRange;
-        private Panel panel6;
-        private Label label1;
-        private Label lblRange;
-        private Label FilThrottle;
-        private Label FilAngle;
-        private Button btnApplyFilter;
+        private TrackBar trkRecord;
+        private Panel pnlTools;
         private Button btnClearFilter;
-        private Panel pnlTimeline;
         private Panel pnlFilter;
         private TableLayoutPanel tplFilter;
+        private Label label1;
+        private NumericUpDown nudSpeedMin;
+        private Panel pnlSpeedRange;
+        private Panel panel4;
         private NumericUpDown nudSpeedMax;
+        private Panel pnlAngleRange;
+        private Panel panel6;
+        private NumericUpDown nudAngleMin;
         private NumericUpDown nudAngleMax;
         private Panel pnlThrottleText;
+        private Label FilThrottle;
         private Panel pnlAngleText;
+        private Label FilAngle;
         private FlowLayoutPanel flowLayoutPanel1;
+        private Button btnApplyFilter;
+        private Label lblDeleteStatus;
+        private Panel pnlTimeline;
+        private Label lblRange;
+        private Button btnSetLeft;
+        private Button btnSetRight;
+        private Button btnDelete;
+        private Button btnRestore;
+        private Button btnReroadTub;
+        private Button btnSave;
+        private Panel pnlGraph;
+        private ContextMenuStrip contextFilter;
+        private ToolStripMenuItem menuThrottle;
+        private ToolStripMenuItem menuAngle;
     }
 }
