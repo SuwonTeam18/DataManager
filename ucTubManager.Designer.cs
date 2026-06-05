@@ -40,7 +40,11 @@
             txtTub = new TextBox();
             trkRecord = new TrackBar();
             pnlTools = new Panel();
-            btnClearFilter = new Button();
+            lblRange = new Label();
+            BtnRangeDelete = new Button();
+            BtnRightSet = new Button();
+            BtnLeftSet = new Button();
+            IblRange = new Label();
             pnlFilter = new Panel();
             tplFilter = new TableLayoutPanel();
             label1 = new Label();
@@ -58,6 +62,7 @@
             FilAngle = new Label();
             flowLayoutPanel1 = new FlowLayoutPanel();
             btnApplyFilter = new Button();
+            btnClearFilter = new Button();
             lblDeleteStatus = new Label();
             pnlTimeline = new Panel();
             lblRange = new Label();
@@ -385,14 +390,19 @@
             // 
             pnlTools.BackColor = Color.FromArgb(244, 243, 238);
             pnlTools.BorderStyle = BorderStyle.FixedSingle;
+            pnlTools.Controls.Add(btnPrev);
+            pnlTools.Controls.Add(lblRange);
+            pnlTools.Controls.Add(btnStartStop);
             pnlTools.Controls.Add(cmbSpeed);
-            pnlTools.Controls.Add(btnClearFilter);
+            pnlTools.Controls.Add(BtnRangeDelete);
+            pnlTools.Controls.Add(BtnRightSet);
+            pnlTools.Controls.Add(BtnLeftSet);
+            pnlTools.Controls.Add(IblRange);
             pnlTools.Controls.Add(pnlFilter);
             pnlTools.Controls.Add(lblDeleteStatus);
             pnlTools.Controls.Add(pnlTimeline);
             pnlTools.Controls.Add(trkRecord);
             pnlTools.Controls.Add(btnFastPrev);
-            pnlTools.Controls.Add(btnPrev);
             pnlTools.Controls.Add(btnNext);
             pnlTools.Controls.Add(btnFastNext);
             pnlTools.Controls.Add(btnStartStop);
@@ -409,8 +419,54 @@
             pnlTools.Size = new Size(1200, 412);
             pnlTools.TabIndex = 3;
             // 
-            // btnClearFilter
+            // lblRange
             // 
+            lblRange.AutoSize = true;
+            lblRange.Location = new Point(73, 93);
+            lblRange.Name = "lblRange";
+            lblRange.Size = new Size(67, 15);
+            lblRange.TabIndex = 25;
+            lblRange.Text = "범위 : [0.0]";
+            // 
+            // BtnRangeDelete
+            // 
+            BtnRangeDelete.Location = new Point(316, 115);
+            BtnRangeDelete.Name = "BtnRangeDelete";
+            BtnRangeDelete.Size = new Size(90, 23);
+            BtnRangeDelete.TabIndex = 24;
+            BtnRangeDelete.Text = "범위 삭제";
+            BtnRangeDelete.UseVisualStyleBackColor = true;
+            BtnRangeDelete.Click += BtnRangeDelete_Click;
+            // 
+            // BtnRightSet
+            // 
+            BtnRightSet.Location = new Point(102, 115);
+            BtnRightSet.Name = "BtnRightSet";
+            BtnRightSet.Size = new Size(90, 24);
+            BtnRightSet.TabIndex = 23;
+            BtnRightSet.Text = "우측 설정 ⚙";
+            BtnRightSet.UseVisualStyleBackColor = true;
+            BtnRightSet.Click += BtnRightSet_Click;
+            // 
+            // BtnLeftSet
+            // 
+            BtnLeftSet.Location = new Point(7, 115);
+            BtnLeftSet.Name = "BtnLeftSet";
+            BtnLeftSet.Size = new Size(89, 23);
+            BtnLeftSet.TabIndex = 22;
+            BtnLeftSet.Text = "좌측 설정 ⚙";
+            BtnLeftSet.UseVisualStyleBackColor = true;
+            BtnLeftSet.Click += BtnLeftSet_Click;
+            // 
+            // IblRange
+            // 
+            IblRange.AutoSize = true;
+            IblRange.ForeColor = Color.FromArgb(0, 192, 192);
+            IblRange.Location = new Point(8, 93);
+            IblRange.Name = "IblRange";
+            IblRange.Size = new Size(59, 15);
+            IblRange.TabIndex = 21;
+            IblRange.Text = "범위 설정";
             btnClearFilter.BackColor = Color.FromArgb(210, 210, 210);
             btnClearFilter.Cursor = Cursors.Hand;
             btnClearFilter.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
@@ -631,7 +687,6 @@
             // 
             btnApplyFilter.BackColor = Color.FromArgb(24, 95, 165);
             btnApplyFilter.Cursor = Cursors.Hand;
-            btnApplyFilter.Dock = DockStyle.Fill;
             btnApplyFilter.FlatAppearance.BorderSize = 0;
             btnApplyFilter.FlatStyle = FlatStyle.Flat;
             btnApplyFilter.Font = new Font("맑은 고딕", 9F);
@@ -643,6 +698,22 @@
             btnApplyFilter.Text = "✔ 필터 적용";
             btnApplyFilter.UseVisualStyleBackColor = false;
             btnApplyFilter.Click += btnApplyFilter_Click;
+            // 
+            // btnClearFilter
+            // 
+            btnClearFilter.BackColor = Color.FromArgb(42, 58, 74);
+            btnClearFilter.Cursor = Cursors.Hand;
+            btnClearFilter.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
+            btnClearFilter.FlatStyle = FlatStyle.Flat;
+            btnClearFilter.Font = new Font("맑은 고딕", 9F);
+            btnClearFilter.ForeColor = Color.FromArgb(180, 180, 180);
+            btnClearFilter.Location = new Point(193, 3);
+            btnClearFilter.Name = "btnClearFilter";
+            btnClearFilter.Size = new Size(193, 36);
+            btnClearFilter.TabIndex = 18;
+            btnClearFilter.Text = "✕ 해제";
+            btnClearFilter.UseVisualStyleBackColor = false;
+            btnClearFilter.Click += btnClearFilter_Click;
             // 
             // lblDeleteStatus
             // 
@@ -688,7 +759,7 @@
             btnSetLeft.Name = "btnSetLeft";
             btnSetLeft.Size = new Size(100, 26);
             btnSetLeft.TabIndex = 0;
-            btnSetLeft.Text = "좌측 설정 ⚙";
+            btnSetLeft.Text = "첫장가기";
             btnSetLeft.UseVisualStyleBackColor = false;
             btnSetLeft.Click += btnSetLeft_Click;
             // 
@@ -705,7 +776,7 @@
             btnSetRight.Name = "btnSetRight";
             btnSetRight.Size = new Size(100, 26);
             btnSetRight.TabIndex = 1;
-            btnSetRight.Text = "우측 설정 ⚙";
+            btnSetRight.Text = "끝장가기";
             btnSetRight.UseVisualStyleBackColor = false;
             btnSetRight.Click += btnSetRight_Click;
             // 

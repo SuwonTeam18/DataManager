@@ -18,6 +18,8 @@ namespace DonkeyUi
 {
     public partial class ucPilotArena : UserControl
     {
+        // Event to notify external components when timeline index changes
+        public static event Action<int>? OnTimelineIndexChanged;
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 타임라인 인덱스 변경 시 외부(TubManager)에 알리는 이벤트
         // ════════════════════════════════════════════════════════════
@@ -80,8 +82,9 @@ namespace DonkeyUi
         private bool _suppressTimelineNotify = false;
 
         private System.Windows.Forms.Timer _sliderDebounce = new System.Windows.Forms.Timer();
-        private CancellationTokenSource _bgTaskCts = new CancellationTokenSource();
+         private CancellationTokenSource _bgTaskCts = new CancellationTokenSource();
         private bool _hasShownPythonError = false;
+        private bool _suppressOnTubDataChangedTimelineSet = false;
 
         private static readonly Color HumanColor = Color.FromArgb(255, 255, 87, 34);
         private static readonly Color AiColor = Color.FromArgb(255, 0, 176, 255);
@@ -269,6 +272,21 @@ namespace DonkeyUi
             if (cmbNumColumns != null) cmbNumColumns.SelectedIndexChanged += (s, e) => UpdateDisplay();
 
             trkTimeline.Scroll += trkTimeline_Scroll;
+            // 타임라인 디바운스 설정 (200ms)
+            _timelineDebounce.Interval = 200;
+            _timelineDebounce.Tick += (s, e) => {
+                _timelineDebounce.Stop();
+                if (_pendingTimelineIndex >= 0)
+                {
+                    int idx = _pendingTimelineIndex;
+                    _pendingTimelineIndex = -1;
+                    // 한 번만 적용
+                    _suppressTimelineNotify = true; // 루프 방지
+                    _currentIndex = idx;
+                    ShowFrame(_currentIndex);
+                    try { OnTimelineIndexChanged?.Invoke(_currentIndex); } catch { }
+                }
+            };
             trkBrightness.Scroll += trkBrightness_Scroll;
             trkBlur.Scroll += trkBlur_Scroll;
             pnlImageArea.Resize += (s, e) => UpdateDisplay();
@@ -859,22 +877,80 @@ namespace DonkeyUi
             catch { }
         }
 
+        // Return image path at specified index
+        public string? GetImagePathAt(int idx)
+        {
+            if (this.InvokeRequired)
+            {
+                return (string?)this.Invoke(new Func<int, string?>(GetImagePathAt), idx);
+            }
+            if (_imageFiles == null || _imageFiles.Count == 0) return null;
+            if (idx < 0 || idx >= _imageFiles.Count) return null;
+            return _imageFiles[idx];
+        }
+
         private void trkTimeline_Scroll(object sender, EventArgs e)
         {
-            if (_suppressTimelineNotify) return;
 
-            _currentIndex = trkTimeline.Value;
-            if (_imageFiles.Count > 0 && _currentIndex >= 0 && _currentIndex < _imageFiles.Count)
-                _lastImagePath = _imageFiles[_currentIndex];
+            private void trkTimeline_Scroll(object sender, EventArgs e)
+{
+    if (_suppressTimelineNotify)
+    {
+        _suppressTimelineNotify = false;
+        return;
+    }
 
-            RefreshAllSlots();
-            _graphDrawPanel?.Invalidate();
+    _currentIndex = trkTimeline.Value;
 
-            _pendingTimelineIndex = trkTimeline.Value;
-            _sliderDebounce.Stop();
-            _sliderDebounce.Start();
-            _timelineDebounce.Stop();
-            _timelineDebounce.Start();
+    if (_imageFiles.Count > 0 &&
+        _currentIndex >= 0 &&
+        _currentIndex < _imageFiles.Count)
+    {
+        _lastImagePath = _imageFiles[_currentIndex];
+    }
+
+    RefreshAllSlots();
+    _graphDrawPanel?.Invalidate();
+
+    _pendingTimelineIndex = trkTimeline.Value;
+
+    _sliderDebounce.Stop();
+    _sliderDebounce.Start();
+
+    _timelineDebounce.Stop();
+    _timelineDebounce.Start();
+}
+
+        private void ShowFrameByPath(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
+            try
+            {
+                using var fs = File.OpenRead(path);
+                using var rawImg = Image.FromStream(fs);
+                using var bright = MakeBrightness(rawImg, trkBrightness.Value);
+                var processed = MakeBlur(bright, trkBlur.Value);
+
+                if (_displayPictureBoxes.Count > 0)
+                {
+                    _displayPictureBoxes[0].Image?.Dispose();
+                    _displayPictureBoxes[0].Image = new Bitmap(processed);
+                }
+                processed.Dispose();
+                _lastImagePath = path;
+            }
+            catch { }
+        }
+
+        private IEnumerable<Control> FindControlsRecursive(Control.ControlCollection cols)
+        {
+            foreach (Control c in cols)
+            {
+                yield return c;
+                foreach (var child in FindControlsRecursive(c.Controls))
+                    yield return child;
+            }
+
         }
 
         private void trkBrightness_Scroll(object sender, EventArgs e)
