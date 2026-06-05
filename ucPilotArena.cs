@@ -211,16 +211,9 @@ namespace DonkeyUi
             catch { }
 
             // 슬라이더 디바운스 (200ms)
+            // 변경 — sliderDebounce는 더 이상 오차율 갱신에 사용하지 않으므로 Tick 비움
             _sliderDebounce.Interval = 200;
-            _sliderDebounce.Tick += (s, e) =>
-            {
-                _sliderDebounce.Stop();
-                if (_imageFiles.Count > 0 && !string.IsNullOrEmpty(_lastImagePath))
-                {
-                    foreach (int i in Enumerable.Range(0, _pilotSlots.Count))
-                        _ = RequestAndUpdateSlot(i, _lastImagePath, trkBrightness.Value, trkBlur.Value);
-                }
-            };
+            _sliderDebounce.Tick += (s, e) => { _sliderDebounce.Stop(); };
 
             // [파일1 추가] 타임라인 디바운스 (200ms)
             _timelineDebounce.Interval = 200;
@@ -287,6 +280,80 @@ namespace DonkeyUi
             _pilotSlots.Clear();
             AddPilotSet();
             InitGraphArea();
+
+            // 필터 적용 / 삭제 버튼 패널을 pnlBrightBlur에 동적 추가
+            var pnlFilterButtons = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 36,
+                FlowDirection = FlowDirection.LeftToRight,
+                BackColor = Color.FromArgb(244, 243, 238),
+                Padding = new Padding(6, 4, 0, 0)
+            };
+
+            var btnApplyFilter = new Button
+            {
+                Text = "필터 적용",
+                Size = new Size(120, 30),
+                AutoSize = false,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(24, 95, 165),
+                ForeColor = Color.White,
+                Font = new Font("맑은 고딕", 8.5f),
+                Margin = new Padding(0, 0, 6, 0),
+                Cursor = Cursors.Hand
+            };
+            btnApplyFilter.FlatAppearance.BorderSize = 0;
+            btnApplyFilter.Click += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(_lastImagePath))
+                {
+                    foreach (int i in Enumerable.Range(0, _pilotSlots.Count))
+                        _ = RequestAndUpdateSlot(i, _lastImagePath, trkBrightness.Value, trkBlur.Value);
+                }
+                _graphBrightness = trkBrightness.Value;
+                _graphBlur = trkBlur.Value;
+                if (_lblGraphFilterStatus != null)
+                    _lblGraphFilterStatus.Text = $"필터값 - 밝기: {_graphBrightness}, 흐림: {_graphBlur}";
+                _graphDrawPanel?.Invalidate();
+            };
+
+            var btnResetFilter = new Button
+            {
+                Text = "필터 삭제",
+                Size = new Size(120, 30),
+                AutoSize = false,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(210, 210, 210),
+                ForeColor = Color.FromArgb(50, 50, 50),
+                Font = new Font("맑은 고딕", 8.5f),
+                Margin = new Padding(0, 0, 6, 0),
+                Cursor = Cursors.Hand
+            };
+            btnResetFilter.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+            btnResetFilter.Click += (s, e) =>
+            {
+                trkBrightness.Value = 0;
+                trkBlur.Value = 0;
+                lblBrightnessValue.Text = "밝기 0";
+                lblBlurValue.Text = "흐림 0";
+
+                if (!string.IsNullOrEmpty(_lastImagePath))
+                {
+                    foreach (int i in Enumerable.Range(0, _pilotSlots.Count))
+                        _ = RequestAndUpdateSlot(i, _lastImagePath, 0, 0);
+                }
+                _graphBrightness = 0;
+                _graphBlur = 0;
+                if (_lblGraphFilterStatus != null)
+                    _lblGraphFilterStatus.Text = "필터값 - 밝기: 0, 흐림: 0";
+                RefreshAllSlots();
+                _graphDrawPanel?.Invalidate();
+            };
+
+            pnlFilterButtons.Controls.Add(btnApplyFilter);
+            pnlFilterButtons.Controls.Add(btnResetFilter);
+            pnlBrightBlur.Controls.Add(pnlFilterButtons);
 
             if (!string.IsNullOrEmpty(ucTubManager.CurrentTubPath))
                 LoadImages(ucTubManager.CurrentTubPath);
@@ -813,17 +880,13 @@ namespace DonkeyUi
         private void trkBrightness_Scroll(object sender, EventArgs e)
         {
             lblBrightnessValue.Text = "밝기 " + trkBrightness.Value;
-            RefreshAllSlots();
-            _sliderDebounce.Stop();
-            _sliderDebounce.Start();
+            RefreshAllSlots();  // 이미지 미리보기만 즉시 반영
         }
 
         private void trkBlur_Scroll(object sender, EventArgs e)
         {
             lblBlurValue.Text = "흐림 " + trkBlur.Value;
-            RefreshAllSlots();
-            _sliderDebounce.Stop();
-            _sliderDebounce.Start();
+            RefreshAllSlots();  // 이미지 미리보기만 즉시 반영
         }
 
         public void LoadUserTub(string folder) => LoadImages(folder);
