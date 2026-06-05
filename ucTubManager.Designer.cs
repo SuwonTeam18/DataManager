@@ -79,6 +79,7 @@
             btnClearFilter = new Button();
             lblDeleteStatus = new Label();
             pnlTimeline = new Panel();
+            lblRange = new Label();
             btnSetLeft = new Button();
             btnSetRight = new Button();
             btnDelete = new Button();
@@ -418,6 +419,7 @@
             pnlTools.Controls.Add(btnFastPrev);
             pnlTools.Controls.Add(btnNext);
             pnlTools.Controls.Add(btnFastNext);
+            pnlTools.Controls.Add(lblRange);
             pnlTools.Controls.Add(btnSetLeft);
             pnlTools.Controls.Add(btnSetRight);
             pnlTools.Controls.Add(btnDelete);
@@ -732,6 +734,17 @@
             pnlTimeline.Size = new Size(1184, 22);
             pnlTimeline.TabIndex = 20;
             // 
+            // lblRange
+            // 
+            lblRange.AutoSize = true;
+            lblRange.Font = new Font("맑은 고딕", 9F);
+            lblRange.ForeColor = Color.FromArgb(80, 80, 80);
+            lblRange.Location = new Point(740, 168);
+            lblRange.Name = "lblRange";
+            lblRange.Size = new Size(55, 15);
+            lblRange.TabIndex = 22;
+            lblRange.Text = "범위 : [-]";
+            // 
             // btnSetLeft
             // 
             btnSetLeft.BackColor = Color.FromArgb(42, 58, 74);
@@ -943,6 +956,7 @@
         private Panel pnlAngleRange;
         private Panel panel6;
         private Label label1;
+        private Label lblRange;
         private Label FilThrottle;
         private Label FilAngle;
         private Button btnApplyFilter;

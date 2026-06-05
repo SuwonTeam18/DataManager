@@ -135,7 +135,7 @@ namespace DonkeyUi
                 // 사람 데이터 — catalog json에서 읽기 (없으면 0)
                 var (hAngle, hThrottle) = ReadCatalogData(imgPath);
 
-                // AI 예측 — 캐시 우선
+                // AI 예측 — 캐시 우선. RequestPrediction(PilotSlot, wslPath) 사용
                 double aiAngle = 0, aiThrottle = 0;
                 if (_predictionCache.TryGetValue(fname, out var cached))
                 {
@@ -145,7 +145,13 @@ namespace DonkeyUi
                 else
                 {
                     string wslPath = ConvertToWslPath(imgPath);
-                    var result = await RequestPrediction(wslPath);
+                    // Find the slot with matching pilotName
+                    var slot = _pilotSlots.FirstOrDefault(s => s.PilotName == pilotName);
+                    (double angle, double throttle)? result = null;
+                    if (slot != null)
+                    {
+                        result = await RequestPrediction(slot, wslPath);
+                    }
                     if (result.HasValue)
                     {
                         aiAngle = result.Value.angle;

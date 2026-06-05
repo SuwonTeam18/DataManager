@@ -68,6 +68,7 @@
             btnCarConnector.TabIndex = 3;
             btnCarConnector.Text = "Car Connector";
             btnCarConnector.UseVisualStyleBackColor = true;
+            btnCarConnector.Visible = false;
             btnCarConnector.Click += btnCarConnector_Click;
             // 
             // btnPilotArena
@@ -77,7 +78,7 @@
             btnPilotArena.Name = "btnPilotArena";
             btnPilotArena.Size = new Size(213, 37);
             btnPilotArena.TabIndex = 2;
-            btnPilotArena.Text = "Pilot Arena";
+            btnPilotArena.Text = "주행 분석";
             btnPilotArena.UseVisualStyleBackColor = true;
             btnPilotArena.Click += btnPilotArena_Click;
             // 
@@ -88,7 +89,7 @@
             btnTrainer.Name = "btnTrainer";
             btnTrainer.Size = new Size(221, 37);
             btnTrainer.TabIndex = 1;
-            btnTrainer.Text = "Trainer";
+            btnTrainer.Text = "모델 학습";
             btnTrainer.UseVisualStyleBackColor = true;
             btnTrainer.Click += btnTrainer_Click;
             // 
@@ -99,7 +100,7 @@
             btnTubManager.Name = "btnTubManager";
             btnTubManager.Size = new Size(221, 37);
             btnTubManager.TabIndex = 0;
-            btnTubManager.Text = "Tub Manager";
+            btnTubManager.Text = "데이터 관리";
             btnTubManager.UseVisualStyleBackColor = true;
             btnTubManager.Click += btnTubManager_Click;
             // 

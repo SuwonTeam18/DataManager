@@ -386,6 +386,11 @@ namespace DonkeyUi
         {
             if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
             {
+                // ★ 트랙바 버그 수정: 폴더 전환 시 이전 카탈로그 상태 먼저 초기화
+                // _maxCatalogIndex가 이전 폴더 값으로 남아있으면 트랙바 Maximum이 잘못 설정됨
+                _maxCatalogIndex = null;
+                _catalogIndexByFileName.Clear();
+                _catalogLines.Clear();
                 _imageFiles.Clear();
                 trkRecord.Enabled = false;
                 return;
