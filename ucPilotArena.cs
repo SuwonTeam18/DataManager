@@ -347,14 +347,17 @@ namespace DonkeyUi
             if (dataIdx > 0) { _mycarWinPath = imagePath.Substring(0, dataIdx); _mycarWslPath = ConvertToWslPath(_mycarWinPath); }
         }
 
+        // 변경
         private List<string> GetModelFiles()
         {
             if (string.IsNullOrEmpty(_mycarWinPath)) return new List<string>();
             string modelsPath = Path.Combine(_mycarWinPath, "models");
             if (!Directory.Exists(modelsPath)) return new List<string>();
-            return new[] { "*.h5", "*.tflite", "*.keras" }
+            return new[] { "*.h5", "*.tflite", "*.keras", "*.savedmodel", "*.pkl" }
               .SelectMany(ext => Directory.GetFiles(modelsPath, ext))
-              .Select(f => Path.GetFileName(f)).OrderBy(f => f).ToList();
+              .Select(f => Path.GetFileName(f))
+              .OrderBy(f => f)
+              .ToList();
         }
 
         // ════════════════════════════════════════════════════════════
