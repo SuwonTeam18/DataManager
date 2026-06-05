@@ -1020,7 +1020,7 @@ namespace DonkeyUi
             Controls.Add(tlpMain);
             Controls.Add(pnlTop);
             Name = "ucPilotArena";
-            Size = new Size(919, 587);
+            Size = new Size(834, 502);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             tlpMain.ResumeLayout(false);

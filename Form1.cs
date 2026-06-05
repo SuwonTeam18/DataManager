@@ -15,6 +15,8 @@ namespace DonkeyUi
         public Form1()
         {
             InitializeComponent();
+            // 프로그램 시작 시 데이터 관리 화면 표시
+            LoadControl(_tubManager);
         }
 
         private void LoadControl(UserControl uc)

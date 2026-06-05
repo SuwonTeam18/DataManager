@@ -36,6 +36,8 @@ namespace DonkeyUi
         private List<string> _allImageFiles = new List<string>();
         private Dictionary<string, int> _deletedIndexes = new Dictionary<string, int>();
         private int _currentIndex = -1;
+        private int _leftFrame = -1;
+        private int _rightFrame = -1;
         private int _minX = 20;
         private int _maxX = 815;
         private bool _dragMin = false;
@@ -47,7 +49,7 @@ namespace DonkeyUi
         private bool _dragAngleMin = false;
         private bool _dragAngleMax = false;
         private int _selectStart = -1;
-private int _selectEnd = -1;
+        private int _selectEnd = -1;
         private const int ANGLE_MAX = 10;
         private System.Windows.Forms.Timer _prevTimer;
         private System.Windows.Forms.Timer _nextTimer;
@@ -62,6 +64,10 @@ private int _selectEnd = -1;
         private double _playBaseIntervalMs = 100.0;
         private List<string> _catalogLines = new List<string>();
         private string _loadedFolderPath = "";
+        // If catalogs contain explicit _index fields, store the maximum index found
+        private int? _maxCatalogIndex = null;
+        // Map filename (e.g. "4131_cam_image_array_.jpg") -> catalog _index
+        private Dictionary<string, int> _catalogIndexByFileName = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         public ucTubManager()
         {
@@ -174,6 +180,119 @@ private int _selectEnd = -1;
 
             picThrottle.Paint += PicThrottle_Paint;
             picAngle.Paint += PicAngle_Paint;
+            // Subscribe to external timeline changes
+            ucPilotArena.OnTimelineIndexChanged += (idx) =>
+            {
+                try
+                {
+                    SetExternalIndex(idx);
+                }
+                catch { }
+            };
+        }
+
+        // Show image by absolute path and update internal selection if possible
+        public void ShowImageAndSelectByPath(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => ShowImageAndSelectByPath(path)));
+                return;
+            }
+            try
+            {
+                string targetFull = string.Empty;
+                try { targetFull = Path.GetFullPath(path); } catch { targetFull = path; }
+
+                int idx = -1;
+                for (int i = 0; i < _imageFiles.Count; i++)
+                {
+                    try
+                    {
+                        var f = Path.GetFullPath(_imageFiles[i]);
+                        if (string.Equals(f, targetFull, StringComparison.OrdinalIgnoreCase)) { idx = i; break; }
+                    }
+                    catch { }
+                }
+
+                if (idx >= 0)
+                {
+                    // Move to that index
+                    SetExternalIndex(idx);
+                    return;
+                }
+
+                // Try match by filename only
+                var fname = Path.GetFileName(path);
+                if (!string.IsNullOrEmpty(fname))
+                {
+                    for (int i = 0; i < _imageFiles.Count; i++)
+                    {
+                        try { if (string.Equals(Path.GetFileName(_imageFiles[i]), fname, StringComparison.OrdinalIgnoreCase)) { idx = i; break; } }
+                        catch { }
+                    }
+                }
+
+                if (idx >= 0)
+                {
+                    SetExternalIndex(idx);
+                    return;
+                }
+
+                // If not found in list, just display the image in picTubImage without changing index
+                try
+                {
+                    using var fs = File.OpenRead(path);
+                    using var img = Image.FromStream(fs);
+                    picTubImage.Image?.Dispose();
+                    picTubImage.Image = new Bitmap(img);
+                    txtTub.Text = path;
+                    txtRecordNumber.Text = "기록 000000";
+                }
+                catch { }
+            }
+            catch { }
+        }
+
+        // Allow external controls to request changing the current index (e.g., ucPilotArena)
+        public void SetExternalIndex(int idx)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => SetExternalIndex(idx)));
+                return;
+            }
+            if (_imageFiles == null || _imageFiles.Count == 0) return;
+            if (idx < 0) idx = 0;
+            if (idx >= _imageFiles.Count) idx = _imageFiles.Count - 1;
+            // If already at this index, do nothing to avoid visual bounce
+            if (_currentIndex == idx) return;
+            // Update trackbar if present
+            try
+            {
+                if (trkRecord != null)
+                {
+                    // set value (this will normally trigger ValueChanged -> SetCurrentIndex)
+                    trkRecord.Value = idx;
+                }
+            }
+            catch { }
+
+            // Ensure UI is updated immediately (in case trackbar is disabled or events suppressed)
+            try { SetCurrentIndex(idx); } catch { }
+        }
+
+        // Return the image path at specified index or null
+        public string? GetImagePathAt(int idx)
+        {
+            if (this.InvokeRequired)
+            {
+                return (string?)this.Invoke(new Func<int, string?>(GetImagePathAt), idx);
+            }
+            if (_imageFiles == null || _imageFiles.Count == 0) return null;
+            if (idx < 0 || idx >= _imageFiles.Count) return null;
+            return _imageFiles[idx];
         }
 
         private void TxtRecordNumber_Leave(object? sender, EventArgs e)
@@ -234,61 +353,44 @@ private int _selectEnd = -1;
             if (dlg.ShowDialog() == DialogResult.OK)
             {
                 txtCarDirectory.Text = dlg.SelectedPath;
-                LoadImagesFromDirectory(dlg.SelectedPath);
+                try
+                {
+                    var ext = Path.GetExtension(txtTub.Text ?? string.Empty)?.ToLowerInvariant();
+                    var imageExts = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
+                    // If txtTub currently points to a single image, do not load the directory (only show path).
+                    if (string.IsNullOrEmpty(ext) || !imageExts.Contains(ext))
+                    {
+                        LoadImagesFromDirectory(dlg.SelectedPath);
+                    }
+                }
+                catch { }
             }
         }
 
         private void BtnLoadTub_Click(object? sender, EventArgs e)
         {
-            using var dlg = new OpenFileDialog();
-            dlg.Title = "주행 데이터 열기";
-            dlg.Filter = "Tub files (*.json;*.csv;*.jpg;*.jpeg;*.png)|*.json;*.csv;*.jpg;*.jpeg;*.png|All files (*.*)|*.*";
-            dlg.CheckFileExists = true;
-            dlg.Multiselect = false;
-            if (dlg.ShowDialog() != DialogResult.OK) return;
+            using var dlg = new FolderBrowserDialog();
 
-            txtTub.Text = dlg.FileName;
-            CurrentTubPath = Path.GetDirectoryName(dlg.FileName) ?? "";
+            dlg.Description = "이미지 폴더 선택";
 
-            try
-            {
-                // If the selected file resides in an "images" (or "image") folder, set txtCarDirectory to its parent folder
-                var dir = Path.GetDirectoryName(dlg.FileName) ?? string.Empty;
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    var dinfo = new DirectoryInfo(dir);
-                    if (string.Equals(dinfo.Name, "images", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(dinfo.Name, "image", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var parent = dinfo.Parent;
-                        if (parent != null)
-                        {
-                            // include trailing directory separator to match example
-                            txtCarDirectory.Text = parent.FullName.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                                + Path.DirectorySeparatorChar;
-                        }
-                    }
-                }
-            }
-            catch { }
+            if (dlg.ShowDialog() != DialogResult.OK)
+                return;
 
-            var ext = Path.GetExtension(dlg.FileName)?.ToLowerInvariant();
-            var imageExts = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
-            if (!string.IsNullOrEmpty(ext) && imageExts.Contains(ext))
-            {
-                var folder = Path.GetDirectoryName(dlg.FileName) ?? string.Empty;
-                LoadImagesFromDirectory(folder);
-                var idx = _imageFiles.FindIndex(p =>
-                    string.Equals(Path.GetFullPath(p), Path.GetFullPath(dlg.FileName),
-                    StringComparison.OrdinalIgnoreCase));
-                if (idx >= 0) SetCurrentIndex(idx);
-            }
+            txtTub.Text = dlg.SelectedPath;
+            CurrentTubPath = dlg.SelectedPath;
+
+            LoadImagesFromDirectory(dlg.SelectedPath);
         }
 
         private void LoadImagesFromDirectory(string folder)
         {
             if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
             {
+                // ★ 트랙바 버그 수정: 폴더 전환 시 이전 카탈로그 상태 먼저 초기화
+                // _maxCatalogIndex가 이전 폴더 값으로 남아있으면 트랙바 Maximum이 잘못 설정됨
+                _maxCatalogIndex = null;
+                _catalogIndexByFileName.Clear();
+                _catalogLines.Clear();
                 _imageFiles.Clear();
                 trkRecord.Enabled = false;
                 return;
@@ -298,7 +400,17 @@ private int _selectEnd = -1;
             var files = exts
                 .SelectMany(e => Directory.GetFiles(folder, e, SearchOption.TopDirectoryOnly))
                 .ToList();
-            files.Sort(StringComparer.OrdinalIgnoreCase);
+            // Prefer numeric ordering when filenames contain indices (e.g. 0, 1, 1000)
+            // to avoid lexicographic order where "0" may be followed by "1000".
+            files = files
+                .OrderBy(p =>
+                {
+                    var fn = Path.GetFileName(p);
+                    var n = ExtractFirstNumber(fn);
+                    return n.HasValue ? n.Value : int.MaxValue;
+                })
+                .ThenBy(p => p, StringComparer.OrdinalIgnoreCase)
+                .ToList();
             _imageFiles = files;
             _allImageFiles = files.ToList();
             _loadedFolderPath = folder;
@@ -310,7 +422,11 @@ private int _selectEnd = -1;
             if (_imageFiles.Count > 0)
             {
                 trkRecord.Minimum = 0;
-                trkRecord.Maximum = Math.Max(0, _imageFiles.Count - 1);
+                // If catalog indicates a larger final index, use that as maximum so timeline matches catalog
+                if (_maxCatalogIndex.HasValue && _maxCatalogIndex.Value >= 0)
+                    trkRecord.Maximum = Math.Max(_maxCatalogIndex.Value, Math.Max(0, _imageFiles.Count - 1));
+                else
+                    trkRecord.Maximum = Math.Max(0, _imageFiles.Count - 1);
                 trkRecord.Value = 0;
                 trkRecord.Enabled = true;
                 SetCurrentIndex(0);
@@ -358,7 +474,28 @@ private int _selectEnd = -1;
                 picTubImage.Image?.Dispose();
                 picTubImage.Image = new Bitmap(img);
 
-                txtRecordNumber.Text = $"기록 {(_currentIndex + 1):D6}";
+                // 기본: 표시할 기록 번호는 catalog에 있는 _index 값을 사용
+                // Prefer mapping by filename: if catalog contains a mapping from filename->_index, use it.
+                int? catalogIndex = null;
+                try
+                {
+                    var fname = Path.GetFileName(path);
+                    if (!string.IsNullOrEmpty(fname) && _catalogIndexByFileName.TryGetValue(fname, out var val))
+                    {
+                        catalogIndex = val;
+                    }
+                    else if (_catalogLines != null && _catalogLines.Count > _currentIndex)
+                    {
+                        var parsed = ParseCatalogLine(_catalogLines[_currentIndex]);
+                        catalogIndex = parsed.index;
+                    }
+                }
+                catch { }
+
+                if (catalogIndex.HasValue)
+                    txtRecordNumber.Text = $"기록 {catalogIndex.Value:D6}";
+                else
+                    txtRecordNumber.Text = $"기록 {(_currentIndex):D6}";
 
                 double? angle = null;
                 double? throttle = null;
@@ -649,6 +786,54 @@ private int _selectEnd = -1;
                 }
                 catch { }
             }
+
+            // Build filename->index map and compute maximum _index
+            _catalogIndexByFileName.Clear();
+            _maxCatalogIndex = null;
+            for (int i = 0; i < _catalogLines.Count; i++)
+            {
+                var line = _catalogLines[i];
+                try
+                {
+                    var parsed = ParseCatalogLine(line);
+                    if (parsed.index.HasValue)
+                    {
+                        if (!_maxCatalogIndex.HasValue || parsed.index.Value > _maxCatalogIndex.Value)
+                            _maxCatalogIndex = parsed.index.Value;
+                    }
+
+                    // try extract cam image filename
+                    string? fname = null;
+                    try
+                    {
+                        var doc = System.Text.Json.JsonDocument.Parse(line);
+                        var root = doc.RootElement;
+                        if (root.TryGetProperty("cam/image_array", out var pc) || root.TryGetProperty("cam_image_array", out pc) || root.TryGetProperty("cam/image", out pc) || root.TryGetProperty("cam_image", out pc))
+                        {
+                            if (pc.ValueKind == System.Text.Json.JsonValueKind.String) fname = pc.GetString();
+                        }
+                    }
+                    catch { }
+
+                    if (string.IsNullOrEmpty(fname))
+                    {
+                        var m = Regex.Match(line, "\"cam(?:/|_)image(?:_array)?\"\\s*:\\s*\"([^\"]+)\"");
+                        if (m.Success) fname = m.Groups[1].Value;
+                    }
+
+                    if (!string.IsNullOrEmpty(fname))
+                    {
+                        try
+                        {
+                            var shortName = Path.GetFileName(fname);
+                            if (parsed.index.HasValue)
+                                _catalogIndexByFileName[shortName] = parsed.index.Value;
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            }
         }
 
         private int? ExtractFirstNumber(string input)
@@ -659,13 +844,14 @@ private int _selectEnd = -1;
             return null;
         }
 
-        private (long? timestamp, double? angle, string mode, double? throttle) ParseCatalogLine(string line)
+        private (long? timestamp, double? angle, string mode, double? throttle, int? index) ParseCatalogLine(string line)
         {
-            if (string.IsNullOrWhiteSpace(line)) return (null, null, null, null);
+            if (string.IsNullOrWhiteSpace(line)) return (null, null, null, null, null);
             long? timestamp = null;
             double? angle = null;
             string mode = null;
             double? throttle = null;
+            int? idx = null;
 
             try
             {
@@ -693,12 +879,18 @@ private int _selectEnd = -1;
                     if (pt.ValueKind == System.Text.Json.JsonValueKind.Number && pt.TryGetDouble(out var dv)) throttle = dv;
                     else if (pt.ValueKind == System.Text.Json.JsonValueKind.String && double.TryParse(pt.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var dv2)) throttle = dv2;
                 }
+                // try index fields
+                if (root.TryGetProperty("_index", out var pi) || root.TryGetProperty("index", out pi))
+                {
+                    if (pi.ValueKind == System.Text.Json.JsonValueKind.Number && pi.TryGetInt32(out var iv)) idx = iv;
+                    else if (pi.ValueKind == System.Text.Json.JsonValueKind.String && int.TryParse(pi.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var iv2)) idx = iv2;
+                }
                 if (root.TryGetProperty("user/mode", out var pm)
                     || root.TryGetProperty("mode", out pm)
                     || root.TryGetProperty("user_mode", out pm))
                     mode = pm.ValueKind == System.Text.Json.JsonValueKind.String ? pm.GetString() : pm.ToString();
 
-                return (timestamp, angle, mode, throttle);
+                return (timestamp, angle, mode, throttle, idx);
             }
             catch { }
 
@@ -723,7 +915,11 @@ private int _selectEnd = -1;
             var mStr = TryMatchToken("user/mode") ?? TryMatchToken("mode") ?? TryMatchToken("user_mode");
             if (!string.IsNullOrEmpty(mStr)) mode = mStr.Trim('"');
 
-            return (timestamp, angle, mode, throttle);
+            // try to extract index via token
+            var iStr = TryMatchNumber("_index") ?? TryMatchNumber("index");
+            if (iStr != null && int.TryParse(iStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ip)) idx = ip;
+
+            return (timestamp, angle, mode, throttle, idx);
         }
 
         // ════════════════════════════════════════════════════════════
@@ -1399,8 +1595,59 @@ private int _selectEnd = -1;
                 pnlTimeline.Height);
         }
 
+        private void BtnLeftSet_Click(object sender, EventArgs e)
+        {
+            _leftFrame = trkRecord.Value + 1;
+
+            lblRange.Text =
+                $"범위 : [{_leftFrame}.{_rightFrame}]";
         }
+
+        private void BtnRightSet_Click(object sender, EventArgs e)
+        {
+            _rightFrame = trkRecord.Value + 1;
+
+            lblRange.Text =
+                $"범위 : [{_leftFrame}.{_rightFrame}]";
+        }
+
+        private void BtnRangeDelete_Click(object sender, EventArgs e)
+        {
+            if (_leftFrame == -1 || _rightFrame == -1)
+            {
+                MessageBox.Show("범위를 먼저 설정하세요.");
+                return;
+            }
+
+            int start = Math.Min(_leftFrame, _rightFrame) - 1;
+            int end = Math.Max(_leftFrame, _rightFrame) - 1;
+
+            for (int i = end; i >= start; i--)
+            {
+                string deletedImage = _imageFiles[i];
+
+                _deletedImages.Add(deletedImage);
+                _deletedIndexes[deletedImage] = i;
+
+                _imageFiles.RemoveAt(i);
+            }
+
+            trkRecord.Maximum = Math.Max(0, _imageFiles.Count - 1);
+
+            if (_imageFiles.Count > 0)
+            {
+                _currentIndex = Math.Min(_currentIndex, _imageFiles.Count - 1);
+                trkRecord.Value = _currentIndex;
+                SetCurrentIndex(_currentIndex);
+            }
+
+            UpdateDeleteStatus();
+            pnlTimeline.Invalidate();
+        }
+
+        
     }
+}
 
 
 
