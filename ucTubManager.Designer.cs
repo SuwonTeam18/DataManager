@@ -54,7 +54,11 @@
             txtTub = new TextBox();
             trkRecord = new TrackBar();
             pnlTools = new Panel();
-            btnClearFilter = new Button();
+            lblRange = new Label();
+            BtnRangeDelete = new Button();
+            BtnRightSet = new Button();
+            BtnLeftSet = new Button();
+            IblRange = new Label();
             pnlFilter = new Panel();
             tplFilter = new TableLayoutPanel();
             label1 = new Label();
@@ -72,6 +76,7 @@
             FilAngle = new Label();
             flowLayoutPanel1 = new FlowLayoutPanel();
             btnApplyFilter = new Button();
+            btnClearFilter = new Button();
             lblDeleteStatus = new Label();
             pnlTimeline = new Panel();
             lblRange = new Label();
@@ -238,7 +243,7 @@
             cmbSpeed.Font = new Font("맑은 고딕", 9F);
             cmbSpeed.ForeColor = Color.White;
             cmbSpeed.Items.AddRange(new object[] { "0.25x", "0.50x", "0.75x", "1.00x", "1.25x", "1.50x", "1.75x", "2.00x" });
-            cmbSpeed.Location = new Point(41, 108);
+            cmbSpeed.Location = new Point(16, 145);
             cmbSpeed.Name = "cmbSpeed";
             cmbSpeed.Size = new Size(92, 23);
             cmbSpeed.TabIndex = 7;
@@ -252,7 +257,7 @@
             btnFastNext.FlatStyle = FlatStyle.Flat;
             btnFastNext.Font = new Font("맑은 고딕", 11F);
             btnFastNext.ForeColor = Color.FromArgb(200, 200, 200);
-            btnFastNext.Location = new Point(963, 46);
+            btnFastNext.Location = new Point(1014, 210);
             btnFastNext.Name = "btnFastNext";
             btnFastNext.Size = new Size(180, 32);
             btnFastNext.TabIndex = 6;
@@ -267,9 +272,9 @@
             btnNext.FlatStyle = FlatStyle.Flat;
             btnNext.Font = new Font("맑은 고딕", 11F);
             btnNext.ForeColor = Color.FromArgb(200, 200, 200);
-            btnNext.Location = new Point(733, 52);
+            btnNext.Location = new Point(820, 210);
             btnNext.Name = "btnNext";
-            btnNext.Size = new Size(204, 32);
+            btnNext.Size = new Size(188, 32);
             btnNext.TabIndex = 5;
             btnNext.Text = "⏩";
             btnNext.UseVisualStyleBackColor = false;
@@ -282,9 +287,9 @@
             btnStartStop.FlatStyle = FlatStyle.Flat;
             btnStartStop.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
             btnStartStop.ForeColor = Color.White;
-            btnStartStop.Location = new Point(193, 3);
+            btnStartStop.Location = new Point(385, 210);
             btnStartStop.Name = "btnStartStop";
-            btnStartStop.Size = new Size(196, 30);
+            btnStartStop.Size = new Size(429, 32);
             btnStartStop.TabIndex = 4;
             btnStartStop.Text = "▶ 재생";
             btnStartStop.UseVisualStyleBackColor = false;
@@ -297,7 +302,7 @@
             btnFastPrev.FlatStyle = FlatStyle.Flat;
             btnFastPrev.Font = new Font("맑은 고딕", 11F);
             btnFastPrev.ForeColor = Color.FromArgb(200, 200, 200);
-            btnFastPrev.Location = new Point(3, 155);
+            btnFastPrev.Location = new Point(3, 210);
             btnFastPrev.Name = "btnFastPrev";
             btnFastPrev.Size = new Size(170, 32);
             btnFastPrev.TabIndex = 3;
@@ -312,7 +317,7 @@
             btnPrev.FlatStyle = FlatStyle.Flat;
             btnPrev.Font = new Font("맑은 고딕", 11F);
             btnPrev.ForeColor = Color.FromArgb(200, 200, 200);
-            btnPrev.Location = new Point(196, 155);
+            btnPrev.Location = new Point(179, 210);
             btnPrev.Name = "btnPrev";
             btnPrev.Size = new Size(200, 32);
             btnPrev.TabIndex = 2;
@@ -389,7 +394,7 @@
             // 
             trkRecord.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             trkRecord.BackColor = Color.FromArgb(18, 25, 42);
-            trkRecord.Location = new Point(179, 108);
+            trkRecord.Location = new Point(114, 144);
             trkRecord.Name = "trkRecord";
             trkRecord.Size = new Size(950, 45);
             trkRecord.TabIndex = 2;
@@ -399,14 +404,19 @@
             // 
             pnlTools.BackColor = Color.White;
             pnlTools.BorderStyle = BorderStyle.FixedSingle;
+            pnlTools.Controls.Add(btnPrev);
+            pnlTools.Controls.Add(lblRange);
+            pnlTools.Controls.Add(btnStartStop);
             pnlTools.Controls.Add(cmbSpeed);
-            pnlTools.Controls.Add(btnClearFilter);
+            pnlTools.Controls.Add(BtnRangeDelete);
+            pnlTools.Controls.Add(BtnRightSet);
+            pnlTools.Controls.Add(BtnLeftSet);
+            pnlTools.Controls.Add(IblRange);
             pnlTools.Controls.Add(pnlFilter);
             pnlTools.Controls.Add(lblDeleteStatus);
             pnlTools.Controls.Add(pnlTimeline);
             pnlTools.Controls.Add(trkRecord);
             pnlTools.Controls.Add(btnFastPrev);
-            pnlTools.Controls.Add(btnPrev);
             pnlTools.Controls.Add(btnNext);
             pnlTools.Controls.Add(btnFastNext);
             pnlTools.Controls.Add(lblRange);
@@ -422,21 +432,54 @@
             pnlTools.Size = new Size(1200, 412);
             pnlTools.TabIndex = 3;
             // 
-            // btnClearFilter
+            // lblRange
             // 
-            btnClearFilter.BackColor = Color.FromArgb(42, 58, 74);
-            btnClearFilter.Cursor = Cursors.Hand;
-            btnClearFilter.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
-            btnClearFilter.FlatStyle = FlatStyle.Flat;
-            btnClearFilter.Font = new Font("맑은 고딕", 9F);
-            btnClearFilter.ForeColor = Color.FromArgb(180, 180, 180);
-            btnClearFilter.Location = new Point(527, 162);
-            btnClearFilter.Name = "btnClearFilter";
-            btnClearFilter.Size = new Size(83, 36);
-            btnClearFilter.TabIndex = 18;
-            btnClearFilter.Text = "✕ 해제";
-            btnClearFilter.UseVisualStyleBackColor = false;
-            btnClearFilter.Click += btnClearFilter_Click;
+            lblRange.AutoSize = true;
+            lblRange.Location = new Point(73, 93);
+            lblRange.Name = "lblRange";
+            lblRange.Size = new Size(67, 15);
+            lblRange.TabIndex = 25;
+            lblRange.Text = "범위 : [0.0]";
+            // 
+            // BtnRangeDelete
+            // 
+            BtnRangeDelete.Location = new Point(316, 115);
+            BtnRangeDelete.Name = "BtnRangeDelete";
+            BtnRangeDelete.Size = new Size(90, 23);
+            BtnRangeDelete.TabIndex = 24;
+            BtnRangeDelete.Text = "범위 삭제";
+            BtnRangeDelete.UseVisualStyleBackColor = true;
+            BtnRangeDelete.Click += BtnRangeDelete_Click;
+            // 
+            // BtnRightSet
+            // 
+            BtnRightSet.Location = new Point(102, 115);
+            BtnRightSet.Name = "BtnRightSet";
+            BtnRightSet.Size = new Size(90, 24);
+            BtnRightSet.TabIndex = 23;
+            BtnRightSet.Text = "우측 설정 ⚙";
+            BtnRightSet.UseVisualStyleBackColor = true;
+            BtnRightSet.Click += BtnRightSet_Click;
+            // 
+            // BtnLeftSet
+            // 
+            BtnLeftSet.Location = new Point(7, 115);
+            BtnLeftSet.Name = "BtnLeftSet";
+            BtnLeftSet.Size = new Size(89, 23);
+            BtnLeftSet.TabIndex = 22;
+            BtnLeftSet.Text = "좌측 설정 ⚙";
+            BtnLeftSet.UseVisualStyleBackColor = true;
+            BtnLeftSet.Click += BtnLeftSet_Click;
+            // 
+            // IblRange
+            // 
+            IblRange.AutoSize = true;
+            IblRange.ForeColor = Color.FromArgb(0, 192, 192);
+            IblRange.Location = new Point(8, 93);
+            IblRange.Name = "IblRange";
+            IblRange.Size = new Size(59, 15);
+            IblRange.TabIndex = 21;
+            IblRange.Text = "범위 설정";
             // 
             // pnlFilter
             // 
@@ -632,7 +675,7 @@
             // flowLayoutPanel1
             // 
             flowLayoutPanel1.Controls.Add(btnApplyFilter);
-            flowLayoutPanel1.Controls.Add(btnStartStop);
+            flowLayoutPanel1.Controls.Add(btnClearFilter);
             flowLayoutPanel1.Dock = DockStyle.Fill;
             flowLayoutPanel1.Location = new Point(122, 3);
             flowLayoutPanel1.Name = "flowLayoutPanel1";
@@ -643,7 +686,6 @@
             // 
             btnApplyFilter.BackColor = Color.FromArgb(24, 95, 165);
             btnApplyFilter.Cursor = Cursors.Hand;
-            btnApplyFilter.Dock = DockStyle.Fill;
             btnApplyFilter.FlatAppearance.BorderSize = 0;
             btnApplyFilter.FlatStyle = FlatStyle.Flat;
             btnApplyFilter.Font = new Font("맑은 고딕", 9F);
@@ -655,6 +697,22 @@
             btnApplyFilter.Text = "✔ 필터 적용";
             btnApplyFilter.UseVisualStyleBackColor = false;
             btnApplyFilter.Click += btnApplyFilter_Click;
+            // 
+            // btnClearFilter
+            // 
+            btnClearFilter.BackColor = Color.FromArgb(42, 58, 74);
+            btnClearFilter.Cursor = Cursors.Hand;
+            btnClearFilter.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
+            btnClearFilter.FlatStyle = FlatStyle.Flat;
+            btnClearFilter.Font = new Font("맑은 고딕", 9F);
+            btnClearFilter.ForeColor = Color.FromArgb(180, 180, 180);
+            btnClearFilter.Location = new Point(193, 3);
+            btnClearFilter.Name = "btnClearFilter";
+            btnClearFilter.Size = new Size(193, 36);
+            btnClearFilter.TabIndex = 18;
+            btnClearFilter.Text = "✕ 해제";
+            btnClearFilter.UseVisualStyleBackColor = false;
+            btnClearFilter.Click += btnClearFilter_Click;
             // 
             // lblDeleteStatus
             // 
@@ -699,7 +757,7 @@
             btnSetLeft.Name = "btnSetLeft";
             btnSetLeft.Size = new Size(100, 26);
             btnSetLeft.TabIndex = 0;
-            btnSetLeft.Text = "좌측 설정 ⚙";
+            btnSetLeft.Text = "첫장가기";
             btnSetLeft.UseVisualStyleBackColor = false;
             btnSetLeft.Click += btnSetLeft_Click;
             // 
@@ -715,7 +773,7 @@
             btnSetRight.Name = "btnSetRight";
             btnSetRight.Size = new Size(100, 26);
             btnSetRight.TabIndex = 1;
-            btnSetRight.Text = "우측 설정 ⚙";
+            btnSetRight.Text = "끝장가기";
             btnSetRight.UseVisualStyleBackColor = false;
             btnSetRight.Click += btnSetRight_Click;
             // 
@@ -904,6 +962,13 @@
         private Button btnApplyFilter;
         private Button btnClearFilter;
         private Panel pnlTimeline;
+
+        private Label IblRange;
+        private Button BtnRightSet;
+        private Button BtnLeftSet;
+        private Button BtnRangeDelete;
+        private Label lblRange;
+
         private Panel pnlFilter;
         private TableLayoutPanel tplFilter;
         private NumericUpDown nudSpeedMax;
@@ -911,5 +976,6 @@
         private Panel pnlThrottleText;
         private Panel pnlAngleText;
         private FlowLayoutPanel flowLayoutPanel1;
+
     }
 }
