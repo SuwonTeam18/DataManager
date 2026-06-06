@@ -54,7 +54,13 @@
             txtTub = new TextBox();
             trkRecord = new TrackBar();
             pnlTools = new Panel();
-            lblRange = new Label();
+            btnAngleRemove = new Button();
+            btnSpeedRemove = new Button();
+            cmbAngleFilters = new ComboBox();
+            cmbSpeedFilters = new ComboBox();
+            btnDeleteAllRanges = new Button();
+            btnRangeCancel = new Button();
+            cmbRanges = new ComboBox();
             BtnRangeDelete = new Button();
             BtnRightSet = new Button();
             BtnLeftSet = new Button();
@@ -393,7 +399,13 @@
             // 
             pnlTools.BackColor = Color.White;
             pnlTools.BorderStyle = BorderStyle.FixedSingle;
-            pnlTools.Controls.Add(lblRange);
+            pnlTools.Controls.Add(btnAngleRemove);
+            pnlTools.Controls.Add(btnSpeedRemove);
+            pnlTools.Controls.Add(cmbAngleFilters);
+            pnlTools.Controls.Add(cmbSpeedFilters);
+            pnlTools.Controls.Add(btnDeleteAllRanges);
+            pnlTools.Controls.Add(btnRangeCancel);
+            pnlTools.Controls.Add(cmbRanges);
             pnlTools.Controls.Add(BtnRangeDelete);
             pnlTools.Controls.Add(BtnRightSet);
             pnlTools.Controls.Add(BtnLeftSet);
@@ -430,18 +442,77 @@
             pnlTools.Size = new Size(1200, 410);
             pnlTools.TabIndex = 3;
             // 
-            // lblRange
+            // btnAngleRemove
             // 
-            lblRange.AutoSize = true;
-            lblRange.Location = new Point(200, 115);
-            lblRange.Name = "lblRange";
-            lblRange.Size = new Size(67, 15);
-            lblRange.TabIndex = 25;
-            lblRange.Text = "범위 : [0.0]";
+            btnAngleRemove.Location = new Point(545, 365);
+            btnAngleRemove.Name = "btnAngleRemove";
+            btnAngleRemove.Size = new Size(75, 23);
+            btnAngleRemove.TabIndex = 32;
+            btnAngleRemove.Text = "해제";
+            btnAngleRemove.UseVisualStyleBackColor = true;
+            btnAngleRemove.Click += btnAngleRemove_Click;
+            // 
+            // btnSpeedRemove
+            // 
+            btnSpeedRemove.Location = new Point(337, 364);
+            btnSpeedRemove.Name = "btnSpeedRemove";
+            btnSpeedRemove.Size = new Size(75, 23);
+            btnSpeedRemove.TabIndex = 31;
+            btnSpeedRemove.Text = "해제";
+            btnSpeedRemove.UseVisualStyleBackColor = true;
+            btnSpeedRemove.Click += btnSpeedRemove_Click;
+            // 
+            // cmbAngleFilters
+            // 
+            cmbAngleFilters.FormattingEnabled = true;
+            cmbAngleFilters.Location = new Point(418, 365);
+            cmbAngleFilters.Name = "cmbAngleFilters";
+            cmbAngleFilters.Size = new Size(121, 23);
+            cmbAngleFilters.TabIndex = 30;
+            cmbAngleFilters.Text = "각도 범위";
+            // 
+            // cmbSpeedFilters
+            // 
+            cmbSpeedFilters.FormattingEnabled = true;
+            cmbSpeedFilters.Location = new Point(212, 363);
+            cmbSpeedFilters.Name = "cmbSpeedFilters";
+            cmbSpeedFilters.Size = new Size(121, 23);
+            cmbSpeedFilters.TabIndex = 29;
+            cmbSpeedFilters.Text = "속도 범위";
+            // 
+            // btnDeleteAllRanges
+            // 
+            btnDeleteAllRanges.Location = new Point(402, 112);
+            btnDeleteAllRanges.Name = "btnDeleteAllRanges";
+            btnDeleteAllRanges.Size = new Size(98, 23);
+            btnDeleteAllRanges.TabIndex = 28;
+            btnDeleteAllRanges.Text = "모든 범위 삭제";
+            btnDeleteAllRanges.UseVisualStyleBackColor = true;
+            btnDeleteAllRanges.Click += btnDeleteAllRanges_Click;
+            // 
+            // btnRangeCancel
+            // 
+            btnRangeCancel.Location = new Point(602, 112);
+            btnRangeCancel.Name = "btnRangeCancel";
+            btnRangeCancel.Size = new Size(90, 23);
+            btnRangeCancel.TabIndex = 27;
+            btnRangeCancel.Text = "범위 취소";
+            btnRangeCancel.UseVisualStyleBackColor = true;
+            btnRangeCancel.Click += btnRangeCancel_Click;
+            // 
+            // cmbRanges
+            // 
+            cmbRanges.FormattingEnabled = true;
+            cmbRanges.Location = new Point(200, 111);
+            cmbRanges.Name = "cmbRanges";
+            cmbRanges.Size = new Size(196, 23);
+            cmbRanges.TabIndex = 26;
+            cmbRanges.Text = "범위 목록";
+            cmbRanges.SelectedIndexChanged += cmbRanges_SelectedIndexChanged;
             // 
             // BtnRangeDelete
             // 
-            BtnRangeDelete.Location = new Point(351, 111);
+            BtnRangeDelete.Location = new Point(506, 112);
             BtnRangeDelete.Name = "BtnRangeDelete";
             BtnRangeDelete.Size = new Size(90, 23);
             BtnRangeDelete.TabIndex = 24;
@@ -574,12 +645,12 @@
             nudAngleMin.Font = new Font("맑은 고딕", 8.5F);
             nudAngleMin.ForeColor = Color.White;
             nudAngleMin.Location = new Point(8, 332);
-            nudAngleMin.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
-            nudAngleMin.Minimum = new decimal(new int[] { 10, 0, 0, int.MinValue });
+            nudAngleMin.Maximum = new decimal(new int[] { 1, 0, 0, 0 });
+            nudAngleMin.Minimum = new decimal(new int[] { 1, 0, 0, int.MinValue });
             nudAngleMin.Name = "nudAngleMin";
             nudAngleMin.Size = new Size(90, 23);
             nudAngleMin.TabIndex = 13;
-            nudAngleMin.Value = new decimal(new int[] { 10, 0, 0, int.MinValue });
+            nudAngleMin.Value = new decimal(new int[] { 1, 0, 0, int.MinValue });
             // 
             // pnlAngleRange
             // 
@@ -605,12 +676,12 @@
             nudAngleMax.Font = new Font("맑은 고딕", 8.5F);
             nudAngleMax.ForeColor = Color.White;
             nudAngleMax.Location = new Point(1100, 331);
-            nudAngleMax.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
-            nudAngleMax.Minimum = new decimal(new int[] { 10, 0, 0, int.MinValue });
+            nudAngleMax.Maximum = new decimal(new int[] { 1, 0, 0, 0 });
+            nudAngleMax.Minimum = new decimal(new int[] { 1, 0, 0, int.MinValue });
             nudAngleMax.Name = "nudAngleMax";
             nudAngleMax.Size = new Size(86, 23);
             nudAngleMax.TabIndex = 14;
-            nudAngleMax.Value = new decimal(new int[] { 10, 0, 0, 0 });
+            nudAngleMax.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // FilAngle
             // 
@@ -649,9 +720,9 @@
             btnClearFilter.ForeColor = Color.FromArgb(180, 180, 180);
             btnClearFilter.Location = new Point(114, 362);
             btnClearFilter.Name = "btnClearFilter";
-            btnClearFilter.Size = new Size(80, 26);
+            btnClearFilter.Size = new Size(93, 26);
             btnClearFilter.TabIndex = 18;
-            btnClearFilter.Text = "✕ 해제";
+            btnClearFilter.Text = "✕ 모두 해제";
             btnClearFilter.UseVisualStyleBackColor = false;
             btnClearFilter.Click += btnClearFilter_Click;
             // 
@@ -867,6 +938,12 @@
         private Button BtnRightSet;
         private Button BtnLeftSet;
         private Button BtnRangeDelete;
-        private Label lblRange;
+        private ComboBox cmbRanges;
+        private Button btnRangeCancel;
+        private Button btnDeleteAllRanges;
+        private Button btnAngleRemove;
+        private Button btnSpeedRemove;
+        private ComboBox cmbAngleFilters;
+        private ComboBox cmbSpeedFilters;
     }
 }
