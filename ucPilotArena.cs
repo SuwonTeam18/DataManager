@@ -18,12 +18,28 @@ namespace DonkeyUi
 {
     public partial class ucPilotArena : UserControl
     {
-        // Event to notify external components when timeline index changes
-        public static event Action<int>? OnTimelineIndexChanged;
+        
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 타임라인 인덱스 변경 시 외부(TubManager)에 알리는 이벤트
         // ════════════════════════════════════════════════════════════
         public static event Action<int>? OnTimelineIndexChanged;
+
+        // ════════════════════════════════════════════════════════════
+        // 재생 상태 공유 이벤트
+        // ════════════════════════════════════════════════════════════
+        public static event Action<object, bool>? OnPlaybackStateChanged; // sender, isPlaying
+
+        public static void RaisePlaybackStarted(object sender, bool isPlaying)
+        {
+            OnPlaybackStateChanged?.Invoke(sender, isPlaying);
+        }
+        // 배속 동기화 이벤트
+        public static event Action<string>? OnSpeedChanged;
+
+        public static void RaiseSpeedChanged(string speed)
+        {
+            OnSpeedChanged?.Invoke(speed);
+        }
 
         // ════════════════════════════════════════════════════════════
         // 파일럿 세트 관리
@@ -88,6 +104,9 @@ namespace DonkeyUi
 
         private static readonly Color HumanColor = Color.FromArgb(255, 255, 87, 34);
         private static readonly Color AiColor = Color.FromArgb(255, 0, 176, 255);
+
+        // 현재 실제로 재생 중인 타이머 (자신 또는 상대방)
+        private static System.Windows.Forms.Timer? _activePlayTimer = null;
 
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 그래프 관련 필드
@@ -248,45 +267,234 @@ namespace DonkeyUi
             btnRemoveLeftPic.MouseEnter += (s, e) => btnRemoveLeftPic.BackColor = Color.FromArgb(190, 190, 190);
             btnRemoveLeftPic.MouseLeave += (s, e) => btnRemoveLeftPic.BackColor = Color.FromArgb(210, 210, 210);
 
+            // ════════════════════════════════════════════════════════════
+            // 재생/정지 + 배속 + 프레임 이동 버튼 활성화
+            // ════════════════════════════════════════════════════════════
             bool isPlaying = false;
-            btnStop.Click += (s, e) =>
+            var playTimer = new System.Windows.Forms.Timer();
+
+            if (cmbSpeed.Items.Count > 0 && cmbSpeed.SelectedIndex < 0)
+                cmbSpeed.SelectedIndex = 3; // "1.00x"
+
+            int GetPlayInterval()
             {
-                isPlaying = !isPlaying;
-                if (isPlaying) { btnStop.Text = "정지"; btnStop.BackColor = Color.FromArgb(255, 240, 240); btnStop.ForeColor = Color.FromArgb(180, 40, 40); }
-                else { btnStop.Text = "재생"; btnStop.BackColor = Color.FromArgb(230, 242, 255); btnStop.ForeColor = Color.FromArgb(24, 95, 165); }
+                string txt = (cmbSpeed.SelectedItem?.ToString() ?? "1.00x")
+                    .Replace("x", "").Trim();
+                if (!double.TryParse(txt, System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out double spd) || spd <= 0)
+                    spd = 1.0;
+                return Math.Max(16, (int)(100.0 / spd));
+            }
+
+            playTimer.Interval = GetPlayInterval();
+            cmbSpeed.SelectedIndexChanged += (s, e) =>
+            {
+                playTimer.Interval = GetPlayInterval();
+                RaiseSpeedChanged(cmbSpeed.SelectedItem?.ToString() ?? "1.00x");
             };
 
+            // 상대방 배속 변경 수신
+            OnSpeedChanged += (speed) =>
+            {
+                if (this.IsDisposed || !this.IsHandleCreated) return;
+                this.BeginInvoke(() =>
+                {
+                    if (cmbSpeed.SelectedItem?.ToString() == speed) return; // 무한루프 방지
+                    for (int i = 0; i < cmbSpeed.Items.Count; i++)
+                    {
+                        if (cmbSpeed.Items[i]?.ToString() == speed)
+                        {
+                            cmbSpeed.SelectedIndex = i;
+                            break;
+                        }
+                    }
+                });
+            };
+
+            // ── PilotArena 독립 네비게이션 ──
+            // TubManager 의존 없이 _imageFiles 기준으로 직접 이동
+            void NavigateTo(int idx)
+            {
+                if (_imageFiles.Count == 0) return;
+                idx = Math.Max(0, Math.Min(idx, _imageFiles.Count - 1));
+
+                _currentIndex = idx;
+                _lastImagePath = _imageFiles[idx];
+
+                // trkTimeline 동기화
+                _suppressTimelineNotify = true;
+                if (idx >= trkTimeline.Minimum && idx <= trkTimeline.Maximum)
+                    trkTimeline.Value = idx;
+                _suppressTimelineNotify = false;
+
+                // catalog에서 읽은 human 값으로 UI 갱신
+                if (_graphHumanAngles.Count > idx)
+                {
+                    _humanAngle = _graphHumanAngles[idx];
+                    _humanThrottle = _graphHumanThrottles[idx];
+                    UpdateUserValuePanel();
+                }
+
+                RefreshAllSlots();
+                _graphDrawPanel?.Invalidate();
+
+                // TubManager에도 알림 (동기화)
+                try { OnTimelineIndexChanged?.Invoke(_currentIndex); } catch { }
+            }
+
+            // ── 재생 타이머 Tick ──
+            // ── 재생 타이머 Tick ──
+            // ── 다른 탭에서 재생 시작 시 내 재생 강제 정지 ──
+            OnPlaybackStateChanged += (sender, playing) =>
+            {
+                if (sender == playTimer) return;
+                if (this.IsDisposed || !this.IsHandleCreated) return;
+                this.BeginInvoke(() =>
+                {
+                    if (playing)
+                    {
+                        // 상대방이 재생 시작
+                        // 내 타이머가 돌고 있으면 멈춤
+                        if (isPlaying) { playTimer.Stop(); isPlaying = false; }
+                        // 상대방 타이머 참조 저장
+                        _activePlayTimer = sender as System.Windows.Forms.Timer;
+                        btnStop.Text = "정지";
+                        btnStop.BackColor = Color.FromArgb(255, 240, 240);
+                        btnStop.ForeColor = Color.FromArgb(180, 40, 40);
+                    }
+                    else
+                    {
+                        // 상대방이 정지
+                        _activePlayTimer = null;
+                        btnStop.Text = "재생";
+                        btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                        btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                    }
+                });
+            };
+
+            // ── 재생 타이머 Tick ──
+            playTimer.Tick += (s, e) =>
+            {
+                if (_imageFiles.Count == 0) { playTimer.Stop(); return; }
+                int next = _currentIndex + 1;
+                if (next >= _imageFiles.Count)
+                {
+                    isPlaying = false;
+                    playTimer.Stop();
+                    btnStop.Text = "재생";
+                    btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                    btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                    return;
+                }
+                NavigateTo(next);
+            };
+
+            // ── 재생/정지 ──
+            btnStop.Click += (s, e) =>
+            {
+                // 상대방이 재생 중인 경우 (버튼이 "정지"지만 내 isPlaying은 false)
+                if (!isPlaying && _activePlayTimer != null)
+                {
+                    // 상대방 타이머 직접 정지
+                    _activePlayTimer.Stop();
+                    _activePlayTimer = null;
+                    btnStop.Text = "재생";
+                    btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                    btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                    RaisePlaybackStarted(playTimer, false); // 상대방 버튼도 "재생"으로
+                    return;
+                }
+
+                if (_imageFiles.Count == 0) return;
+                isPlaying = !isPlaying;
+                if (isPlaying)
+                {
+                    _activePlayTimer = playTimer;
+                    btnStop.Text = "정지";
+                    btnStop.BackColor = Color.FromArgb(255, 240, 240);
+                    btnStop.ForeColor = Color.FromArgb(180, 40, 40);
+                    playTimer.Interval = GetPlayInterval();
+                    playTimer.Start();
+                    RaisePlaybackStarted(playTimer, true);
+                }
+                else
+                {
+                    _activePlayTimer = null;
+                    btnStop.Text = "재생";
+                    btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                    btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                    playTimer.Stop();
+                    RaisePlaybackStarted(playTimer, false);
+                }
+            };
+
+            // ── << 맨 앞으로 ──
+            btnRewind.Click += (s, e) =>
+            {
+                if (_imageFiles.Count == 0) return;
+                isPlaying = false; playTimer.Stop();
+                btnStop.Text = "재생";
+                btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                NavigateTo(0);
+            };
+
+            // ── >> 맨 뒤로 ──
+            btnFastForward.Click += (s, e) =>
+            {
+                if (_imageFiles.Count == 0) return;
+                isPlaying = false; playTimer.Stop();
+                btnStop.Text = "재생";
+                btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                NavigateTo(_imageFiles.Count - 1);
+            };
+
+            // ── < 이전 프레임 ──
+            btnPrev.Click += (s, e) =>
+            {
+                if (_imageFiles.Count == 0 || _currentIndex <= 0) return;
+                NavigateTo(_currentIndex - 1);
+            };
+
+            // ── > 다음 프레임 ──
+            btnNext.Click += (s, e) =>
+            {
+                if (_imageFiles.Count == 0 || _currentIndex >= _imageFiles.Count - 1) return;
+                NavigateTo(_currentIndex + 1);
+            };
+
+            // ── 호버 효과 ──
             foreach (Button btn in new[] { btnRewind, btnFastForward })
             {
-                btn.MouseEnter += (s, e) => { ((Button)s).BackColor = Color.FromArgb(200, 200, 200); ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180); };
-                btn.MouseLeave += (s, e) => { ((Button)s).BackColor = Color.FromArgb(224, 224, 224); ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(204, 204, 204); };
+                btn.MouseEnter += (s, e) => {
+                    ((Button)s).BackColor = Color.FromArgb(200, 200, 200);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+                };
+                btn.MouseLeave += (s, e) => {
+                    ((Button)s).BackColor = Color.FromArgb(224, 224, 224);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(204, 204, 204);
+                };
             }
             foreach (Button btn in new[] { btnPrev, btnNext })
             {
-                btn.MouseEnter += (s, e) => { ((Button)s).BackColor = Color.FromArgb(216, 216, 216); ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200); };
-                btn.MouseLeave += (s, e) => { ((Button)s).BackColor = Color.FromArgb(236, 236, 236); ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(221, 221, 221); };
+                btn.MouseEnter += (s, e) => {
+                    ((Button)s).BackColor = Color.FromArgb(216, 216, 216);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+                };
+                btn.MouseLeave += (s, e) => {
+                    ((Button)s).BackColor = Color.FromArgb(236, 236, 236);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(221, 221, 221);
+                };
             }
-
             btnAddLeftPic.Click += BtnAddLeftPic_Click;
             btnRemoveLeftPic.Click += BtnRemoveLeftPic_Click;
             if (cmbNumColumns != null) cmbNumColumns.SelectedIndexChanged += (s, e) => UpdateDisplay();
 
             trkTimeline.Scroll += trkTimeline_Scroll;
             // 타임라인 디바운스 설정 (200ms)
-            _timelineDebounce.Interval = 200;
-            _timelineDebounce.Tick += (s, e) => {
-                _timelineDebounce.Stop();
-                if (_pendingTimelineIndex >= 0)
-                {
-                    int idx = _pendingTimelineIndex;
-                    _pendingTimelineIndex = -1;
-                    // 한 번만 적용
-                    _suppressTimelineNotify = true; // 루프 방지
-                    _currentIndex = idx;
-                    ShowFrame(_currentIndex);
-                    try { OnTimelineIndexChanged?.Invoke(_currentIndex); } catch { }
-                }
-            };
+            
             trkBrightness.Scroll += trkBrightness_Scroll;
             trkBlur.Scroll += trkBlur_Scroll;
             pnlImageArea.Resize += (s, e) => UpdateDisplay();
@@ -380,14 +588,7 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 외부에서 타임라인 인덱스 조회/설정
         // ════════════════════════════════════════════════════════════
-        public string? GetImagePathAt(int idx)
-        {
-            if (this.InvokeRequired)
-                return (string?)this.Invoke(new Func<int, string?>(GetImagePathAt), idx);
-            if (_imageFiles == null || _imageFiles.Count == 0) return null;
-            if (idx < 0 || idx >= _imageFiles.Count) return null;
-            return _imageFiles[idx];
-        }
+        
 
         public void SetTimelineIndexFromExternal(int index)
         {
@@ -890,9 +1091,9 @@ namespace DonkeyUi
         }
 
         private void trkTimeline_Scroll(object sender, EventArgs e)
-        {
+        
 
-            private void trkTimeline_Scroll(object sender, EventArgs e)
+            
 {
     if (_suppressTimelineNotify)
     {
@@ -1030,6 +1231,54 @@ namespace DonkeyUi
             UpdateUserValuePanel();
             UpdateThrottleStatistics(throttle);
 
+            // ★ 추가: _imageFiles가 비어있으면 TubManager 경로로 채우기
+            if (_imageFiles.Count == 0 && !string.IsNullOrEmpty(imagePath))
+            {
+                string imgFolder = Path.GetDirectoryName(imagePath);
+                if (Directory.Exists(imgFolder))
+                {
+                    _imageFiles = Directory.GetFiles(imgFolder)
+                        .Where(f => f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                                 || f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                                 || f.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                        .OrderBy(f => GetFileNumber(f))
+                        .ToList();
+
+                    if (_imageFiles.Count > 0)
+                    {
+                        trkTimeline.Minimum = 0;
+                        trkTimeline.Maximum = _imageFiles.Count - 1;
+                    }
+                }
+            }
+
+            // ★ 추가: _imageFiles가 채워졌는데 tubPath가 바뀐 경우 갱신
+            if (!string.IsNullOrEmpty(imagePath))
+            {
+                string imgFolder = Path.GetDirectoryName(imagePath);
+                if (_imageFiles.Count > 0)
+                {
+                    string currentFolder = Path.GetDirectoryName(_imageFiles[0]);
+                    if (!string.Equals(imgFolder, currentFolder, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _imageFiles = Directory.Exists(imgFolder)
+                            ? Directory.GetFiles(imgFolder)
+                                .Where(f => f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                                         || f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                                         || f.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                                .OrderBy(f => GetFileNumber(f))
+                                .ToList()
+                            : new List<string>();
+
+                        if (_imageFiles.Count > 0)
+                        {
+                            trkTimeline.Minimum = 0;
+                            trkTimeline.Maximum = _imageFiles.Count - 1;
+                        }
+                    }
+                }
+            }
+
             try
             {
                 trkTimeline.Minimum = 0;
@@ -1043,6 +1292,8 @@ namespace DonkeyUi
             }
             catch { }
             _currentIndex = currentIndex;
+
+            
 
             string tubPath = FixPath(ucTubManager.CurrentTubPath);
             if (!string.IsNullOrEmpty(tubPath) && _currentTubFolderPath != tubPath)

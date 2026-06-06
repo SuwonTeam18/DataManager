@@ -369,7 +369,7 @@ namespace DonkeyUi
             tlpMain.RowCount = 5;
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 55.0535774F));
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 163F));
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 26.0812588F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 220F));
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 17.9554386F));
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 1.04849279F));
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
@@ -384,7 +384,7 @@ namespace DonkeyUi
             pnlImageArea.Dock = DockStyle.Fill;
             pnlImageArea.Location = new Point(9, 9);
             pnlImageArea.Name = "pnlImageArea";
-            pnlImageArea.Size = new Size(1082, 390);
+            pnlImageArea.Size = new Size(1082, 366);
             pnlImageArea.TabIndex = 5;
             // 
             // flpPilotCards
@@ -393,7 +393,7 @@ namespace DonkeyUi
             flpPilotCards.Dock = DockStyle.Fill;
             flpPilotCards.Location = new Point(0, 0);
             flpPilotCards.Name = "flpPilotCards";
-            flpPilotCards.Size = new Size(1082, 390);
+            flpPilotCards.Size = new Size(1082, 366);
             flpPilotCards.TabIndex = 0;
             flpPilotCards.WrapContents = false;
             // 
@@ -404,7 +404,7 @@ namespace DonkeyUi
             tlpMain.SetColumnSpan(pnlTimeline, 2);
             pnlTimeline.Controls.Add(tlpUserValue);
             pnlTimeline.Dock = DockStyle.Fill;
-            pnlTimeline.Location = new Point(9, 405);
+            pnlTimeline.Location = new Point(9, 381);
             pnlTimeline.Name = "pnlTimeline";
             pnlTimeline.Padding = new Padding(8);
             pnlTimeline.Size = new Size(1082, 157);
@@ -432,27 +432,27 @@ namespace DonkeyUi
             pnlBrightBlur.Controls.Add(tlpBrightBlur);
             pnlBrightBlur.Controls.Add(tlpPlayback);
             pnlBrightBlur.Dock = DockStyle.Fill;
-            pnlBrightBlur.Location = new Point(9, 568);
+            pnlBrightBlur.Location = new Point(9, 544);
             pnlBrightBlur.Name = "pnlBrightBlur";
             pnlBrightBlur.Padding = new Padding(6);
-            pnlBrightBlur.Size = new Size(1082, 181);
+            pnlBrightBlur.Size = new Size(1082, 214);
             pnlBrightBlur.TabIndex = 5;
             // 
             // panel1
             // 
+            panel1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             panel1.BorderStyle = BorderStyle.FixedSingle;
             panel1.Controls.Add(tableLayoutPanel1);
-            panel1.Dock = DockStyle.Fill;
             panel1.Location = new Point(6, 102);
             panel1.Name = "panel1";
-            panel1.Size = new Size(1070, 34);
+            panel1.Size = new Size(1070, 36);
             panel1.TabIndex = 3;
             // 
             // tableLayoutPanel1
             // 
             tableLayoutPanel1.ColumnCount = 2;
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 11.1111107F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 88.8888855F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.Controls.Add(trkTimeline, 1, 0);
             tableLayoutPanel1.Controls.Add(cmbSpeed, 0, 0);
             tableLayoutPanel1.Dock = DockStyle.Fill;
@@ -460,17 +460,17 @@ namespace DonkeyUi
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.RowCount = 1;
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tableLayoutPanel1.Size = new Size(1068, 32);
+            tableLayoutPanel1.Size = new Size(1068, 34);
             tableLayoutPanel1.TabIndex = 2;
             // 
             // trkTimeline
             // 
             trkTimeline.BackColor = Color.FromArgb(244, 243, 238);
             trkTimeline.Dock = DockStyle.Fill;
-            trkTimeline.Location = new Point(121, 3);
+            trkTimeline.Location = new Point(123, 3);
             trkTimeline.Maximum = 1000;
             trkTimeline.Name = "trkTimeline";
-            trkTimeline.Size = new Size(944, 26);
+            trkTimeline.Size = new Size(942, 28);
             trkTimeline.TabIndex = 4;
             trkTimeline.TickStyle = TickStyle.None;
             trkTimeline.Value = 200;
@@ -482,7 +482,7 @@ namespace DonkeyUi
             cmbSpeed.Items.AddRange(new object[] { "0.25x", "0.50x", "0.75x", "1.00x", "1.25x", "1.50x", "1.75x", "2.00x" });
             cmbSpeed.Location = new Point(3, 3);
             cmbSpeed.Name = "cmbSpeed";
-            cmbSpeed.Size = new Size(112, 23);
+            cmbSpeed.Size = new Size(114, 23);
             cmbSpeed.TabIndex = 5;
             // 
             // tlpBrightBlur
@@ -569,6 +569,7 @@ namespace DonkeyUi
             // 
             // tlpPlayback
             // 
+            tlpPlayback.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             tlpPlayback.ColumnCount = 5;
             tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
             tlpPlayback.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
@@ -580,13 +581,12 @@ namespace DonkeyUi
             tlpPlayback.Controls.Add(btnStop, 2, 0);
             tlpPlayback.Controls.Add(btnNext, 3, 0);
             tlpPlayback.Controls.Add(btnFastForward, 4, 0);
-            tlpPlayback.Dock = DockStyle.Bottom;
-            tlpPlayback.Location = new Point(6, 136);
+            tlpPlayback.Location = new Point(6, 142);
             tlpPlayback.Name = "tlpPlayback";
             tlpPlayback.Padding = new Padding(6);
             tlpPlayback.RowCount = 1;
             tlpPlayback.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
-            tlpPlayback.Size = new Size(1070, 39);
+            tlpPlayback.Size = new Size(1070, 48);
             tlpPlayback.TabIndex = 1;
             // 
             // btnRewind
@@ -675,18 +675,18 @@ namespace DonkeyUi
             pnlGraphArea.BorderStyle = BorderStyle.FixedSingle;
             tlpMain.SetColumnSpan(pnlGraphArea, 2);
             pnlGraphArea.Dock = DockStyle.Fill;
-            pnlGraphArea.Location = new Point(9, 755);
+            pnlGraphArea.Location = new Point(9, 764);
             pnlGraphArea.Name = "pnlGraphArea";
-            pnlGraphArea.Size = new Size(1082, 123);
+            pnlGraphArea.Size = new Size(1082, 115);
             pnlGraphArea.TabIndex = 0;
             // 
             // pnlLeftContainer
             // 
             pnlLeftContainer.Controls.Add(flpLeftPics);
             pnlLeftContainer.Dock = DockStyle.Fill;
-            pnlLeftContainer.Location = new Point(9, 884);
+            pnlLeftContainer.Location = new Point(9, 885);
             pnlLeftContainer.Name = "pnlLeftContainer";
-            pnlLeftContainer.Size = new Size(534, 3);
+            pnlLeftContainer.Size = new Size(534, 2);
             pnlLeftContainer.TabIndex = 0;
             pnlLeftContainer.Visible = false;
             // 
@@ -701,7 +701,7 @@ namespace DonkeyUi
             flpLeftPics.FlowDirection = FlowDirection.TopDown;
             flpLeftPics.Location = new Point(0, 0);
             flpLeftPics.Name = "flpLeftPics";
-            flpLeftPics.Size = new Size(534, 3);
+            flpLeftPics.Size = new Size(534, 2);
             flpLeftPics.TabIndex = 1;
             flpLeftPics.WrapContents = false;
             // 
@@ -1020,7 +1020,7 @@ namespace DonkeyUi
             Controls.Add(tlpMain);
             Controls.Add(pnlTop);
             Name = "ucPilotArena";
-            Size = new Size(1003, 666);
+            Size = new Size(795, 405);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             tlpMain.ResumeLayout(false);
