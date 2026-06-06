@@ -64,12 +64,19 @@ namespace DonkeyUi
         private double _playBaseIntervalMs = 100.0;
         private List<string> _catalogLines = new List<string>();
         private string _loadedFolderPath = "";
+
         private List<(int Start, int End)> _ranges = new();
         private List<(int Start, int End)> _deletedRanges = new();
         private List<int> _deletedSingleFrames = new();
         private List<(double Min, double Max)> _speedFilters = new();
         private List<(double Min, double Max)> _angleFilters = new();
 
+
+
+        // If catalogs contain explicit _index fields, store the maximum index found
+        private int? _maxCatalogIndex = null;
+        // Map filename (e.g. "4131_cam_image_array_.jpg") -> catalog _index
+        private Dictionary<string, int> _catalogIndexByFileName = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
 
         public ucTubManager()
@@ -111,6 +118,7 @@ namespace DonkeyUi
             nudSpeedMin.Maximum = 1;
             nudSpeedMax.Maximum = 1;
 
+
             nudAngleMin.Minimum = -1;
             nudAngleMin.Maximum = 1;
             nudAngleMin.DecimalPlaces = 3;
@@ -125,6 +133,23 @@ namespace DonkeyUi
 
             _angleMinX = AngleToX(nudAngleMin.Value);
             _angleMaxX = AngleToX(nudAngleMax.Value);
+
+            // Recalculate handle positions when the panels resize so the full panel width is used
+            pnlSpeedRange.SizeChanged += (s, e) =>
+            {
+                _minX = SpeedToX(nudSpeedMin.Value);
+                _maxX = SpeedToX(nudSpeedMax.Value);
+                pnlSpeedRange.Invalidate();
+            };
+
+            pnlAngleRange.SizeChanged += (s, e) =>
+            {
+                _angleMinX = AngleToX(nudAngleMin.Value);
+                _angleMaxX = AngleToX(nudAngleMax.Value);
+                pnlAngleRange.Invalidate();
+            };
+
+
             pnlTimeline.Paint += pnlTimeline_Paint;
             _prevTimer = new System.Windows.Forms.Timer { Interval = 100 };
             _nextTimer = new System.Windows.Forms.Timer { Interval = 100 };
@@ -182,6 +207,119 @@ namespace DonkeyUi
 
             picThrottle.Paint += PicThrottle_Paint;
             picAngle.Paint += PicAngle_Paint;
+            // Subscribe to external timeline changes
+            ucPilotArena.OnTimelineIndexChanged += (idx) =>
+            {
+                try
+                {
+                    SetExternalIndex(idx);
+                }
+                catch { }
+            };
+        }
+
+        // Show image by absolute path and update internal selection if possible
+        public void ShowImageAndSelectByPath(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => ShowImageAndSelectByPath(path)));
+                return;
+            }
+            try
+            {
+                string targetFull = string.Empty;
+                try { targetFull = Path.GetFullPath(path); } catch { targetFull = path; }
+
+                int idx = -1;
+                for (int i = 0; i < _imageFiles.Count; i++)
+                {
+                    try
+                    {
+                        var f = Path.GetFullPath(_imageFiles[i]);
+                        if (string.Equals(f, targetFull, StringComparison.OrdinalIgnoreCase)) { idx = i; break; }
+                    }
+                    catch { }
+                }
+
+                if (idx >= 0)
+                {
+                    // Move to that index
+                    SetExternalIndex(idx);
+                    return;
+                }
+
+                // Try match by filename only
+                var fname = Path.GetFileName(path);
+                if (!string.IsNullOrEmpty(fname))
+                {
+                    for (int i = 0; i < _imageFiles.Count; i++)
+                    {
+                        try { if (string.Equals(Path.GetFileName(_imageFiles[i]), fname, StringComparison.OrdinalIgnoreCase)) { idx = i; break; } }
+                        catch { }
+                    }
+                }
+
+                if (idx >= 0)
+                {
+                    SetExternalIndex(idx);
+                    return;
+                }
+
+                // If not found in list, just display the image in picTubImage without changing index
+                try
+                {
+                    using var fs = File.OpenRead(path);
+                    using var img = Image.FromStream(fs);
+                    picTubImage.Image?.Dispose();
+                    picTubImage.Image = new Bitmap(img);
+                    txtTub.Text = path;
+                    txtRecordNumber.Text = "기록 000000";
+                }
+                catch { }
+            }
+            catch { }
+        }
+
+        // Allow external controls to request changing the current index (e.g., ucPilotArena)
+        public void SetExternalIndex(int idx)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => SetExternalIndex(idx)));
+                return;
+            }
+            if (_imageFiles == null || _imageFiles.Count == 0) return;
+            if (idx < 0) idx = 0;
+            if (idx >= _imageFiles.Count) idx = _imageFiles.Count - 1;
+            // If already at this index, do nothing to avoid visual bounce
+            if (_currentIndex == idx) return;
+            // Update trackbar if present
+            try
+            {
+                if (trkRecord != null)
+                {
+                    // set value (this will normally trigger ValueChanged -> SetCurrentIndex)
+                    trkRecord.Value = idx;
+                }
+            }
+            catch { }
+
+            // Ensure UI is updated immediately (in case trackbar is disabled or events suppressed)
+            try { SetCurrentIndex(idx); } catch { }
+        }
+
+        // Return the image path at specified index or null
+        public string? GetImagePathAt(int idx)
+        {
+            if (this.InvokeRequired)
+            {
+                return (string?)this.Invoke(new Func<int, string?>(GetImagePathAt), idx);
+            }
+            if (_imageFiles == null || _imageFiles.Count == 0) return null;
+            if (idx < 0 || idx >= _imageFiles.Count) return null;
+            return _imageFiles[idx];
         }
 
         private bool IsDeletedFrame(int originalIndex)
@@ -248,7 +386,17 @@ namespace DonkeyUi
             if (dlg.ShowDialog() == DialogResult.OK)
             {
                 txtCarDirectory.Text = dlg.SelectedPath;
-                LoadImagesFromDirectory(dlg.SelectedPath);
+                try
+                {
+                    var ext = Path.GetExtension(txtTub.Text ?? string.Empty)?.ToLowerInvariant();
+                    var imageExts = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
+                    // If txtTub currently points to a single image, do not load the directory (only show path).
+                    if (string.IsNullOrEmpty(ext) || !imageExts.Contains(ext))
+                    {
+                        LoadImagesFromDirectory(dlg.SelectedPath);
+                    }
+                }
+                catch { }
             }
         }
 
@@ -271,6 +419,11 @@ namespace DonkeyUi
         {
             if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
             {
+                // ★ 트랙바 버그 수정: 폴더 전환 시 이전 카탈로그 상태 먼저 초기화
+                // _maxCatalogIndex가 이전 폴더 값으로 남아있으면 트랙바 Maximum이 잘못 설정됨
+                _maxCatalogIndex = null;
+                _catalogIndexByFileName.Clear();
+                _catalogLines.Clear();
                 _imageFiles.Clear();
                 trkRecord.Enabled = false;
                 return;
@@ -280,7 +433,17 @@ namespace DonkeyUi
             var files = exts
                 .SelectMany(e => Directory.GetFiles(folder, e, SearchOption.TopDirectoryOnly))
                 .ToList();
-            files.Sort(StringComparer.OrdinalIgnoreCase);
+            // Prefer numeric ordering when filenames contain indices (e.g. 0, 1, 1000)
+            // to avoid lexicographic order where "0" may be followed by "1000".
+            files = files
+                .OrderBy(p =>
+                {
+                    var fn = Path.GetFileName(p);
+                    var n = ExtractFirstNumber(fn);
+                    return n.HasValue ? n.Value : int.MaxValue;
+                })
+                .ThenBy(p => p, StringComparer.OrdinalIgnoreCase)
+                .ToList();
             _imageFiles = files;
             _allImageFiles = files.ToList();
             _loadedFolderPath = folder;
@@ -292,7 +455,9 @@ namespace DonkeyUi
             if (_imageFiles.Count > 0)
             {
                 trkRecord.Minimum = 0;
+
                 trkRecord.Maximum = Math.Max(0, _allImageFiles.Count - 1);
+
                 trkRecord.Value = 0;
                 trkRecord.Enabled = true;
                 SetCurrentIndex(0);
@@ -345,8 +510,10 @@ namespace DonkeyUi
                 picTubImage.Image?.Dispose();
                 picTubImage.Image = new Bitmap(img);
 
+
                 txtRecordNumber.Text =
                     $"기록 {(idx + 1):D6}";
+
 
                 double? angle = null;
                 double? throttle = null;
@@ -415,8 +582,9 @@ namespace DonkeyUi
             using (var b = new SolidBrush(Color.FromArgb(40, 40, 40)))
                 g.FillRectangle(b, rect);
 
+            // ── 중심점: 기존과 동일 ──────────────────────────────────
             var cx = rect.Left + rect.Width / 2f;
-            var cy = rect.Top + rect.Height - 15f;
+            var cy = rect.Bottom - 15f;
             var radius = Math.Min(rect.Width / 2f - 12f, rect.Height - 12f);
             if (radius <= 8) radius = Math.Min(rect.Width, rect.Height) / 2f;
             var arcRect = new RectangleF(cx - radius, cy - radius, radius * 2f, radius * 2f);
@@ -427,17 +595,21 @@ namespace DonkeyUi
 
             double tnorm;
             if (throttleVal >= -1.01 && throttleVal <= 1.01)
-                tnorm = Math.Max(-1.0, Math.Min(1.0, throttleVal));
+                tnorm = Math.Max(0.0, Math.Min(1.0, throttleVal)); // 0~1 범위 (음수 없음)
             else
             {
-                tnorm = (throttleVal * 2.0) - 1.0;
-                tnorm = Math.Max(-1.0, Math.Min(1.0, tnorm));
+                tnorm = throttleVal;
+                tnorm = Math.Max(0.0, Math.Min(1.0, tnorm));
             }
 
+            // ── 호: 9시(180°) → 0시(0°/360°) 즉 180° 범위 ──────────
+            // 9시 = 180°, 시계방향으로 증가 → 0시(360°=0°)가 최대
+            // DrawArc: 시작각 = 180°, 범위 = -180° (반시계 그리기 트릭 없이,
+            // 9시→12시→3시 = 시계방향이므로 startAngle=180, sweepAngle=-180)
             int segments = 12;
-            float segSweep = 180f / segments;
+            float totalSweep = 180f;   // 180°→0° (시계방향)
+            float segSweep = totalSweep / segments;
             float gap = 2f;
-            float drawSweep = Math.Max(1f, segSweep - gap);
             float segPenWidth = Math.Max(12f, radius * 0.18f);
 
             for (int i = 0; i < segments; i++)
@@ -446,19 +618,23 @@ namespace DonkeyUi
                 int rCol = (int)(pos * 255);
                 int gCol = (int)((1 - pos) * 255);
                 var segColor = Color.FromArgb(200, rCol, gCol, 0);
+                float startA = 180f + i * segSweep + (i == 0 ? gap / 2f : gap / 2f);
+                float sweepA = segSweep - gap;
                 using (var pen = new Pen(segColor, segPenWidth)
                 {
                     StartCap = System.Drawing.Drawing2D.LineCap.Round,
                     EndCap = System.Drawing.Drawing2D.LineCap.Round
                 })
-                    g.DrawArc(pen, arcRect, 180f + i * segSweep + gap / 2f, drawSweep);
+                    g.DrawArc(pen, arcRect, startA, sweepA);
             }
 
+            // ── 눈금선 ───────────────────────────────────────────────
             using (var tickPen = new Pen(Color.FromArgb(120, 120, 120), 1.5f))
             {
+                // 9시(180°)→0시(0°) 사이 7개 눈금
                 for (int i = 0; i <= 6; i++)
                 {
-                    var t = 180.0 - (i * 30.0);
+                    var t = 180.0 - (i * 30.0);   // 180→0 (30° 간격)
                     var rad = t * Math.PI / 180.0;
                     var inner = new PointF(
                         (float)(cx + Math.Cos(rad) * (radius - segPenWidth / 2f - 2)),
@@ -470,7 +646,17 @@ namespace DonkeyUi
                 }
             }
 
-            var angleDeg = 180.0 + ((tnorm + 1.0) / 2.0) * 180.0;
+            // ── 바늘: 9시(180°)에서 시작, tnorm=1이면 0°(3시) ──────
+            // 하지만 요청: 최대는 12시(90°↑ = -90°=270°). 
+            // 9시(180°)→12시(90° 위 = 270° CCW 기준이지만 GDI에선 -90°)
+            // GDI+ 각도: 0=3시, 90=6시, 180=9시, 270=12시
+            // 범위: 180°→270° 즉 sweepAngle = -90° (반시계) × tnorm
+            // 하지만 시계방향으로 올라간다고 했으므로:
+            // 9시(180°) → 시계방향 → 12시(270° GDI, 실제 위쪽)
+            // GDI+ 시계방향: 180°에서 증가하면 6시쪽으로 감 → 원하지 않음
+            // 따라서 9시에서 반시계 방향(각도 감소)으로 12시까지 = 180°→90°
+            // tnorm=0: 180°(9시), tnorm=1: 90°(12시)
+            var angleDeg = 180.0 + tnorm * 180.0;
             var angleRad = angleDeg * Math.PI / 180.0;
             var nx = (float)(cx + Math.Cos(angleRad) * (radius - 14));
             var ny = (float)(cy + Math.Sin(angleRad) * (radius - 14));
@@ -487,13 +673,20 @@ namespace DonkeyUi
                 EndCap = System.Drawing.Drawing2D.LineCap.Round
             })
                 g.DrawLine(pen, cx, cy, nx, ny);
+
             using (var hub = new SolidBrush(Color.White))
                 g.FillEllipse(hub, cx - 5f, cy - 5f, 10f, 10f);
 
-            var valText = hasValue ? throttleVal.ToString("0.000", CultureInfo.InvariantCulture) : "--";
-            using (var f = new Font("맑은 고딕", 10))
+            // ── 가운데 숫자 ──────────────────────────────────────────
+            var valText = hasValue ? throttleVal.ToString("+0.000;-0.000;0.000", System.Globalization.CultureInfo.InvariantCulture) : "--";
+            using (var f = new Font("맑은 고딕", 11f, FontStyle.Bold))
             using (var b = new SolidBrush(Color.White))
-                g.DrawString(valText, f, b, rect.Left + 8, rect.Top + rect.Height - 20);
+            {
+                var sz = g.MeasureString(valText, f);
+                float tx = 10f;
+                float ty = 8f;
+                g.DrawString(valText, f, b, tx, ty);
+            }
         }
 
         private void PicAngle_Paint(object? sender, PaintEventArgs e)
@@ -505,32 +698,48 @@ namespace DonkeyUi
             using (var b = new SolidBrush(Color.FromArgb(40, 40, 40)))
                 g.FillRectangle(b, rect);
 
+            // ── 중심점: 아래쪽에 배치하여 반원이 위로 펼쳐지도록 ────
             var cx = rect.Left + rect.Width / 2f;
-            var cy = rect.Top + rect.Height / 2f + 40f;
+            var cy = rect.Top + rect.Height - 20f;          // 하단 기준
             var radius = Math.Min(rect.Width / 2f - 20f, rect.Height - 20f);
             if (radius <= 6) radius = Math.Min(rect.Width, rect.Height) / 2f;
             var arcRect = new RectangleF(cx - radius, cy - radius, radius * 2f, radius * 2f);
 
-            using (var pen = new Pen(Color.FromArgb(220, 30, 144, 255), Math.Max(10f, radius * 0.14f))
+            float arcPenW = Math.Max(10f, radius * 0.14f);
+
+            // ── 반원 호: 180°(9시)→0°(3시), 즉 위쪽 반원 ───────────
+            // 왼쪽(180°) = 좌회전 최대, 0°(3시) = 우회전 최대
+            // 파란색: 좌반원(180°→270°, 즉 180°부터 -90° sweep = 왼쪽→12시)
+            // 빨간색: 우반원(270°→360°, 즉 270°부터 -90° sweep = 12시→오른쪽)
+            // GDI+: 0°=3시, 180°=9시, 270°=12시(위)
+            // 위 반원 전체 = 시작 180°, sweep -180°
+
+            // 좌측(파랑): 180° → 270° (GDI시계방향 = 9시→12시)
+            using (var pen = new Pen(Color.FromArgb(220, 30, 144, 255), arcPenW)
             {
                 StartCap = System.Drawing.Drawing2D.LineCap.Flat,
                 EndCap = System.Drawing.Drawing2D.LineCap.Flat
             })
-                g.DrawArc(pen, arcRect, 180f, 90f);
+                g.DrawArc(pen, arcRect, 180f, 90f);   // 9시→12시
 
-            using (var pen = new Pen(Color.FromArgb(220, 255, 60, 60), Math.Max(10f, radius * 0.14f))
+            // 우측(빨강): 270° → 360° (GDI시계방향 = 12시→3시)
+            using (var pen = new Pen(Color.FromArgb(220, 255, 60, 60), arcPenW)
             {
                 StartCap = System.Drawing.Drawing2D.LineCap.Flat,
                 EndCap = System.Drawing.Drawing2D.LineCap.Flat
             })
-                g.DrawArc(pen, arcRect, 270f, 90f);
+                g.DrawArc(pen, arcRect, 270f, 90f);   // 12시→3시
 
+            // ── 바늘: 12시(270° GDI = -90° 수학) 기준, 좌우로 이동 ─
+            // angle -1 → 9시(180°), angle 0 → 12시(270°), angle +1 → 3시(0°/360°)
+            // GDI 각도 = 270° + angle * 90°  (음수=좌, 양수=우)
             double angDeg = 0.0;
-            if (_currentAngle.HasValue)
-                angDeg = Math.Max(-45.0, Math.Min(45.0, _currentAngle.Value));
+            bool hasAngle = _currentAngle.HasValue;
+            if (hasAngle)
+                angDeg = Math.Max(-1.0, Math.Min(1.0, _currentAngle.Value));
 
-            var angleDeg = 270.0 - (angDeg / 45.0) * 90.0;
-            var angleRad = angleDeg * Math.PI / 180.0;
+            double gdiAngle = 270.0 + angDeg * 120.0;   // 270°±90°
+            var angleRad = gdiAngle * Math.PI / 180.0;
             var nx = (float)(cx + Math.Cos(angleRad) * (radius - 8));
             var ny = (float)(cy + Math.Sin(angleRad) * (radius - 8));
 
@@ -546,8 +755,22 @@ namespace DonkeyUi
                 EndCap = System.Drawing.Drawing2D.LineCap.Round
             })
                 g.DrawLine(pen, cx, cy, nx, ny);
+
             using (var hub = new SolidBrush(Color.Black))
                 g.FillEllipse(hub, cx - 4f, cy - 4f, 8f, 8f);
+
+            // ── 가운데 숫자 ──────────────────────────────────────────
+            var valText = hasAngle
+                ? _currentAngle!.Value.ToString("+0.000;-0.000;0.000", System.Globalization.CultureInfo.InvariantCulture)
+                : "--";
+            using (var f = new Font("맑은 고딕", 11f, FontStyle.Bold))
+            using (var b2 = new SolidBrush(Color.White))
+            {
+                var sz = g.MeasureString(valText, f);
+                float tx = 10f;
+                float ty = 8f;   // 반원 안쪽
+                g.DrawString(valText, f, b2, tx, ty);
+            }
         }
 
         // ════════════════════════════════════════════════════════════
@@ -587,6 +810,54 @@ namespace DonkeyUi
                 }
                 catch { }
             }
+
+            // Build filename->index map and compute maximum _index
+            _catalogIndexByFileName.Clear();
+            _maxCatalogIndex = null;
+            for (int i = 0; i < _catalogLines.Count; i++)
+            {
+                var line = _catalogLines[i];
+                try
+                {
+                    var parsed = ParseCatalogLine(line);
+                    if (parsed.index.HasValue)
+                    {
+                        if (!_maxCatalogIndex.HasValue || parsed.index.Value > _maxCatalogIndex.Value)
+                            _maxCatalogIndex = parsed.index.Value;
+                    }
+                
+                    // try extract cam image filename
+                    string? fname = null;
+                    try
+                    {
+                        var doc = System.Text.Json.JsonDocument.Parse(line);
+                        var root = doc.RootElement;
+                        if (root.TryGetProperty("cam/image_array", out var pc) || root.TryGetProperty("cam_image_array", out pc) || root.TryGetProperty("cam/image", out pc) || root.TryGetProperty("cam_image", out pc))
+                        {
+                            if (pc.ValueKind == System.Text.Json.JsonValueKind.String) fname = pc.GetString();
+                        }
+                    }
+                    catch { }
+
+                    if (string.IsNullOrEmpty(fname))
+                    {
+                        var m = Regex.Match(line, "\"cam(?:/|_)image(?:_array)?\"\\s*:\\s*\"([^\"]+)\"");
+                        if (m.Success) fname = m.Groups[1].Value;
+                    }
+
+                    if (!string.IsNullOrEmpty(fname))
+                    {
+                        try
+                        {
+                            var shortName = Path.GetFileName(fname);
+                            if (parsed.index.HasValue)
+                                _catalogIndexByFileName[shortName] = parsed.index.Value;
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            }
         }
 
         private int? ExtractFirstNumber(string input)
@@ -597,13 +868,14 @@ namespace DonkeyUi
             return null;
         }
 
-        private (long? timestamp, double? angle, string mode, double? throttle) ParseCatalogLine(string line)
+        private (long? timestamp, double? angle, string mode, double? throttle, int? index) ParseCatalogLine(string line)
         {
-            if (string.IsNullOrWhiteSpace(line)) return (null, null, null, null);
+            if (string.IsNullOrWhiteSpace(line)) return (null, null, null, null, null);
             long? timestamp = null;
             double? angle = null;
             string mode = null;
             double? throttle = null;
+            int? idx = null;
 
             try
             {
@@ -631,12 +903,18 @@ namespace DonkeyUi
                     if (pt.ValueKind == System.Text.Json.JsonValueKind.Number && pt.TryGetDouble(out var dv)) throttle = dv;
                     else if (pt.ValueKind == System.Text.Json.JsonValueKind.String && double.TryParse(pt.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var dv2)) throttle = dv2;
                 }
+                // try index fields
+                if (root.TryGetProperty("_index", out var pi) || root.TryGetProperty("index", out pi))
+                {
+                    if (pi.ValueKind == System.Text.Json.JsonValueKind.Number && pi.TryGetInt32(out var iv)) idx = iv;
+                    else if (pi.ValueKind == System.Text.Json.JsonValueKind.String && int.TryParse(pi.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var iv2)) idx = iv2;
+                }
                 if (root.TryGetProperty("user/mode", out var pm)
                     || root.TryGetProperty("mode", out pm)
                     || root.TryGetProperty("user_mode", out pm))
                     mode = pm.ValueKind == System.Text.Json.JsonValueKind.String ? pm.GetString() : pm.ToString();
 
-                return (timestamp, angle, mode, throttle);
+                return (timestamp, angle, mode, throttle, idx);
             }
             catch { }
 
@@ -661,7 +939,11 @@ namespace DonkeyUi
             var mStr = TryMatchToken("user/mode") ?? TryMatchToken("mode") ?? TryMatchToken("user_mode");
             if (!string.IsNullOrEmpty(mStr)) mode = mStr.Trim('"');
 
-            return (timestamp, angle, mode, throttle);
+            // try to extract index via token
+            var iStr = TryMatchNumber("_index") ?? TryMatchNumber("index");
+            if (iStr != null && int.TryParse(iStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ip)) idx = ip;
+
+            return (timestamp, angle, mode, throttle, idx);
         }
 
         // ════════════════════════════════════════════════════════════
@@ -1076,9 +1358,10 @@ namespace DonkeyUi
             if (_dragMin)
             {
                 _minX = e.X;
-
+                int left = 20;
+                int right = Math.Max(left + 1, pnlSpeedRange.Width - 20);
                 _minX = Math.Max(
-                    20,
+                    left,
                     Math.Min(_minX, _maxX));
 
                 nudSpeedMin.Value =
@@ -1092,11 +1375,10 @@ namespace DonkeyUi
             if (_dragMax)
             {
                 _maxX = e.X;
-
-                int maxX = pnlSpeedRange.Width - 20;
-
+                int left = 20;
+                int right = Math.Max(left + 1, pnlSpeedRange.Width - 20);
                 _maxX = Math.Min(
-                    maxX,
+                    right,
                     Math.Max(_maxX, _minX));
 
                 nudSpeedMax.Value =
@@ -1109,6 +1391,7 @@ namespace DonkeyUi
         }
         private decimal XToSpeed(int x)
         {
+
             int maxX = pnlSpeedRange.Width - 20;
 
             x = Math.Max(20, Math.Min(x, maxX));
@@ -1124,6 +1407,7 @@ namespace DonkeyUi
             return 20 + (int)(
                 (double)speed
                 * (maxX - 20));
+
         }
         private void nudSpeedMin_ValueChanged(
            object sender,
@@ -1159,6 +1443,7 @@ namespace DonkeyUi
                 ((double)angle + 1)
                 / 2
                 * (maxX - 20));
+
         }
         private void nudAngleMin_ValueChanged(
     object sender,
@@ -1203,10 +1488,13 @@ namespace DonkeyUi
             if (_dragAngleMin)
             {
                 _angleMinX = e.X;
+                int left = 20;
+                int right = Math.Max(left + 1, pnlAngleRange.Width - 20);
+
 
                 _angleMinX = Math.Max(
-                    20,
-                    Math.Min(_angleMinX, _angleMaxX));
+         left,
+         Math.Min(_angleMinX, _angleMaxX));
 
                 nudAngleMin.Value =
                     Math.Max(
@@ -1221,11 +1509,12 @@ namespace DonkeyUi
 
             {
                 _angleMaxX = e.X;
+                int left = 20;
+                int right = Math.Max(left + 1, pnlAngleRange.Width - 20);
 
                 int maxX = pnlAngleRange.Width - 20;
-
                 _angleMaxX = Math.Min(
-                    maxX,
+                    right,
                     Math.Max(_angleMaxX, _angleMinX));
 
                 nudAngleMax.Value =
@@ -1696,6 +1985,8 @@ namespace DonkeyUi
             cmbAngleFilters.Items.RemoveAt(idx);
             cmbAngleFilters.Text = "각도 필터 목록";
         }
+
+        
     }
 }
 
