@@ -58,6 +58,10 @@
             flowLayoutPanel1 = new FlowLayoutPanel();
             btnApplyFilter = new Button();
             btnClearFilter = new Button();
+            cmbSpeedFilters = new ComboBox();
+            btnSpeedRemove = new Button();
+            cmbAngleFilters = new ComboBox();
+            btnAngleRemove = new Button();
             pnlTimeline = new Panel();
             lblRange = new Label();
             btnSetLeft = new Button();
@@ -70,8 +74,6 @@
             BtnLeftSet = new Button();
             BtnRightSet = new Button();
             BtnRangeDelete = new Button();
-            cmbSpeedFilters = new ComboBox();
-            cmbAngleFilters = new ComboBox();
             cmbRanges = new ComboBox();
             btnDeleteAllRanges = new Button();
             btnRangeCancel = new Button();
@@ -233,7 +235,7 @@
             cmbSpeed.Font = new Font("맑은 고딕", 9F);
             cmbSpeed.ForeColor = Color.FromArgb(50, 50, 50);
             cmbSpeed.Items.AddRange(new object[] { "0.25x", "0.50x", "0.75x", "1.00x", "1.25x", "1.50x", "1.75x", "2.00x" });
-            cmbSpeed.Location = new Point(8, 60);
+            cmbSpeed.Location = new Point(8, 83);
             cmbSpeed.Name = "cmbSpeed";
             cmbSpeed.Size = new Size(140, 23);
             cmbSpeed.TabIndex = 7;
@@ -247,7 +249,7 @@
             btnFastNext.FlatStyle = FlatStyle.Flat;
             btnFastNext.Font = new Font("맑은 고딕", 9F);
             btnFastNext.ForeColor = Color.FromArgb(68, 68, 68);
-            btnFastNext.Location = new Point(956, 90);
+            btnFastNext.Location = new Point(952, 112);
             btnFastNext.Name = "btnFastNext";
             btnFastNext.Size = new Size(236, 32);
             btnFastNext.TabIndex = 6;
@@ -262,7 +264,7 @@
             btnNext.FlatStyle = FlatStyle.Flat;
             btnNext.Font = new Font("맑은 고딕", 9F);
             btnNext.ForeColor = Color.FromArgb(85, 85, 85);
-            btnNext.Location = new Point(730, 90);
+            btnNext.Location = new Point(726, 112);
             btnNext.Name = "btnNext";
             btnNext.Size = new Size(220, 32);
             btnNext.TabIndex = 5;
@@ -277,7 +279,7 @@
             btnStartStop.FlatStyle = FlatStyle.Flat;
             btnStartStop.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
             btnStartStop.ForeColor = Color.FromArgb(24, 95, 165);
-            btnStartStop.Location = new Point(460, 90);
+            btnStartStop.Location = new Point(456, 112);
             btnStartStop.Name = "btnStartStop";
             btnStartStop.Size = new Size(264, 32);
             btnStartStop.TabIndex = 4;
@@ -292,7 +294,7 @@
             btnFastPrev.FlatStyle = FlatStyle.Flat;
             btnFastPrev.Font = new Font("맑은 고딕", 9F);
             btnFastPrev.ForeColor = Color.FromArgb(68, 68, 68);
-            btnFastPrev.Location = new Point(8, 90);
+            btnFastPrev.Location = new Point(4, 112);
             btnFastPrev.Name = "btnFastPrev";
             btnFastPrev.Size = new Size(220, 32);
             btnFastPrev.TabIndex = 3;
@@ -307,7 +309,7 @@
             btnPrev.FlatStyle = FlatStyle.Flat;
             btnPrev.Font = new Font("맑은 고딕", 9F);
             btnPrev.ForeColor = Color.FromArgb(85, 85, 85);
-            btnPrev.Location = new Point(234, 90);
+            btnPrev.Location = new Point(230, 112);
             btnPrev.Name = "btnPrev";
             btnPrev.Size = new Size(220, 32);
             btnPrev.TabIndex = 2;
@@ -384,7 +386,7 @@
             // 
             trkRecord.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             trkRecord.BackColor = Color.FromArgb(244, 243, 238);
-            trkRecord.Location = new Point(8, 28);
+            trkRecord.Location = new Point(3, 32);
             trkRecord.Name = "trkRecord";
             trkRecord.Size = new Size(1184, 45);
             trkRecord.TabIndex = 2;
@@ -414,8 +416,6 @@
             pnlTools.Controls.Add(BtnLeftSet);
             pnlTools.Controls.Add(BtnRightSet);
             pnlTools.Controls.Add(BtnRangeDelete);
-            pnlTools.Controls.Add(cmbSpeedFilters);
-            pnlTools.Controls.Add(cmbAngleFilters);
             pnlTools.Controls.Add(cmbRanges);
             pnlTools.Controls.Add(btnDeleteAllRanges);
             pnlTools.Controls.Add(btnRangeCancel);
@@ -621,6 +621,10 @@
             // 
             flowLayoutPanel1.Controls.Add(btnApplyFilter);
             flowLayoutPanel1.Controls.Add(btnClearFilter);
+            flowLayoutPanel1.Controls.Add(cmbSpeedFilters);
+            flowLayoutPanel1.Controls.Add(btnSpeedRemove);
+            flowLayoutPanel1.Controls.Add(cmbAngleFilters);
+            flowLayoutPanel1.Controls.Add(btnAngleRemove);
             flowLayoutPanel1.Dock = DockStyle.Fill;
             flowLayoutPanel1.Location = new Point(122, 3);
             flowLayoutPanel1.Name = "flowLayoutPanel1";
@@ -656,9 +660,45 @@
             btnClearFilter.Name = "btnClearFilter";
             btnClearFilter.Size = new Size(184, 30);
             btnClearFilter.TabIndex = 18;
-            btnClearFilter.Text = "✕ 해제";
+            btnClearFilter.Text = "✕ 모두 해제";
             btnClearFilter.UseVisualStyleBackColor = false;
             btnClearFilter.Click += btnClearFilter_Click;
+            // 
+            // cmbSpeedFilters
+            // 
+            cmbSpeedFilters.Location = new Point(383, 3);
+            cmbSpeedFilters.Name = "cmbSpeedFilters";
+            cmbSpeedFilters.Size = new Size(121, 23);
+            cmbSpeedFilters.TabIndex = 25;
+            cmbSpeedFilters.Text = "속도 범위";
+            // 
+            // btnSpeedRemove
+            // 
+            btnSpeedRemove.Location = new Point(510, 3);
+            btnSpeedRemove.Name = "btnSpeedRemove";
+            btnSpeedRemove.Size = new Size(75, 23);
+            btnSpeedRemove.TabIndex = 27;
+            btnSpeedRemove.Text = "해제";
+            btnSpeedRemove.UseVisualStyleBackColor = true;
+            btnSpeedRemove.Click += btnSpeedRemove_Click;
+            // 
+            // cmbAngleFilters
+            // 
+            cmbAngleFilters.Location = new Point(591, 3);
+            cmbAngleFilters.Name = "cmbAngleFilters";
+            cmbAngleFilters.Size = new Size(115, 23);
+            cmbAngleFilters.TabIndex = 26;
+            cmbAngleFilters.Text = "각도 범위";
+            // 
+            // btnAngleRemove
+            // 
+            btnAngleRemove.Location = new Point(712, 3);
+            btnAngleRemove.Name = "btnAngleRemove";
+            btnAngleRemove.Size = new Size(75, 23);
+            btnAngleRemove.TabIndex = 28;
+            btnAngleRemove.Text = "해제";
+            btnAngleRemove.UseVisualStyleBackColor = true;
+            btnAngleRemove.Click += btnAngleRemove_Click;
             // 
             // pnlTimeline
             // 
@@ -673,7 +713,7 @@
             lblRange.AutoSize = true;
             lblRange.Font = new Font("맑은 고딕", 9F);
             lblRange.ForeColor = Color.FromArgb(80, 80, 80);
-            lblRange.Location = new Point(8, 130);
+            lblRange.Location = new Point(7, 156);
             lblRange.Name = "lblRange";
             lblRange.Size = new Size(55, 15);
             lblRange.TabIndex = 22;
@@ -688,11 +728,11 @@
             btnSetLeft.FlatStyle = FlatStyle.Flat;
             btnSetLeft.Font = new Font("맑은 고딕", 9F);
             btnSetLeft.ForeColor = Color.FromArgb(50, 50, 50);
-            btnSetLeft.Location = new Point(8, 148);
+            btnSetLeft.Location = new Point(6, 176);
             btnSetLeft.Name = "btnSetLeft";
             btnSetLeft.Size = new Size(100, 26);
             btnSetLeft.TabIndex = 0;
-            btnSetLeft.Text = "좌측 설정 ⚙";
+            btnSetLeft.Text = "첫장 가기";
             btnSetLeft.UseVisualStyleBackColor = false;
             btnSetLeft.Click += btnSetLeft_Click;
             // 
@@ -705,11 +745,11 @@
             btnSetRight.FlatStyle = FlatStyle.Flat;
             btnSetRight.Font = new Font("맑은 고딕", 9F);
             btnSetRight.ForeColor = Color.FromArgb(50, 50, 50);
-            btnSetRight.Location = new Point(114, 148);
+            btnSetRight.Location = new Point(112, 176);
             btnSetRight.Name = "btnSetRight";
             btnSetRight.Size = new Size(100, 26);
             btnSetRight.TabIndex = 1;
-            btnSetRight.Text = "우측 설정 ⚙";
+            btnSetRight.Text = "끝장 가기";
             btnSetRight.UseVisualStyleBackColor = false;
             btnSetRight.Click += btnSetRight_Click;
             // 
@@ -721,7 +761,7 @@
             btnDelete.FlatStyle = FlatStyle.Flat;
             btnDelete.Font = new Font("맑은 고딕", 9F);
             btnDelete.ForeColor = Color.FromArgb(50, 50, 50);
-            btnDelete.Location = new Point(220, 148);
+            btnDelete.Location = new Point(219, 174);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(90, 26);
             btnDelete.TabIndex = 3;
@@ -738,7 +778,7 @@
             btnRestore.FlatStyle = FlatStyle.Flat;
             btnRestore.Font = new Font("맑은 고딕", 9F);
             btnRestore.ForeColor = Color.FromArgb(50, 50, 50);
-            btnRestore.Location = new Point(316, 148);
+            btnRestore.Location = new Point(315, 174);
             btnRestore.Name = "btnRestore";
             btnRestore.Size = new Size(80, 26);
             btnRestore.TabIndex = 4;
@@ -755,7 +795,7 @@
             btnReroadTub.FlatStyle = FlatStyle.Flat;
             btnReroadTub.Font = new Font("맑은 고딕", 9F);
             btnReroadTub.ForeColor = Color.FromArgb(50, 50, 50);
-            btnReroadTub.Location = new Point(402, 148);
+            btnReroadTub.Location = new Point(401, 174);
             btnReroadTub.Name = "btnReroadTub";
             btnReroadTub.Size = new Size(100, 26);
             btnReroadTub.TabIndex = 5;
@@ -771,7 +811,7 @@
             btnSave.FlatStyle = FlatStyle.Flat;
             btnSave.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
-            btnSave.Location = new Point(508, 148);
+            btnSave.Location = new Point(507, 174);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(90, 26);
             btnSave.TabIndex = 8;
@@ -783,7 +823,7 @@
             // 
             IblRange.AutoSize = true;
             IblRange.ForeColor = Color.FromArgb(24, 95, 165);
-            IblRange.Location = new Point(8, 130);
+            IblRange.Location = new Point(7, 156);
             IblRange.Name = "IblRange";
             IblRange.Size = new Size(59, 15);
             IblRange.TabIndex = 21;
@@ -792,62 +832,43 @@
             // 
             // BtnLeftSet
             // 
-            BtnLeftSet.Location = new Point(7, 130);
+            BtnLeftSet.Location = new Point(155, 82);
             BtnLeftSet.Name = "BtnLeftSet";
             BtnLeftSet.Size = new Size(89, 23);
             BtnLeftSet.TabIndex = 22;
             BtnLeftSet.Text = "좌측 설정 ⚙";
             BtnLeftSet.UseVisualStyleBackColor = true;
-            BtnLeftSet.Visible = false;
             BtnLeftSet.Click += BtnLeftSet_Click;
             // 
             // BtnRightSet
             // 
-            BtnRightSet.Location = new Point(102, 130);
+            BtnRightSet.Location = new Point(250, 81);
             BtnRightSet.Name = "BtnRightSet";
             BtnRightSet.Size = new Size(90, 24);
             BtnRightSet.TabIndex = 23;
             BtnRightSet.Text = "우측 설정 ⚙";
             BtnRightSet.UseVisualStyleBackColor = true;
-            BtnRightSet.Visible = false;
             BtnRightSet.Click += BtnRightSet_Click;
             // 
             // BtnRangeDelete
             // 
-            BtnRangeDelete.BackColor = Color.FromArgb(210, 210, 210);
+            BtnRangeDelete.BackColor = Color.White;
             BtnRangeDelete.Cursor = Cursors.Hand;
             BtnRangeDelete.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
             BtnRangeDelete.FlatAppearance.BorderSize = 0;
-            BtnRangeDelete.FlatStyle = FlatStyle.Flat;
             BtnRangeDelete.Font = new Font("맑은 고딕", 9F);
-            BtnRangeDelete.ForeColor = Color.FromArgb(50, 50, 50);
-            BtnRangeDelete.Location = new Point(604, 148);
+            BtnRangeDelete.ForeColor = Color.Black;
+            BtnRangeDelete.Location = new Point(577, 78);
             BtnRangeDelete.Name = "BtnRangeDelete";
-            BtnRangeDelete.Size = new Size(90, 26);
+            BtnRangeDelete.Size = new Size(90, 32);
             BtnRangeDelete.TabIndex = 24;
             BtnRangeDelete.Text = "범위 삭제";
             BtnRangeDelete.UseVisualStyleBackColor = false;
             BtnRangeDelete.Click += BtnRangeDelete_Click;
             // 
-            // cmbSpeedFilters
-            // 
-            cmbSpeedFilters.Location = new Point(0, 0);
-            cmbSpeedFilters.Name = "cmbSpeedFilters";
-            cmbSpeedFilters.Size = new Size(121, 23);
-            cmbSpeedFilters.TabIndex = 25;
-            cmbSpeedFilters.Visible = false;
-            // 
-            // cmbAngleFilters
-            // 
-            cmbAngleFilters.Location = new Point(0, 0);
-            cmbAngleFilters.Name = "cmbAngleFilters";
-            cmbAngleFilters.Size = new Size(330, 23);
-            cmbAngleFilters.TabIndex = 26;
-            cmbAngleFilters.Visible = false;
-            // 
             // cmbRanges
             // 
-            cmbRanges.Location = new Point(720, 150);
+            cmbRanges.Location = new Point(346, 81);
             cmbRanges.Name = "cmbRanges";
             cmbRanges.Size = new Size(121, 23);
             cmbRanges.TabIndex = 34;
@@ -856,9 +877,9 @@
             // 
             // btnDeleteAllRanges
             // 
-            btnDeleteAllRanges.Location = new Point(847, 150);
+            btnDeleteAllRanges.Location = new Point(473, 76);
             btnDeleteAllRanges.Name = "btnDeleteAllRanges";
-            btnDeleteAllRanges.Size = new Size(98, 23);
+            btnDeleteAllRanges.Size = new Size(98, 34);
             btnDeleteAllRanges.TabIndex = 28;
             btnDeleteAllRanges.Text = "모든 범위 삭제";
             btnDeleteAllRanges.UseVisualStyleBackColor = true;
@@ -866,9 +887,9 @@
             // 
             // btnRangeCancel
             // 
-            btnRangeCancel.Location = new Point(951, 150);
+            btnRangeCancel.Location = new Point(673, 78);
             btnRangeCancel.Name = "btnRangeCancel";
-            btnRangeCancel.Size = new Size(90, 23);
+            btnRangeCancel.Size = new Size(90, 32);
             btnRangeCancel.TabIndex = 33;
             btnRangeCancel.Text = "범위 취소";
             btnRangeCancel.UseVisualStyleBackColor = true;
@@ -1025,5 +1046,7 @@
         private ComboBox cmbRanges;
         private Button btnDeleteAllRanges;
         private Button btnRangeCancel;
+        private Button btnSpeedRemove;
+        private Button btnAngleRemove;
     }
 }
