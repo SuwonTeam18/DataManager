@@ -18,12 +18,28 @@ namespace DonkeyUi
 {
     public partial class ucPilotArena : UserControl
     {
-        // Event to notify external components when timeline index changes
-        public static event Action<int>? OnTimelineIndexChanged;
+        
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 타임라인 인덱스 변경 시 외부(TubManager)에 알리는 이벤트
         // ════════════════════════════════════════════════════════════
         
+
+        // ════════════════════════════════════════════════════════════
+        // 재생 상태 공유 이벤트
+        // ════════════════════════════════════════════════════════════
+        public static event Action<object, bool>? OnPlaybackStateChanged; // sender, isPlaying
+
+        public static void RaisePlaybackStarted(object sender, bool isPlaying)
+        {
+            OnPlaybackStateChanged?.Invoke(sender, isPlaying);
+        }
+        // 배속 동기화 이벤트
+        public static event Action<string>? OnSpeedChanged;
+
+        public static void RaiseSpeedChanged(string speed)
+        {
+            OnSpeedChanged?.Invoke(speed);
+        }
 
         // ════════════════════════════════════════════════════════════
         // 파일럿 세트 관리
@@ -88,6 +104,9 @@ namespace DonkeyUi
 
         private static readonly Color HumanColor = Color.FromArgb(255, 255, 87, 34);
         private static readonly Color AiColor = Color.FromArgb(255, 0, 176, 255);
+
+        // 현재 실제로 재생 중인 타이머 (자신 또는 상대방)
+        private static System.Windows.Forms.Timer? _activePlayTimer = null;
 
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 그래프 관련 필드
@@ -214,19 +233,14 @@ namespace DonkeyUi
             catch { }
 
             // 슬라이더 디바운스 (200ms)
+            // 변경 — sliderDebounce는 더 이상 오차율 갱신에 사용하지 않으므로 Tick 비움
             _sliderDebounce.Interval = 200;
-            _sliderDebounce.Tick += (s, e) => {
-                _sliderDebounce.Stop();
-                if (_imageFiles.Count > 0 && !string.IsNullOrEmpty(_lastImagePath))
-                {
-                    foreach (int i in Enumerable.Range(0, _pilotSlots.Count))
-                        _ = RequestAndUpdateSlot(i, _lastImagePath, trkBrightness.Value, trkBlur.Value);
-                }
-            };
+            _sliderDebounce.Tick += (s, e) => { _sliderDebounce.Stop(); };
 
             // [파일1 추가] 타임라인 디바운스 (200ms)
             _timelineDebounce.Interval = 200;
-            _timelineDebounce.Tick += (s, e) => {
+            _timelineDebounce.Tick += (s, e) =>
+            {
                 _timelineDebounce.Stop();
                 if (_pendingTimelineIndex < 0) return;
 
@@ -253,45 +267,234 @@ namespace DonkeyUi
             btnRemoveLeftPic.MouseEnter += (s, e) => btnRemoveLeftPic.BackColor = Color.FromArgb(190, 190, 190);
             btnRemoveLeftPic.MouseLeave += (s, e) => btnRemoveLeftPic.BackColor = Color.FromArgb(210, 210, 210);
 
+            // ════════════════════════════════════════════════════════════
+            // 재생/정지 + 배속 + 프레임 이동 버튼 활성화
+            // ════════════════════════════════════════════════════════════
             bool isPlaying = false;
-            btnStop.Click += (s, e) =>
+            var playTimer = new System.Windows.Forms.Timer();
+
+            if (cmbSpeed.Items.Count > 0 && cmbSpeed.SelectedIndex < 0)
+                cmbSpeed.SelectedIndex = 3; // "1.00x"
+
+            int GetPlayInterval()
             {
-                isPlaying = !isPlaying;
-                if (isPlaying) { btnStop.Text = "정지"; btnStop.BackColor = Color.FromArgb(255, 240, 240); btnStop.ForeColor = Color.FromArgb(180, 40, 40); }
-                else { btnStop.Text = "재생"; btnStop.BackColor = Color.FromArgb(230, 242, 255); btnStop.ForeColor = Color.FromArgb(24, 95, 165); }
+                string txt = (cmbSpeed.SelectedItem?.ToString() ?? "1.00x")
+                    .Replace("x", "").Trim();
+                if (!double.TryParse(txt, System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out double spd) || spd <= 0)
+                    spd = 1.0;
+                return Math.Max(16, (int)(100.0 / spd));
+            }
+
+            playTimer.Interval = GetPlayInterval();
+            cmbSpeed.SelectedIndexChanged += (s, e) =>
+            {
+                playTimer.Interval = GetPlayInterval();
+                RaiseSpeedChanged(cmbSpeed.SelectedItem?.ToString() ?? "1.00x");
             };
 
+            // 상대방 배속 변경 수신
+            OnSpeedChanged += (speed) =>
+            {
+                if (this.IsDisposed || !this.IsHandleCreated) return;
+                this.BeginInvoke(() =>
+                {
+                    if (cmbSpeed.SelectedItem?.ToString() == speed) return; // 무한루프 방지
+                    for (int i = 0; i < cmbSpeed.Items.Count; i++)
+                    {
+                        if (cmbSpeed.Items[i]?.ToString() == speed)
+                        {
+                            cmbSpeed.SelectedIndex = i;
+                            break;
+                        }
+                    }
+                });
+            };
+
+            // ── PilotArena 독립 네비게이션 ──
+            // TubManager 의존 없이 _imageFiles 기준으로 직접 이동
+            void NavigateTo(int idx)
+            {
+                if (_imageFiles.Count == 0) return;
+                idx = Math.Max(0, Math.Min(idx, _imageFiles.Count - 1));
+
+                _currentIndex = idx;
+                _lastImagePath = _imageFiles[idx];
+
+                // trkTimeline 동기화
+                _suppressTimelineNotify = true;
+                if (idx >= trkTimeline.Minimum && idx <= trkTimeline.Maximum)
+                    trkTimeline.Value = idx;
+                _suppressTimelineNotify = false;
+
+                // catalog에서 읽은 human 값으로 UI 갱신
+                if (_graphHumanAngles.Count > idx)
+                {
+                    _humanAngle = _graphHumanAngles[idx];
+                    _humanThrottle = _graphHumanThrottles[idx];
+                    UpdateUserValuePanel();
+                }
+
+                RefreshAllSlots();
+                _graphDrawPanel?.Invalidate();
+
+                // TubManager에도 알림 (동기화)
+                try { OnTimelineIndexChanged?.Invoke(_currentIndex); } catch { }
+            }
+
+            // ── 재생 타이머 Tick ──
+            // ── 재생 타이머 Tick ──
+            // ── 다른 탭에서 재생 시작 시 내 재생 강제 정지 ──
+            OnPlaybackStateChanged += (sender, playing) =>
+            {
+                if (sender == playTimer) return;
+                if (this.IsDisposed || !this.IsHandleCreated) return;
+                this.BeginInvoke(() =>
+                {
+                    if (playing)
+                    {
+                        // 상대방이 재생 시작
+                        // 내 타이머가 돌고 있으면 멈춤
+                        if (isPlaying) { playTimer.Stop(); isPlaying = false; }
+                        // 상대방 타이머 참조 저장
+                        _activePlayTimer = sender as System.Windows.Forms.Timer;
+                        btnStop.Text = "정지";
+                        btnStop.BackColor = Color.FromArgb(255, 240, 240);
+                        btnStop.ForeColor = Color.FromArgb(180, 40, 40);
+                    }
+                    else
+                    {
+                        // 상대방이 정지
+                        _activePlayTimer = null;
+                        btnStop.Text = "재생";
+                        btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                        btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                    }
+                });
+            };
+
+            // ── 재생 타이머 Tick ──
+            playTimer.Tick += (s, e) =>
+            {
+                if (_imageFiles.Count == 0) { playTimer.Stop(); return; }
+                int next = _currentIndex + 1;
+                if (next >= _imageFiles.Count)
+                {
+                    isPlaying = false;
+                    playTimer.Stop();
+                    btnStop.Text = "재생";
+                    btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                    btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                    return;
+                }
+                NavigateTo(next);
+            };
+
+            // ── 재생/정지 ──
+            btnStop.Click += (s, e) =>
+            {
+                // 상대방이 재생 중인 경우 (버튼이 "정지"지만 내 isPlaying은 false)
+                if (!isPlaying && _activePlayTimer != null)
+                {
+                    // 상대방 타이머 직접 정지
+                    _activePlayTimer.Stop();
+                    _activePlayTimer = null;
+                    btnStop.Text = "재생";
+                    btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                    btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                    RaisePlaybackStarted(playTimer, false); // 상대방 버튼도 "재생"으로
+                    return;
+                }
+
+                if (_imageFiles.Count == 0) return;
+                isPlaying = !isPlaying;
+                if (isPlaying)
+                {
+                    _activePlayTimer = playTimer;
+                    btnStop.Text = "정지";
+                    btnStop.BackColor = Color.FromArgb(255, 240, 240);
+                    btnStop.ForeColor = Color.FromArgb(180, 40, 40);
+                    playTimer.Interval = GetPlayInterval();
+                    playTimer.Start();
+                    RaisePlaybackStarted(playTimer, true);
+                }
+                else
+                {
+                    _activePlayTimer = null;
+                    btnStop.Text = "재생";
+                    btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                    btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                    playTimer.Stop();
+                    RaisePlaybackStarted(playTimer, false);
+                }
+            };
+
+            // ── << 맨 앞으로 ──
+            btnRewind.Click += (s, e) =>
+            {
+                if (_imageFiles.Count == 0) return;
+                isPlaying = false; playTimer.Stop();
+                btnStop.Text = "재생";
+                btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                NavigateTo(0);
+            };
+
+            // ── >> 맨 뒤로 ──
+            btnFastForward.Click += (s, e) =>
+            {
+                if (_imageFiles.Count == 0) return;
+                isPlaying = false; playTimer.Stop();
+                btnStop.Text = "재생";
+                btnStop.BackColor = Color.FromArgb(230, 242, 255);
+                btnStop.ForeColor = Color.FromArgb(24, 95, 165);
+                NavigateTo(_imageFiles.Count - 1);
+            };
+
+            // ── < 이전 프레임 ──
+            btnPrev.Click += (s, e) =>
+            {
+                if (_imageFiles.Count == 0 || _currentIndex <= 0) return;
+                NavigateTo(_currentIndex - 1);
+            };
+
+            // ── > 다음 프레임 ──
+            btnNext.Click += (s, e) =>
+            {
+                if (_imageFiles.Count == 0 || _currentIndex >= _imageFiles.Count - 1) return;
+                NavigateTo(_currentIndex + 1);
+            };
+
+            // ── 호버 효과 ──
             foreach (Button btn in new[] { btnRewind, btnFastForward })
             {
-                btn.MouseEnter += (s, e) => { ((Button)s).BackColor = Color.FromArgb(200, 200, 200); ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180); };
-                btn.MouseLeave += (s, e) => { ((Button)s).BackColor = Color.FromArgb(224, 224, 224); ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(204, 204, 204); };
+                btn.MouseEnter += (s, e) => {
+                    ((Button)s).BackColor = Color.FromArgb(200, 200, 200);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+                };
+                btn.MouseLeave += (s, e) => {
+                    ((Button)s).BackColor = Color.FromArgb(224, 224, 224);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(204, 204, 204);
+                };
             }
             foreach (Button btn in new[] { btnPrev, btnNext })
             {
-                btn.MouseEnter += (s, e) => { ((Button)s).BackColor = Color.FromArgb(216, 216, 216); ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200); };
-                btn.MouseLeave += (s, e) => { ((Button)s).BackColor = Color.FromArgb(236, 236, 236); ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(221, 221, 221); };
+                btn.MouseEnter += (s, e) => {
+                    ((Button)s).BackColor = Color.FromArgb(216, 216, 216);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+                };
+                btn.MouseLeave += (s, e) => {
+                    ((Button)s).BackColor = Color.FromArgb(236, 236, 236);
+                    ((Button)s).FlatAppearance.BorderColor = Color.FromArgb(221, 221, 221);
+                };
             }
-
             btnAddLeftPic.Click += BtnAddLeftPic_Click;
             btnRemoveLeftPic.Click += BtnRemoveLeftPic_Click;
             if (cmbNumColumns != null) cmbNumColumns.SelectedIndexChanged += (s, e) => UpdateDisplay();
 
             trkTimeline.Scroll += trkTimeline_Scroll;
             // 타임라인 디바운스 설정 (200ms)
-            _timelineDebounce.Interval = 200;
-            _timelineDebounce.Tick += (s, e) => {
-                _timelineDebounce.Stop();
-                if (_pendingTimelineIndex >= 0)
-                {
-                    int idx = _pendingTimelineIndex;
-                    _pendingTimelineIndex = -1;
-                    // 한 번만 적용
-                    _suppressTimelineNotify = true; // 루프 방지
-                    _currentIndex = idx;
-                    ShowFrame(_currentIndex);
-                    try { OnTimelineIndexChanged?.Invoke(_currentIndex); } catch { }
-                }
-            };
+            
             trkBrightness.Scroll += trkBrightness_Scroll;
             trkBlur.Scroll += trkBlur_Scroll;
             pnlImageArea.Resize += (s, e) => UpdateDisplay();
@@ -304,6 +507,80 @@ namespace DonkeyUi
             AddPilotSet();
             InitGraphArea();
 
+            // 필터 적용 / 삭제 버튼 패널을 pnlBrightBlur에 동적 추가
+            var pnlFilterButtons = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 36,
+                FlowDirection = FlowDirection.LeftToRight,
+                BackColor = Color.FromArgb(244, 243, 238),
+                Padding = new Padding(6, 4, 0, 0)
+            };
+
+            var btnApplyFilter = new Button
+            {
+                Text = "필터 적용",
+                Size = new Size(120, 30),
+                AutoSize = false,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(24, 95, 165),
+                ForeColor = Color.White,
+                Font = new Font("맑은 고딕", 8.5f),
+                Margin = new Padding(0, 0, 6, 0),
+                Cursor = Cursors.Hand
+            };
+            btnApplyFilter.FlatAppearance.BorderSize = 0;
+            btnApplyFilter.Click += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(_lastImagePath))
+                {
+                    foreach (int i in Enumerable.Range(0, _pilotSlots.Count))
+                        _ = RequestAndUpdateSlot(i, _lastImagePath, trkBrightness.Value, trkBlur.Value);
+                }
+                _graphBrightness = trkBrightness.Value;
+                _graphBlur = trkBlur.Value;
+                if (_lblGraphFilterStatus != null)
+                    _lblGraphFilterStatus.Text = $"필터값 - 밝기: {_graphBrightness}, 흐림: {_graphBlur}";
+                _graphDrawPanel?.Invalidate();
+            };
+
+            var btnResetFilter = new Button
+            {
+                Text = "필터 삭제",
+                Size = new Size(120, 30),
+                AutoSize = false,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(210, 210, 210),
+                ForeColor = Color.FromArgb(50, 50, 50),
+                Font = new Font("맑은 고딕", 8.5f),
+                Margin = new Padding(0, 0, 6, 0),
+                Cursor = Cursors.Hand
+            };
+            btnResetFilter.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+            btnResetFilter.Click += (s, e) =>
+            {
+                trkBrightness.Value = 0;
+                trkBlur.Value = 0;
+                lblBrightnessValue.Text = "밝기 0";
+                lblBlurValue.Text = "흐림 0";
+
+                if (!string.IsNullOrEmpty(_lastImagePath))
+                {
+                    foreach (int i in Enumerable.Range(0, _pilotSlots.Count))
+                        _ = RequestAndUpdateSlot(i, _lastImagePath, 0, 0);
+                }
+                _graphBrightness = 0;
+                _graphBlur = 0;
+                if (_lblGraphFilterStatus != null)
+                    _lblGraphFilterStatus.Text = "필터값 - 밝기: 0, 흐림: 0";
+                RefreshAllSlots();
+                _graphDrawPanel?.Invalidate();
+            };
+
+            pnlFilterButtons.Controls.Add(btnApplyFilter);
+            pnlFilterButtons.Controls.Add(btnResetFilter);
+            pnlBrightBlur.Controls.Add(pnlFilterButtons);
+
             if (!string.IsNullOrEmpty(ucTubManager.CurrentTubPath))
                 LoadImages(ucTubManager.CurrentTubPath);
         }
@@ -311,14 +588,7 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 외부에서 타임라인 인덱스 조회/설정
         // ════════════════════════════════════════════════════════════
-        public string? GetImagePathAt(int idx)
-        {
-            if (this.InvokeRequired)
-                return (string?)this.Invoke(new Func<int, string?>(GetImagePathAt), idx);
-            if (_imageFiles == null || _imageFiles.Count == 0) return null;
-            if (idx < 0 || idx >= _imageFiles.Count) return null;
-            return _imageFiles[idx];
-        }
+        
 
         public void SetTimelineIndexFromExternal(int index)
         {
@@ -363,14 +633,17 @@ namespace DonkeyUi
             if (dataIdx > 0) { _mycarWinPath = imagePath.Substring(0, dataIdx); _mycarWslPath = ConvertToWslPath(_mycarWinPath); }
         }
 
+        // 변경
         private List<string> GetModelFiles()
         {
             if (string.IsNullOrEmpty(_mycarWinPath)) return new List<string>();
             string modelsPath = Path.Combine(_mycarWinPath, "models");
             if (!Directory.Exists(modelsPath)) return new List<string>();
-            return new[] { "*.h5", "*.tflite", "*.keras" }
+            return new[] { "*.h5", "*.tflite", "*.keras", "*.savedmodel", "*.pkl" }
               .SelectMany(ext => Directory.GetFiles(modelsPath, ext))
-              .Select(f => Path.GetFileName(f)).OrderBy(f => f).ToList();
+              .Select(f => Path.GetFileName(f))
+              .OrderBy(f => f)
+              .ToList();
         }
 
         // ════════════════════════════════════════════════════════════
@@ -396,7 +669,8 @@ namespace DonkeyUi
             slot.PythonProc = proc;
 
             string pythonErrorLog = "";
-            _ = Task.Run(async () => {
+            _ = Task.Run(async () =>
+            {
                 try { while (!proc.HasExited && !proc.StandardError.EndOfStream) { string err = await proc.StandardError.ReadLineAsync(); if (!string.IsNullOrEmpty(err)) { pythonErrorLog += err + "\n"; Debug.WriteLine($"[stderr] {err}"); } } } catch { }
             });
 
@@ -807,9 +1081,10 @@ namespace DonkeyUi
         // Return image path at specified index
      
 
-      
+        private void trkTimeline_Scroll(object sender, EventArgs e)
+        
 
-            private void trkTimeline_Scroll(object sender, EventArgs e)
+            
 {
     if (_suppressTimelineNotify)
     {
@@ -873,17 +1148,13 @@ namespace DonkeyUi
         private void trkBrightness_Scroll(object sender, EventArgs e)
         {
             lblBrightnessValue.Text = "밝기 " + trkBrightness.Value;
-            RefreshAllSlots();
-            _sliderDebounce.Stop();
-            _sliderDebounce.Start();
+            RefreshAllSlots();  // 이미지 미리보기만 즉시 반영
         }
 
         private void trkBlur_Scroll(object sender, EventArgs e)
         {
             lblBlurValue.Text = "흐림 " + trkBlur.Value;
-            RefreshAllSlots();
-            _sliderDebounce.Stop();
-            _sliderDebounce.Start();
+            RefreshAllSlots();  // 이미지 미리보기만 즉시 반영
         }
 
         public void LoadUserTub(string folder) => LoadImages(folder);
@@ -951,6 +1222,54 @@ namespace DonkeyUi
             UpdateUserValuePanel();
             UpdateThrottleStatistics(throttle);
 
+            // ★ 추가: _imageFiles가 비어있으면 TubManager 경로로 채우기
+            if (_imageFiles.Count == 0 && !string.IsNullOrEmpty(imagePath))
+            {
+                string imgFolder = Path.GetDirectoryName(imagePath);
+                if (Directory.Exists(imgFolder))
+                {
+                    _imageFiles = Directory.GetFiles(imgFolder)
+                        .Where(f => f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                                 || f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                                 || f.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                        .OrderBy(f => GetFileNumber(f))
+                        .ToList();
+
+                    if (_imageFiles.Count > 0)
+                    {
+                        trkTimeline.Minimum = 0;
+                        trkTimeline.Maximum = _imageFiles.Count - 1;
+                    }
+                }
+            }
+
+            // ★ 추가: _imageFiles가 채워졌는데 tubPath가 바뀐 경우 갱신
+            if (!string.IsNullOrEmpty(imagePath))
+            {
+                string imgFolder = Path.GetDirectoryName(imagePath);
+                if (_imageFiles.Count > 0)
+                {
+                    string currentFolder = Path.GetDirectoryName(_imageFiles[0]);
+                    if (!string.Equals(imgFolder, currentFolder, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _imageFiles = Directory.Exists(imgFolder)
+                            ? Directory.GetFiles(imgFolder)
+                                .Where(f => f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                                         || f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                                         || f.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                                .OrderBy(f => GetFileNumber(f))
+                                .ToList()
+                            : new List<string>();
+
+                        if (_imageFiles.Count > 0)
+                        {
+                            trkTimeline.Minimum = 0;
+                            trkTimeline.Maximum = _imageFiles.Count - 1;
+                        }
+                    }
+                }
+            }
+
             try
             {
                 trkTimeline.Minimum = 0;
@@ -964,6 +1283,8 @@ namespace DonkeyUi
             }
             catch { }
             _currentIndex = currentIndex;
+
+            
 
             string tubPath = FixPath(ucTubManager.CurrentTubPath);
             if (!string.IsNullOrEmpty(tubPath) && _currentTubFolderPath != tubPath)
@@ -1089,7 +1410,8 @@ namespace DonkeyUi
             _rdoErrAngle.CheckedChanged += (s, e) => { if (_rdoErrAngle.Checked && _pnlErrorOptions.Visible) { _graphMode = GraphMode.ErrorAngle; updateLegend(); _graphDrawPanel?.Invalidate(); } };
             _rdoErrThrottle.CheckedChanged += (s, e) => { if (_rdoErrThrottle.Checked && _pnlErrorOptions.Visible) { _graphMode = GraphMode.ErrorThrottle; updateLegend(); _graphDrawPanel?.Invalidate(); } };
 
-            _btnGenerateFilteredGraph.Click += (s, e) => {
+            _btnGenerateFilteredGraph.Click += (s, e) =>
+            {
                 _graphBrightness = trkBrightness.Value;
                 _graphBlur = trkBlur.Value;
                 _lblGraphFilterStatus.Text = $"필터값 - 밝기: {_graphBrightness}, 흐림: {_graphBlur}";
@@ -1388,7 +1710,8 @@ namespace DonkeyUi
                     var p2 = Directory.GetFiles(tubFolder, "catalog_*", SearchOption.TopDirectoryOnly);
                     var catalogFiles = p1.Union(p2).Distinct()
                         .Where(f => !Directory.Exists(f))
-                        .OrderBy(p => {
+                        .OrderBy(p =>
+                        {
                             var fn = Path.GetFileNameWithoutExtension(p);
                             var m = System.Text.RegularExpressions.Regex.Match(fn, @"\d+");
                             return m.Success ? int.Parse(m.Value) : int.MaxValue;
@@ -1522,7 +1845,8 @@ namespace DonkeyUi
 
             if (!token.IsCancellationRequested && !this.IsDisposed && this.IsHandleCreated)
             {
-                this.BeginInvoke(() => {
+                this.BeginInvoke(() =>
+                {
                     RefreshAllSlots();
                     int n = _graphHumanAngles.Count;
                     if (n >= 2 && _graphDrawPanel != null)
@@ -1543,17 +1867,110 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         private void SetupRankControls()
         {
-            flpRankControls.BackColor = Color.FromArgb(244, 243, 238); flpRankControls.Padding = new Padding(6, 0, 0, 0);
-            flpRankControls.Height = 50; flpRankControls.WrapContents = false; flpRankControls.FlowDirection = FlowDirection.LeftToRight;
+            flpRankControls.BackColor = Color.FromArgb(244, 243, 238);
+            flpRankControls.Padding = new Padding(6, 0, 0, 0);
+            flpRankControls.Height = 50;
+            flpRankControls.WrapContents = false;
+            flpRankControls.FlowDirection = FlowDirection.LeftToRight;
             flpRankControls.Controls.Clear();
-            Label lblHeader = new Label { Text = "오차율 순위", Font = new Font("맑은 고딕", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(26, 95, 168), AutoSize = true, Margin = new Padding(4, 10, 4, 0) };
+
+            // ── 헤더 라벨 ──
+            Label lblHeader = new Label
+            {
+                Text = "오차율 순위",
+                Font = new Font("맑은 고딕", 8.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(26, 95, 168),
+                AutoSize = true,
+                Margin = new Padding(4, 12, 4, 0)
+            };
+
+            // ── 분류 선택 콤보박스 1개 ──
+            var cmbRankType = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 80,
+                Font = new Font("맑은 고딕", 8.5f),
+                Margin = new Padding(0, 10, 8, 0)
+            };
+            cmbRankType.Items.AddRange(new object[] { "종합", "각도", "속도" });
+            cmbRankType.SelectedIndex = 0;
+
+            // ── 순위 패널 (1~3위를 가로로 표시) ──
+            var pnlRanks = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                AutoSize = true,
+                WrapContents = false,
+                Margin = new Padding(0, 6, 0, 0)
+            };
+
+            // 순위 라벨 3개 생성
+            var rankLabels = new Label[3];
+            Color[] medalColors = 
+            {
+                Color.FromArgb(212, 175, 55),  // 1위 금
+                Color.FromArgb(160, 160, 160), // 2위 은
+                Color.FromArgb(176, 101, 48)   // 3위 동
+            };
+
+            string[] medals = { "🥇", "🥈", "🥉" };
+
+            for (int i = 0; i < 3; i++)
+            {
+                var lbl = new Label
+                {
+                    Text = $"{i + 1}위  -",
+                    Font = new Font("맑은 고딕", 8.5f, FontStyle.Bold),
+                    ForeColor = medalColors[i],
+                    AutoSize = false,
+                    Width = 260,
+                    Height = 36,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    BackColor = Color.White,
+                    Margin = new Padding(0, 0, 4, 0),
+                    Padding = new Padding(6, 0, 0, 0)
+                };
+                rankLabels[i] = lbl;
+                pnlRanks.Controls.Add(lbl);
+            }
+
+            // ── 콤보 변경 시 순위 갱신 ──
+            Action refreshRanks = () =>
+            {
+                // 어떤 콤보박스 기준으로 정렬할지 결정
+                ComboBox srcCombo = cmbRankType.SelectedIndex switch
+                {
+                    1 => cmbRankAngle,
+                    2 => cmbRankThrottle,
+                    _ => cmbRankOverall
+                };
+
+                // srcCombo 아이템을 순서대로 읽어서 1~3위 표시
+                // (기존 cmbRankOverall/Angle/Throttle에 모델명이 순위대로 들어있다고 가정)
+                string[] medals = { "🥇", "🥈", "🥉" };
+                for (int i = 0; i < 3; i++)
+                {
+                    string modelName = (srcCombo.Items.Count > i)
+                        ? srcCombo.Items[i]?.ToString() ?? "-"
+                        : "-";
+                    rankLabels[i].Text = $"{medals[i]} {i + 1}위  {modelName}";
+                }
+            };
+
+            cmbRankType.SelectedIndexChanged += (s, e) => refreshRanks();
+
+            // 기존 숨겨진 콤보박스들(cmbRankOverall 등)의 아이템이 바뀔 때도 갱신
+            cmbRankOverall.SelectedIndexChanged += (s, e) => refreshRanks();
+            cmbRankAngle.SelectedIndexChanged += (s, e) => refreshRanks();
+            cmbRankThrottle.SelectedIndexChanged += (s, e) => refreshRanks();
+
             flpRankControls.Controls.Add(lblHeader);
             flpRankControls.Controls.Add(MakeSeparator());
-            flpRankControls.Controls.Add(MakeComboGroup("종합", Color.FromArgb(26, 95, 168), cmbRankOverall));
-            flpRankControls.Controls.Add(MakeSeparator());
-            flpRankControls.Controls.Add(MakeComboGroup("각도", Color.FromArgb(25, 122, 58), cmbRankAngle));
-            flpRankControls.Controls.Add(MakeSeparator());
-            flpRankControls.Controls.Add(MakeComboGroup("속도", Color.FromArgb(200, 82, 10), cmbRankThrottle));
+            flpRankControls.Controls.Add(cmbRankType);
+            flpRankControls.Controls.Add(pnlRanks);
+
+            refreshRanks();
         }
 
         private Panel MakeComboGroup(string labelText, Color labelColor, ComboBox comboBox)

@@ -30,6 +30,7 @@ namespace DonkeyUi
         // ── 게이지 상태 ──────────────────────────────────────────────
         private double? _currentThrottle = null;
         private double? _currentAngle = null;
+        private System.Windows.Forms.Timer? _activePlayTimer = null;
 
         private List<string> _imageFiles = new List<string>();
         private List<string> _deletedImages = new List<string>();
@@ -201,12 +202,64 @@ namespace DonkeyUi
             if (cmbSpeed.Items.Count == 0)
                 cmbSpeed.Items.AddRange(new object[] { "0.25", "0.50", "0.75", "1.00", "1.25", "1.50", "1.75", "2.00" });
             cmbSpeed.Text = "1.00";
-            cmbSpeed.SelectedIndexChanged += (s, e) => UpdatePlaybackIntervalFromCombo();
+            // 교체
+            cmbSpeed.SelectedIndexChanged += (s, e) =>
+            {
+                UpdatePlaybackIntervalFromCombo();
+                string speed = cmbSpeed.SelectedItem?.ToString() ?? "1.00x";
+                ucPilotArena.RaiseSpeedChanged(speed); // 형식 변환 없이 그대로 전달
+            };
             cmbSpeed.TextChanged += (s, e) => UpdatePlaybackIntervalFromCombo();
+            UpdatePlaybackIntervalFromCombo();
             UpdatePlaybackIntervalFromCombo();
 
             picThrottle.Paint += PicThrottle_Paint;
             picAngle.Paint += PicAngle_Paint;
+            // Subscribe to external timeline changes
+            // ★ 추가: PilotArena에서 재생 시작 시 TubManager 재생 정지
+            ucPilotArena.OnPlaybackStateChanged += (sender, playing) =>
+            {
+                if (sender == _playTimer) return;
+                void Handle()
+                {
+                    if (playing)
+                    {
+                        if (_isPlaying) { _playTimer.Stop(); _isPlaying = false; }
+                        _activePlayTimer = sender as System.Windows.Forms.Timer;
+                        btnStartStop.Text = "⏹ 정지";
+                        btnStartStop.BackColor = Color.FromArgb(180, 40, 40);
+                        btnStartStop.FlatAppearance.BorderSize = 0;
+                    }
+                    else
+                    {
+                        _activePlayTimer = null;
+                        btnStartStop.Text = "▶ 재생";
+                        btnStartStop.BackColor = Color.FromArgb(24, 95, 165);
+                        btnStartStop.FlatAppearance.BorderSize = 0;
+                    }
+                }
+                if (this.InvokeRequired) this.BeginInvoke(Handle);
+                else Handle();
+            };
+
+            // 배속 동기화 수신
+            ucPilotArena.OnSpeedChanged += (speed) =>
+            {
+                if (this.IsDisposed || !this.IsHandleCreated) return;
+                this.BeginInvoke(() =>
+                {
+                    if (cmbSpeed.SelectedItem?.ToString() == speed) return; // 무한루프 방지
+                    for (int i = 0; i < cmbSpeed.Items.Count; i++)
+                    {
+                        if (cmbSpeed.Items[i]?.ToString() == speed)
+                        {
+                            cmbSpeed.SelectedIndex = i;
+                            break;
+                        }
+                    }
+                });
+            };
+
             // Subscribe to external timeline changes
             ucPilotArena.OnTimelineIndexChanged += (idx) =>
             {
@@ -216,6 +269,7 @@ namespace DonkeyUi
                 }
                 catch { }
             };
+            
         }
 
         // Show image by absolute path and update internal selection if possible
@@ -964,8 +1018,21 @@ namespace DonkeyUi
             _playTimer.Interval = (int)Math.Max(10, Math.Round(_playBaseIntervalMs / speed));
         }
 
+        // 교체
         private void BtnStartStop_Click(object? sender, EventArgs e)
         {
+            // 상대방(PilotArena)이 재생 중인 경우
+            if (!_isPlaying && _activePlayTimer != null)
+            {
+                _activePlayTimer.Stop();
+                _activePlayTimer = null;
+                btnStartStop.Text = "▶ 재생";
+                btnStartStop.BackColor = Color.FromArgb(24, 95, 165);
+                btnStartStop.FlatAppearance.BorderSize = 0;
+                ucPilotArena.RaisePlaybackStarted(_playTimer, false);
+                return;
+            }
+
             if (_isPlaying) StopPlayback(); else StartPlayback();
         }
 
@@ -977,6 +1044,7 @@ namespace DonkeyUi
             btnStartStop.BackColor = Color.FromArgb(180, 40, 40);
             btnStartStop.FlatAppearance.BorderSize = 0;
             _playTimer.Start();
+            ucPilotArena.RaisePlaybackStarted(_playTimer, true);
         }
 
         private void StopPlayback()
@@ -986,6 +1054,7 @@ namespace DonkeyUi
             btnStartStop.BackColor = Color.FromArgb(24, 95, 165);
             btnStartStop.FlatAppearance.BorderSize = 0;
             _playTimer.Stop();
+            ucPilotArena.RaisePlaybackStarted(_playTimer, false); // ★ 정지 알림 추가
         }
 
         // ════════════════════════════════════════════════════════════
