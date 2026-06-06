@@ -23,7 +23,7 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 타임라인 인덱스 변경 시 외부(TubManager)에 알리는 이벤트
         // ════════════════════════════════════════════════════════════
-        public static event Action<int>? OnTimelineIndexChanged;
+        
 
         // ════════════════════════════════════════════════════════════
         // 파일럿 세트 관리
@@ -805,19 +805,9 @@ namespace DonkeyUi
         }
 
         // Return image path at specified index
-        public string? GetImagePathAt(int idx)
-        {
-            if (this.InvokeRequired)
-            {
-                return (string?)this.Invoke(new Func<int, string?>(GetImagePathAt), idx);
-            }
-            if (_imageFiles == null || _imageFiles.Count == 0) return null;
-            if (idx < 0 || idx >= _imageFiles.Count) return null;
-            return _imageFiles[idx];
-        }
+     
 
-        private void trkTimeline_Scroll(object sender, EventArgs e)
-        {
+      
 
             private void trkTimeline_Scroll(object sender, EventArgs e)
 {
