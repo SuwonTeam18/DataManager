@@ -60,7 +60,9 @@
             btnApplyFilter = new Button();
             lblDeleteStatus = new Label();
             pnlTimeline = new Panel();
-            lblRange = new Label();
+            btnDeleteAllRanges = new Button();
+            btnRangeCancel = new Button();
+            cmbRanges = new ComboBox();
             btnSetLeft = new Button();
             btnSetRight = new Button();
             btnDelete = new Button();
@@ -392,7 +394,6 @@
             pnlTools.Controls.Add(cmbSpeed);
             pnlTools.Controls.Add(btnClearFilter);
             pnlTools.Controls.Add(pnlFilter);
-            pnlTools.Controls.Add(lblDeleteStatus);
             pnlTools.Controls.Add(pnlTimeline);
             pnlTools.Controls.Add(trkRecord);
             pnlTools.Controls.Add(btnFastPrev);
@@ -414,7 +415,7 @@
             pnlTools.Dock = DockStyle.Top;
             pnlTools.Location = new Point(0, 464);
             pnlTools.Name = "pnlTools";
-            pnlTools.Size = new Size(1200, 412);
+            pnlTools.Size = new Size(1200, 408);
             pnlTools.TabIndex = 3;
             // 
             // btnClearFilter
@@ -440,7 +441,7 @@
             pnlFilter.BorderStyle = BorderStyle.FixedSingle;
             pnlFilter.Controls.Add(tplFilter);
             pnlFilter.Dock = DockStyle.Bottom;
-            pnlFilter.Location = new Point(0, 250);
+            pnlFilter.Location = new Point(0, 246);
             pnlFilter.Name = "pnlFilter";
             pnlFilter.Size = new Size(1198, 160);
             pnlFilter.TabIndex = 21;
@@ -549,7 +550,7 @@
             // 
             panel6.Location = new Point(0, 28);
             panel6.Name = "panel6";
-            panel6.Size = new Size(947, 22);
+            panel6.Size = new Size(947, 13);
             panel6.TabIndex = 11;
             // 
             // nudAngleMin
@@ -580,7 +581,7 @@
             nudAngleMax.Name = "nudAngleMax";
             nudAngleMax.Size = new Size(115, 27);
             nudAngleMax.TabIndex = 14;
-            nudAngleMax.Value = new decimal(new int[] { 10, 0, 0, 0 });
+            nudAngleMax.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // pnlThrottleText
             // 
@@ -671,7 +672,17 @@
             pnlTimeline.Size = new Size(1184, 18);
             pnlTimeline.TabIndex = 20;
             // 
-            // lblRange
+            // btnDeleteAllRanges
+            // 
+            btnDeleteAllRanges.Location = new Point(339, 115);
+            btnDeleteAllRanges.Name = "btnDeleteAllRanges";
+            btnDeleteAllRanges.Size = new Size(98, 23);
+            btnDeleteAllRanges.TabIndex = 28;
+            btnDeleteAllRanges.Text = "모든 범위 삭제";
+            btnDeleteAllRanges.UseVisualStyleBackColor = true;
+            btnDeleteAllRanges.Click += btnDeleteAllRanges_Click;
+            // 
+            // btnRangeCancel
             // 
             lblRange.AutoSize = true;
             lblRange.Font = new Font("맑은 고딕", 9F);
@@ -837,9 +848,9 @@
             pnlGraph.BackColor = Color.FromArgb(244, 243, 238);
             pnlGraph.BorderStyle = BorderStyle.FixedSingle;
             pnlGraph.Dock = DockStyle.Fill;
-            pnlGraph.Location = new Point(0, 876);
+            pnlGraph.Location = new Point(0, 872);
             pnlGraph.Name = "pnlGraph";
-            pnlGraph.Size = new Size(1200, 124);
+            pnlGraph.Size = new Size(1200, 128);
             pnlGraph.TabIndex = 4;
             // 
             // contextFilter
