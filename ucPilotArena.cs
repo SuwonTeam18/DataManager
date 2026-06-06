@@ -28,6 +28,7 @@ namespace DonkeyUi
         // 재생 상태 공유 이벤트
         // ════════════════════════════════════════════════════════════
         public static event Action<object, bool>? OnPlaybackStateChanged; // sender, isPlaying
+        public static event Action<int>? OnTimelineIndexChanged;
 
         public static void RaisePlaybackStarted(object sender, bool isPlaying)
         {
@@ -429,28 +430,20 @@ namespace DonkeyUi
                 }
             };
 
-            // ── << 맨 앞으로 ──
+            // ── << 100장 이전 ──
             btnRewind.Click += (s, e) =>
             {
                 if (_imageFiles.Count == 0) return;
-                isPlaying = false; playTimer.Stop();
-                btnStop.Text = "재생";
-                btnStop.BackColor = Color.FromArgb(230, 242, 255);
-                btnStop.ForeColor = Color.FromArgb(24, 95, 165);
-                NavigateTo(0);
+                NavigateTo(_currentIndex - 100);
             };
 
-            // ── >> 맨 뒤로 ──
+            // ── >> 100장 이후 ──
             btnFastForward.Click += (s, e) =>
             {
                 if (_imageFiles.Count == 0) return;
-                isPlaying = false; playTimer.Stop();
-                btnStop.Text = "재생";
-                btnStop.BackColor = Color.FromArgb(230, 242, 255);
-                btnStop.ForeColor = Color.FromArgb(24, 95, 165);
-                NavigateTo(_imageFiles.Count - 1);
+                NavigateTo(_currentIndex + 100);
             };
-
+        
             // ── < 이전 프레임 ──
             btnPrev.Click += (s, e) =>
             {
@@ -1035,6 +1028,15 @@ namespace DonkeyUi
                 return bmp;
             }
             catch { return null; }
+        }
+
+        public string? GetImagePathAt(int idx)
+        {
+            if (this.InvokeRequired)
+                return (string?)this.Invoke(new Func<int, string?>(GetImagePathAt), idx);
+            if (_imageFiles == null || _imageFiles.Count == 0) return null;
+            if (idx < 0 || idx >= _imageFiles.Count) return null;
+            return _imageFiles[idx];
         }
 
         // ════════════════════════════════════════════════════════════
