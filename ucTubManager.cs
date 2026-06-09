@@ -76,6 +76,7 @@ namespace DonkeyUi
     = new Dictionary<string, List<string>>();
 
 
+
         // If catalogs contain explicit _index fields, store the maximum index found
         private int? _maxCatalogIndex = null;
         // Map filename (e.g. "4131_cam_image_array_.jpg") -> catalog _index
@@ -637,7 +638,7 @@ namespace DonkeyUi
                     _currentIndex,
                     _allImageFiles.Count);
 
-               pnlTimeline.Invalidate();
+                pnlTimeline.Invalidate();
             }
             catch
             {
@@ -895,7 +896,7 @@ namespace DonkeyUi
                 }
                 catch
                 {
-                }
+            }
             }
 
             // Build filename->index map and compute maximum _index
@@ -1387,11 +1388,11 @@ namespace DonkeyUi
                 List<string> filteredLines = new();
 
                 foreach (string line in lines)
-                {
+            {
                     string? fileName = null;
 
-                    try
-                    {
+                try
+                {
                         var doc = System.Text.Json.JsonDocument.Parse(line);
 
                         if (doc.RootElement.TryGetProperty(
@@ -1401,12 +1402,12 @@ namespace DonkeyUi
                             fileName =
                                 Path.GetFileName(
                                     p.GetString());
-                        }
+                }
                     }
                     catch
-                    {
+                {
                         continue;
-                    }
+                }
 
                     if (string.IsNullOrEmpty(fileName))
                         continue;
@@ -1428,7 +1429,7 @@ namespace DonkeyUi
                         continue;
 
                     filteredLines.Add(line);
-                }
+            }
 
                 string targetCatalog =
                     Path.Combine(
@@ -1438,10 +1439,10 @@ namespace DonkeyUi
                 File.WriteAllLines(
                     targetCatalog,
                     filteredLines);
-            }
+        }
                 MessageBox.Show(
                  $"Filtered 저장 완료\n{saveFolder}");
-            
+
         }
 
         // ════════════════════════════════════════════════════════════
@@ -1788,38 +1789,38 @@ namespace DonkeyUi
           
 
             foreach (var img in _allImageFiles)
-            {
+      {
                 int idx = _allImageFiles.IndexOf(img);
 
-                if (idx >= _catalogLines.Count)
+          if (idx >= _catalogLines.Count)
                     continue;
 
-                var parsed = ParseCatalogLine(_catalogLines[idx]);
+          var parsed = ParseCatalogLine(_catalogLines[idx]);
 
-                bool speedMatch = false;
-                bool angleMatch = false;
+          bool speedMatch = false;
+          bool angleMatch = false;
 
-                foreach (var filter in _speedFilters)
-                {
-                    if (parsed.throttle.HasValue &&
-                        parsed.throttle.Value >= filter.Min &&
-                        parsed.throttle.Value <= filter.Max)
-                    {
-                        speedMatch = true;
-                        break;
-                    }
-                }
+          foreach (var filter in _speedFilters)
+          {
+              if (parsed.throttle.HasValue &&
+                  parsed.throttle.Value >= filter.Min &&
+                  parsed.throttle.Value <= filter.Max)
+              {
+                  speedMatch = true;
+                  break;
+              }
+          }
 
-                foreach (var filter in _angleFilters)
-                {
-                    if (parsed.angle.HasValue &&
-                        parsed.angle.Value >= filter.Min &&
-                        parsed.angle.Value <= filter.Max)
-                    {
-                        angleMatch = true;
-                        break;
-                    }
-                }
+          foreach (var filter in _angleFilters)
+          {
+              if (parsed.angle.HasValue &&
+                  parsed.angle.Value >= filter.Min &&
+                  parsed.angle.Value <= filter.Max)
+              {
+                  angleMatch = true;
+                  break;
+              }
+          }
                 pnlTimeline.Invalidate();
 
                 if (!(speedMatch && angleMatch))
@@ -1827,6 +1828,18 @@ namespace DonkeyUi
                     _filteredImages.Add(img);
                 }
             }
+            pnlTimeline.Invalidate();
+            trkRecord.Minimum = 0;
+            trkRecord.Maximum = Math.Max(0, _imageFiles.Count - 1);
+
+            if (_imageFiles.Count > 0)
+            {
+                trkRecord.Value = 0;
+                SetCurrentIndex(0);
+            }
+
+            MessageBox.Show(
+                $"필터 적용 완료\n남은 프레임: {_imageFiles.Count}개");
         }
 
         private void btnClearFilter_Click(object sender, EventArgs e)
