@@ -229,15 +229,17 @@ namespace DonkeyUi
                     {
                         if (_isPlaying) { _playTimer.Stop(); _isPlaying = false; }
                         _activePlayTimer = sender as System.Windows.Forms.Timer;
-                        btnStartStop.Text = "⏹ 정지";
-                        btnStartStop.BackColor = Color.FromArgb(180, 40, 40);
+                        btnStartStop.Text = "정지";
+                        btnStartStop.BackColor = Color.FromArgb(255, 240, 240);
+                        btnStartStop.ForeColor = Color.FromArgb(180, 40, 40);
                         btnStartStop.FlatAppearance.BorderSize = 0;
                     }
                     else
                     {
                         _activePlayTimer = null;
-                        btnStartStop.Text = "▶ 재생";
-                        btnStartStop.BackColor = Color.FromArgb(24, 95, 165);
+                        btnStartStop.Text = "재생";
+                        btnStartStop.BackColor = Color.FromArgb(230, 242, 255);
+                        btnStartStop.ForeColor = Color.FromArgb(24, 95, 165);
                         btnStartStop.FlatAppearance.BorderSize = 0;
                     }
                 }
@@ -1060,8 +1062,9 @@ namespace DonkeyUi
             {
                 _activePlayTimer.Stop();
                 _activePlayTimer = null;
-                btnStartStop.Text = "▶ 재생";
-                btnStartStop.BackColor = Color.FromArgb(24, 95, 165);
+                btnStartStop.Text = "재생";
+                btnStartStop.BackColor = Color.FromArgb(230, 242, 255);
+                btnStartStop.ForeColor = Color.FromArgb(24, 95, 165);
                 btnStartStop.FlatAppearance.BorderSize = 0;
                 ucPilotArena.RaisePlaybackStarted(_playTimer, false);
                 return;
@@ -1074,8 +1077,9 @@ namespace DonkeyUi
         {
             if (_imageFiles.Count == 0) return;
             _isPlaying = true;
-            btnStartStop.Text = "⏹ 정지";
-            btnStartStop.BackColor = Color.FromArgb(180, 40, 40);
+            btnStartStop.Text = "정지";
+            btnStartStop.BackColor = Color.FromArgb(255, 240, 240);
+            btnStartStop.ForeColor = Color.FromArgb(180, 40, 40);
             btnStartStop.FlatAppearance.BorderSize = 0;
             _playTimer.Start();
             ucPilotArena.RaisePlaybackStarted(_playTimer, true);
@@ -1084,11 +1088,12 @@ namespace DonkeyUi
         private void StopPlayback()
         {
             _isPlaying = false;
-            btnStartStop.Text = "▶ 재생";
-            btnStartStop.BackColor = Color.FromArgb(24, 95, 165);
+            btnStartStop.Text = "재생";
+            btnStartStop.BackColor = Color.FromArgb(230, 242, 255);
+            btnStartStop.ForeColor = Color.FromArgb(24, 95, 165);
             btnStartStop.FlatAppearance.BorderSize = 0;
             _playTimer.Stop();
-            ucPilotArena.RaisePlaybackStarted(_playTimer, false); // ★ 정지 알림 추가
+            ucPilotArena.RaisePlaybackStarted(_playTimer, false);
         }
 
         // ════════════════════════════════════════════════════════════

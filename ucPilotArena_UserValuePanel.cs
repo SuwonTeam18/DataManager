@@ -212,16 +212,28 @@ namespace DonkeyUi
         {
             if (_lblUserAngleVal == null) return;
 
-            // ── 각도 ────────────────────────────────────────────
-            double angle = _humanAngle ?? 0.0;
-            _lblUserAngleVal.Text = angle.ToString("+0.000;-0.000;0.000");
+            // ── catalog 데이터 우선 사용 (재생 중 튀는 현상 방지) ──
+            double angle, throttle;
 
-            // 바: -1 ~ +1 → 트랙 너비의 0 ~ 100%
-            // 중앙이 0, 음수면 왼쪽, 양수면 오른쪽
+            if (_graphHumanAngles != null &&
+                _graphHumanThrottles != null &&
+                _currentIndex >= 0 &&
+                _currentIndex < _graphHumanAngles.Count)
+            {
+                angle = _graphHumanAngles[_currentIndex];
+                throttle = _graphHumanThrottles[_currentIndex];
+            }
+            else
+            {
+                angle = _humanAngle ?? 0.0;
+                throttle = _humanThrottle ?? 0.0;
+            }
+
+            // ── 각도 ────────────────────────────────────────────
+            _lblUserAngleVal.Text = angle.ToString("+0.000;-0.000;0.000");
             SetBar(_barAngleFill, _barAngleTrack, angle);
 
             // ── 속도 ────────────────────────────────────────────
-            double throttle = _humanThrottle ?? 0.0;
             _lblUserThrottleVal.Text = throttle.ToString("+0.000;-0.000;0.000");
             SetBar(_barThrottleFill, _barThrottleTrack, throttle);
         }

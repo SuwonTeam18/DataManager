@@ -56,7 +56,7 @@ namespace DonkeyUi
 
         private void BuildUI()
         {
-            Text = "Tub Plot 설정";
+            Text = "그래프 설정";
             Size = new Size(480, 560);
             MinimumSize = new Size(480, 550);
             MaximumSize = new Size(480, 550 );
@@ -79,7 +79,7 @@ namespace DonkeyUi
             };
             var lblTitle = new Label
             {
-                Text = "Tub Plot 설정",
+                Text = "그래프 설정",
                 Font = new Font("맑은 고딕", 12f, FontStyle.Bold),
                 ForeColor = TextMain,
                 AutoSize = true,
@@ -278,7 +278,7 @@ namespace DonkeyUi
 
             _btnCreate = new Button
             {
-                Text = "Tub Plot 생성",
+                Text = "그래프 생성",
                 Size = new Size(118, 30),
                 Location = new Point(316, 12),
                 FlatStyle = FlatStyle.Flat,
