@@ -702,6 +702,7 @@
             // 
             // pnlTimeline
             // 
+            pnlTimeline.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             pnlTimeline.BackColor = Color.FromArgb(24, 95, 165);
             pnlTimeline.Location = new Point(8, 8);
             pnlTimeline.Name = "pnlTimeline";
