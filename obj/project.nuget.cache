@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "R2x83UHTWzs=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\user\\Desktop\\새 폴더\\DataManager-main\\DataManager-main\\DonkeyUi.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\user\\.nuget\\packages\\winforms.datavisualization\\1.10.2\\winforms.datavisualization.1.10.2.nupkg.sha512"
+  ],
+  "logs": []
+}

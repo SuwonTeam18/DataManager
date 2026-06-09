@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup />
+  <ItemGroup>
+    <Compile Update="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="TubPlotDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="ucCarConnector.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="ucPilotArena.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="ucPilotArena.TubPlot.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="ucPilotArena_UserValuePanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="ucTrainer.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="ucTubManager.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+  </ItemGroup>
+</Project>
