@@ -337,6 +337,7 @@ namespace DonkeyUi
                 }
 
                 RefreshAllSlots();
+                UpdateRecordIndexLabel();
                 _graphDrawPanel?.Invalidate();
 
                 // TubManager에도 알림 (동기화)
@@ -486,8 +487,15 @@ namespace DonkeyUi
             if (cmbNumColumns != null) cmbNumColumns.SelectedIndexChanged += (s, e) => UpdateDisplay();
 
             trkTimeline.Scroll += trkTimeline_Scroll;
+            lblRecordIndexDisplay.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode != Keys.Enter) return;
+                e.SuppressKeyPress = true;
+                TryNavigateFromRecordText();
+            };
+            lblRecordIndexDisplay.Leave += (s, e) => TryNavigateFromRecordText();
             // 타임라인 디바운스 설정 (200ms)
-            
+
             trkBrightness.Scroll += trkBrightness_Scroll;
             trkBlur.Scroll += trkBlur_Scroll;
             pnlImageArea.Resize += (s, e) => UpdateDisplay();
@@ -581,7 +589,7 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 외부에서 타임라인 인덱스 조회/설정
         // ════════════════════════════════════════════════════════════
-        
+
 
         public void SetTimelineIndexFromExternal(int index)
         {
@@ -592,6 +600,7 @@ namespace DonkeyUi
             _currentIndex = index;
             _suppressTimelineNotify = false;
             RefreshAllSlots();
+            UpdateRecordIndexLabel();
             _graphDrawPanel?.Invalidate();
         }
 
@@ -940,6 +949,55 @@ namespace DonkeyUi
 
         private void RefreshAllSlots() { for (int i = 0; i < _displayPictureBoxes.Count; i++) RefreshSlot(i); }
 
+        private void UpdateRecordIndexLabel()
+        {
+            if (lblRecordIndexDisplay == null) return;
+            int total = _imageFiles.Count;
+            lblRecordIndexDisplay.Text = total == 0
+                ? "기록 000000"
+                : $"기록 {(_currentIndex + 1):D6}";
+        }
+
+        private void TryNavigateFromRecordText()
+        {
+            if (lblRecordIndexDisplay == null) return;
+            var txt = lblRecordIndexDisplay.Text ?? string.Empty;
+
+            // "기록 000042" 형태에서 숫자만 추출
+            var m = System.Text.RegularExpressions.Regex.Match(txt, @"\d+");
+            if (!m.Success) { UpdateRecordIndexLabel(); return; }
+
+            if (!int.TryParse(m.Value, out int num)) { UpdateRecordIndexLabel(); return; }
+
+            // 1-based → 0-based 변환
+            int idx = num - 1;
+            if (idx < 0) idx = 0;
+            if (idx >= _imageFiles.Count) idx = _imageFiles.Count - 1;
+
+            if (_imageFiles.Count == 0) { UpdateRecordIndexLabel(); return; }
+
+            _currentIndex = idx;
+            _lastImagePath = _imageFiles[idx];
+
+            _suppressTimelineNotify = true;
+            if (idx >= trkTimeline.Minimum && idx <= trkTimeline.Maximum)
+                trkTimeline.Value = idx;
+            _suppressTimelineNotify = false;
+
+            if (_graphHumanAngles.Count > idx)
+            {
+                _humanAngle = _graphHumanAngles[idx];
+                _humanThrottle = _graphHumanThrottles[idx];
+                UpdateUserValuePanel();
+            }
+
+            RefreshAllSlots();
+            UpdateRecordIndexLabel();
+            _graphDrawPanel?.Invalidate();
+
+            try { OnTimelineIndexChanged?.Invoke(_currentIndex); } catch { }
+        }
+
         private (double? angle, double? throttle) GetCurrentHumanValues()
         {
             if (_graphHumanAngles != null && _graphHumanThrottles != null &&
@@ -1054,6 +1112,7 @@ namespace DonkeyUi
 
             trkTimeline.Minimum = 0; trkTimeline.Maximum = _imageFiles.Count - 1; trkTimeline.Value = 0; _currentIndex = 0;
             ShowFrame(0);
+            UpdateRecordIndexLabel();
 
             string tubFolder = FixPath(ucTubManager.CurrentTubPath) ?? Directory.GetParent(folder)?.FullName ?? folder;
             if (tubFolder.EndsWith("images", StringComparison.OrdinalIgnoreCase)) tubFolder = Directory.GetParent(tubFolder)?.FullName ?? tubFolder;
@@ -1103,12 +1162,13 @@ namespace DonkeyUi
         _lastImagePath = _imageFiles[_currentIndex];
     }
 
-    RefreshAllSlots();
-    _graphDrawPanel?.Invalidate();
+            RefreshAllSlots();
+            UpdateRecordIndexLabel();
+            _graphDrawPanel?.Invalidate();
 
-    _pendingTimelineIndex = trkTimeline.Value;
+            _pendingTimelineIndex = trkTimeline.Value;
 
-    _sliderDebounce.Stop();
+            _sliderDebounce.Stop();
     _sliderDebounce.Start();
 
     _timelineDebounce.Stop();
@@ -1285,23 +1345,49 @@ namespace DonkeyUi
             }
             catch { }
             _currentIndex = currentIndex;
+            UpdateRecordIndexLabel();
 
-            
+
 
             string tubPath = FixPath(ucTubManager.CurrentTubPath);
-            if (!string.IsNullOrEmpty(tubPath) && _currentTubFolderPath != tubPath)
+            if (!string.IsNullOrEmpty(tubPath))
             {
-                _currentTubFolderPath = tubPath;
-                string catalogFolder = tubPath.EndsWith("images", StringComparison.OrdinalIgnoreCase)
-                  ? Directory.GetParent(tubPath)?.FullName ?? tubPath : tubPath;
                 string imagesFolder = tubPath.EndsWith("images", StringComparison.OrdinalIgnoreCase)
-                  ? tubPath : Path.Combine(tubPath, "images");
+                    ? tubPath : Path.Combine(tubPath, "images");
                 var validImages = Directory.Exists(imagesFolder)
-                  ? Directory.GetFiles(imagesFolder)
-                    .Where(f => f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                    .OrderBy(f => GetFileNumber(f)).ToList()
-                  : _imageFiles;
-                _ = LoadGraphDataAsync(catalogFolder, validImages);
+                    ? Directory.GetFiles(imagesFolder)
+                        .Where(f => f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                                 || f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                                 || f.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                        .OrderBy(f => GetFileNumber(f)).ToList()
+                    : _imageFiles;
+
+                string catalogFolder = tubPath.EndsWith("images", StringComparison.OrdinalIgnoreCase)
+                    ? Directory.GetParent(tubPath)?.FullName ?? tubPath : tubPath;
+
+                if (_currentTubFolderPath != tubPath)
+                {
+                    // tub 경로가 바뀐 경우 → 전체 재로드
+                    _currentTubFolderPath = tubPath;
+                    _ = LoadGraphDataAsync(catalogFolder, validImages);
+                }
+                else if (validImages.Count != _graphImagePaths.Count)
+                {
+                    // 같은 tub인데 이미지 수가 달라진 경우 (레코드 삭제 감지)
+                    _ = LoadGraphDataAsync(catalogFolder, validImages);
+
+                    // AI 예측 배열 초기화
+                    _graphAiAngles = new double?[validImages.Count];
+                    _graphAiThrottles = new double?[validImages.Count];
+
+                    // 현재 선택된 모델이 있으면 다시 채우기
+                    if (_pilotSlots.Count > 0 && !string.IsNullOrEmpty(_pilotSlots[0].ModelFileName))
+                    {
+                        _bgTaskCts?.Cancel();
+                        _bgTaskCts = new CancellationTokenSource();
+                        _ = FillGraphFromSlotCacheAsync(validImages, _bgTaskCts.Token, _graphBrightness, _graphBlur);
+                    }
+                }
             }
 
             RefreshAllSlots();
@@ -1860,6 +1946,8 @@ namespace DonkeyUi
                             _graphScrollX = Math.Max(0, Math.Min((int)(px - gw / 2), GetGraphMaxScrollX()));
                     }
                     _graphDrawPanel?.Invalidate();
+                    // ★ 그래프 완료 후 순위 갱신
+                    UpdateRankings();
                 });
             }
         }
@@ -1940,7 +2028,6 @@ namespace DonkeyUi
             // ── 콤보 변경 시 순위 갱신 ──
             Action refreshRanks = () =>
             {
-                // 어떤 콤보박스 기준으로 정렬할지 결정
                 ComboBox srcCombo = cmbRankType.SelectedIndex switch
                 {
                     1 => cmbRankAngle,
@@ -1948,15 +2035,20 @@ namespace DonkeyUi
                     _ => cmbRankOverall
                 };
 
-                // srcCombo 아이템을 순서대로 읽어서 1~3위 표시
-                // (기존 cmbRankOverall/Angle/Throttle에 모델명이 순위대로 들어있다고 가정)
                 string[] medals = { "🥇", "🥈", "🥉" };
                 for (int i = 0; i < 3; i++)
                 {
-                    string modelName = (srcCombo.Items.Count > i)
-                        ? srcCombo.Items[i]?.ToString() ?? "-"
-                        : "-";
-                    rankLabels[i].Text = $"{medals[i]} {i + 1}위  {modelName}";
+                    if (srcCombo.Items.Count > i)
+                    {
+                        string item = srcCombo.Items[i]?.ToString() ?? "-";
+                        rankLabels[i].Text = $"{medals[i]} {item}";
+                        rankLabels[i].ForeColor = medalColors[i];
+                    }
+                    else
+                    {
+                        rankLabels[i].Text = $"{medals[i]} {i + 1}위  -";
+                        rankLabels[i].ForeColor = Color.FromArgb(180, 180, 180);
+                    }
                 }
             };
 
@@ -1973,6 +2065,65 @@ namespace DonkeyUi
             flpRankControls.Controls.Add(pnlRanks);
 
             refreshRanks();
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 오차율 순위 계산 및 갱신
+        // ════════════════════════════════════════════════════════════
+        private void UpdateRankings()
+        {
+            if (_graphHumanAngles.Count == 0) return;
+
+            // 슬롯별 오차 계산
+            var rankData = new List<(string modelName, double overall, double angle, double throttle)>();
+
+            for (int s = 0; s < _pilotSlots.Count; s++)
+            {
+                var slot = _pilotSlots[s];
+                if (string.IsNullOrEmpty(slot.ModelFileName)) continue;
+
+                var angleErrs = new List<double>();
+                var throttleErrs = new List<double>();
+
+                for (int i = 0; i < _graphHumanAngles.Count; i++)
+                {
+                    bool hasAngle = i < _graphAiAngles.Length && _graphAiAngles[i].HasValue;
+                    bool hasThrottle = i < _graphAiThrottles.Length && _graphAiThrottles[i].HasValue;
+
+                    if (hasAngle)
+                        angleErrs.Add(Math.Abs(_graphAiAngles[i]!.Value - _graphHumanAngles[i]) * 100.0);
+                    if (hasThrottle)
+                        throttleErrs.Add(Math.Abs(_graphAiThrottles[i]!.Value - _graphHumanThrottles[i]) * 100.0);
+                }
+
+                if (angleErrs.Count == 0 && throttleErrs.Count == 0) continue;
+
+                double avgAngle = angleErrs.Count > 0 ? angleErrs.Average() : 0.0;
+                double avgThrottle = throttleErrs.Count > 0 ? throttleErrs.Average() : 0.0;
+                double avgOverall = (avgAngle + avgThrottle) / 2.0;
+
+                rankData.Add((slot.ModelFileName, avgOverall, avgAngle, avgThrottle));
+            }
+
+            if (rankData.Count == 0) return;
+
+            // 정렬 (오차 낮은 순)
+            var sortedOverall = rankData.OrderBy(r => r.overall).ToList();
+            var sortedAngle = rankData.OrderBy(r => r.angle).ToList();
+            var sortedThrottle = rankData.OrderBy(r => r.throttle).ToList();
+
+            // 콤보박스 갱신
+            void FillCombo(ComboBox cmb, List<(string modelName, double overall, double angle, double throttle)> sorted, Func<(string modelName, double overall, double angle, double throttle), double> getVal)
+            {
+                cmb.Items.Clear();
+                foreach (var item in sorted)
+                    cmb.Items.Add($"{item.modelName}  ({getVal(item):F2}%)");
+                if (cmb.Items.Count > 0) cmb.SelectedIndex = 0;
+            }
+
+            FillCombo(cmbRankOverall, sortedOverall, r => r.overall);
+            FillCombo(cmbRankAngle, sortedAngle, r => r.angle);
+            FillCombo(cmbRankThrottle, sortedThrottle, r => r.throttle);
         }
 
         private Panel MakeComboGroup(string labelText, Color labelColor, ComboBox comboBox)
