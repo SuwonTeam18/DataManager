@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace DonkeyUi
 {
@@ -65,13 +66,14 @@ namespace DonkeyUi
         private double _playBaseIntervalMs = 100.0;
         private List<string> _catalogLines = new List<string>();
         private string _loadedFolderPath = "";
-
+        private List<string> _catalogFiles = new List<string>();
         private List<(int Start, int End)> _ranges = new();
         private List<(int Start, int End)> _deletedRanges = new();
         private List<int> _deletedSingleFrames = new();
         private List<(double Min, double Max)> _speedFilters = new();
         private List<(double Min, double Max)> _angleFilters = new();
-
+        private Dictionary<string, List<string>> _catalogData
+    = new Dictionary<string, List<string>>();
 
 
         // If catalogs contain explicit _index fields, store the maximum index found
@@ -269,7 +271,12 @@ namespace DonkeyUi
                 }
                 catch { }
             };
-            
+            typeof(Panel)
+    .GetProperty(
+        "DoubleBuffered",
+        System.Reflection.BindingFlags.NonPublic |
+        System.Reflection.BindingFlags.Instance)
+    ?.SetValue(pnlTimeline, true);
         }
 
         // Show image by absolute path and update internal selection if possible
@@ -508,6 +515,16 @@ namespace DonkeyUi
 
             _deletedImages.Clear();
             _deletedIndexes.Clear();
+            _filteredImages.Clear();
+
+            _speedFilters.Clear();
+            _angleFilters.Clear();
+
+            cmbSpeedFilters.Items.Clear();
+            cmbAngleFilters.Items.Clear();
+
+            cmbSpeedFilters.Text = "속도 필터 목록";
+            cmbAngleFilters.Text = "각도 필터 목록";
             UpdateDeleteStatus();
 
             if (_imageFiles.Count > 0)
@@ -620,7 +637,7 @@ namespace DonkeyUi
                     _currentIndex,
                     _allImageFiles.Count);
 
-                pnlTimeline.Invalidate();
+               pnlTimeline.Invalidate();
             }
             catch
             {
@@ -858,15 +875,27 @@ namespace DonkeyUi
                     return (2, int.MaxValue, fn);
                 })
                 .ToList();
+            _catalogFiles = catalogFiles.ToList();
+
+            _catalogData.Clear();
 
             foreach (var cf in catalogFiles)
             {
                 try
                 {
-                    foreach (var l in File.ReadAllLines(cf))
-                        if (!string.IsNullOrWhiteSpace(l)) _catalogLines.Add(l.Trim());
+                    var lines =
+                        File.ReadAllLines(cf)
+                            .Where(x => !string.IsNullOrWhiteSpace(x))
+                            .Select(x => x.Trim())
+                            .ToList();
+
+                    _catalogData[cf] = lines;
+
+                    _catalogLines.AddRange(lines);
                 }
-                catch { }
+                catch
+                {
+                }
             }
 
             // Build filename->index map and compute maximum _index
@@ -1075,8 +1104,7 @@ namespace DonkeyUi
 
             if (idx < 0 || idx >= _allImageFiles.Count)
                 return;
-
-            if (IsDeletedFrame(idx))
+            if (IsHiddenFrame(idx))
             {
                 int fixedIndex;
 
@@ -1122,16 +1150,40 @@ namespace DonkeyUi
 
         private void MoveNext()
         {
-            if (_imageFiles.Count == 0) return;
-            var newIndex = _currentIndex < 0 ? 0 : Math.Min(_imageFiles.Count - 1, _currentIndex + 1);
-            if (trkRecord.Enabled) trkRecord.Value = newIndex; else SetCurrentIndex(newIndex);
+            if (_allImageFiles.Count == 0) return;
+
+            int newIndex = _currentIndex + 1;
+
+            while (newIndex < _allImageFiles.Count &&
+                   IsHiddenFrame(newIndex))
+            {
+                newIndex++;
+            }
+
+            if (newIndex >= _allImageFiles.Count)
+            {
+                StopPlayback();
+                return;
+            }
+
+            trkRecord.Value = newIndex;
         }
 
         private void MoveFastPrev()
         {
-            if (_imageFiles.Count == 0) return;
-            var newIndex = Math.Max(0, _currentIndex - 100);
-            if (trkRecord.Enabled) trkRecord.Value = newIndex; else SetCurrentIndex(newIndex);
+            if (_allImageFiles.Count == 0) return;
+
+            int newIndex = _currentIndex - 100;
+
+            while (newIndex >= 0 &&
+                   IsHiddenFrame(newIndex))
+            {
+                newIndex--;
+            }
+
+            if (newIndex < 0) return;
+
+            trkRecord.Value = newIndex;
         }
 
         private void MoveFastNext()
@@ -1306,34 +1358,90 @@ namespace DonkeyUi
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            var result = MessageBox.Show(
-         "삭제된 파일이 실제로 저장되며 복구가 어려울 수 있습니다.\n그래도 저장하시겠습니까?",
-         "저장 확인",
-         MessageBoxButtons.YesNo,
-         MessageBoxIcon.Warning);
+            string parentFolder =
+     Directory.GetParent(CurrentTubPath)!.FullName;
 
-            if (result != DialogResult.Yes)
-                return;
+            string baseFolder =
+     Path.Combine(
+         parentFolder,
+         Path.GetFileName(CurrentTubPath) + "_filtered");
 
-            var toDelete = _deletedImages.ToList();
+            int version = 1;
 
-            int deletedCount = 0;
-            foreach (string imagePath in toDelete)
+            string saveFolder =
+                $"{baseFolder}_{version}";
+
+            while (Directory.Exists(saveFolder))
             {
-                try
-                {
-                    if (File.Exists(imagePath)) { File.Delete(imagePath); deletedCount++; }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("삭제 실패:\n" + ex.Message);
-                }
+                version++;
+                saveFolder =
+                    $"{baseFolder}_{version}";
             }
-            _deletedImages.Clear();
-            _deletedIndexes.Clear();
-            UpdateDeleteStatus();
-            MessageBox.Show($"{deletedCount}개 파일 저장 완료");
-            pnlTimeline.Invalidate();
+
+            Directory.CreateDirectory(saveFolder);
+            foreach (var catalog in _catalogData)
+            {
+                string sourceCatalog = catalog.Key;
+                List<string> lines = catalog.Value;
+
+                List<string> filteredLines = new();
+
+                foreach (string line in lines)
+                {
+                    string? fileName = null;
+
+                    try
+                    {
+                        var doc = System.Text.Json.JsonDocument.Parse(line);
+
+                        if (doc.RootElement.TryGetProperty(
+                            "cam/image_array",
+                            out var p))
+                        {
+                            fileName =
+                                Path.GetFileName(
+                                    p.GetString());
+                        }
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(fileName))
+                        continue;
+
+                    string? imagePath =
+                        _allImageFiles.FirstOrDefault(x =>
+                            Path.GetFileName(x)
+                            .Equals(
+                                fileName,
+                                StringComparison.OrdinalIgnoreCase));
+
+                    if (imagePath == null)
+                        continue;
+
+                    if (_deletedImages.Contains(imagePath))
+                        continue;
+
+                    if (_filteredImages.Contains(imagePath))
+                        continue;
+
+                    filteredLines.Add(line);
+                }
+
+                string targetCatalog =
+                    Path.Combine(
+                        saveFolder,
+                        Path.GetFileName(sourceCatalog));
+
+                File.WriteAllLines(
+                    targetCatalog,
+                    filteredLines);
+            }
+                MessageBox.Show(
+                 $"Filtered 저장 완료\n{saveFolder}");
+            
         }
 
         // ════════════════════════════════════════════════════════════
@@ -1677,61 +1785,48 @@ namespace DonkeyUi
                     $"각도 {angleMin:F3} ~ {angleMax:F3}");
             }
             _filteredImages.Clear();
-            _imageFiles = _allImageFiles
-      .Where((img, idx) =>
-      {
-          if (idx >= _catalogLines.Count)
-              return false;
+          
 
-          var parsed = ParseCatalogLine(_catalogLines[idx]);
-
-          bool speedMatch = false;
-          bool angleMatch = false;
-
-          foreach (var filter in _speedFilters)
-          {
-              if (parsed.throttle.HasValue &&
-                  parsed.throttle.Value >= filter.Min &&
-                  parsed.throttle.Value <= filter.Max)
-              {
-                  speedMatch = true;
-                  break;
-              }
-          }
-
-          foreach (var filter in _angleFilters)
-          {
-              if (parsed.angle.HasValue &&
-                  parsed.angle.Value >= filter.Min &&
-                  parsed.angle.Value <= filter.Max)
-              {
-                  angleMatch = true;
-                  break;
-              }
-          }
-
-          return speedMatch && angleMatch;
-      })
-      .ToList();
             foreach (var img in _allImageFiles)
             {
-                if (!_imageFiles.Contains(img))
+                int idx = _allImageFiles.IndexOf(img);
+
+                if (idx >= _catalogLines.Count)
+                    continue;
+
+                var parsed = ParseCatalogLine(_catalogLines[idx]);
+
+                bool speedMatch = false;
+                bool angleMatch = false;
+
+                foreach (var filter in _speedFilters)
+                {
+                    if (parsed.throttle.HasValue &&
+                        parsed.throttle.Value >= filter.Min &&
+                        parsed.throttle.Value <= filter.Max)
+                    {
+                        speedMatch = true;
+                        break;
+                    }
+                }
+
+                foreach (var filter in _angleFilters)
+                {
+                    if (parsed.angle.HasValue &&
+                        parsed.angle.Value >= filter.Min &&
+                        parsed.angle.Value <= filter.Max)
+                    {
+                        angleMatch = true;
+                        break;
+                    }
+                }
+                pnlTimeline.Invalidate();
+
+                if (!(speedMatch && angleMatch))
                 {
                     _filteredImages.Add(img);
                 }
             }
-            pnlTimeline.Invalidate();
-            trkRecord.Minimum = 0;
-            trkRecord.Maximum = Math.Max(0, _imageFiles.Count - 1);
-
-            if (_imageFiles.Count > 0)
-            {
-                trkRecord.Value = 0;
-                SetCurrentIndex(0);
-            }
-
-            MessageBox.Show(
-                $"필터 적용 완료\n남은 프레임: {_imageFiles.Count}개");
         }
 
         private void btnClearFilter_Click(object sender, EventArgs e)
@@ -1747,9 +1842,9 @@ namespace DonkeyUi
             _imageFiles = _allImageFiles.ToList();
 
             trkRecord.Minimum = 0;
-            trkRecord.Maximum = Math.Max(0, _imageFiles.Count - 1);
+            trkRecord.Maximum = Math.Max(0, _allImageFiles.Count - 1);
 
-            if (_imageFiles.Count > 0)
+            if (_allImageFiles.Count > 0)
             {
                 trkRecord.Value = 0;
                 SetCurrentIndex(0);
@@ -2057,8 +2152,40 @@ namespace DonkeyUi
             cmbAngleFilters.Items.RemoveAt(idx);
             cmbAngleFilters.Text = "각도 범위";
         }
+        private bool IsHiddenFrame(int index)
+        {
+            if (index < 0 || index >= _allImageFiles.Count)
+                return true;
 
+            string img = _allImageFiles[index];
 
+            return _deletedImages.Contains(img) ||
+                   _filteredImages.Contains(img);
+        }
+        private void CopyDirectory(string sourceDir, string targetDir)
+        {
+            Directory.CreateDirectory(targetDir);
+
+            foreach (string file in Directory.GetFiles(sourceDir))
+            {
+                string dest =
+                    Path.Combine(
+                        targetDir,
+                        Path.GetFileName(file));
+
+                File.Copy(file, dest, true);
+            }
+
+            foreach (string dir in Directory.GetDirectories(sourceDir))
+            {
+                string dest =
+                    Path.Combine(
+                        targetDir,
+                        Path.GetFileName(dir));
+
+                CopyDirectory(dir, dest);
+            }
+        }
     }
 }
 
