@@ -38,6 +38,34 @@ namespace DonkeyUi
         private string _tubPath = "./data";
         private FileSystemWatcher _modelWatcher;
 
+        // ════════════════════════════════════════════════════════════
+        // 실시간 학습 상태 추적
+        // ════════════════════════════════════════════════════════════
+        private int _currentEpoch = 0;
+        private int _totalEpoch = 0;
+        private double _lastLoss = double.NaN;
+        private double _lastValLoss = double.NaN;
+        private double _prevLoss = double.NaN;
+        private double _prevValLoss = double.NaN;
+
+        private List<double> _lossHistory = new();
+        private List<double> _valLossHistory = new();
+        private List<double> _n0LossHistory = new();
+        private List<double> _valN0LossHistory = new();
+        private List<double> _n1LossHistory = new();
+        private List<double> _valN1LossHistory = new();
+        private bool _earlyStopDetected = false;
+
+        private Form _liveGraphForm = null;
+        private Chart _liveChart = null;
+
+        private string _currentModelName = "";
+        private string _currentModelType = "";
+        private string _currentTubArg = "";
+        private string _currentComment = "";
+        private string _currentMycarPath = "";
+        private string _currentStartTime = "";
+
         private string PresetFilePath =>
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "presets.json");
 
@@ -611,6 +639,14 @@ namespace DonkeyUi
 
             string modelType = (cmbModelType.SelectedItem?.ToString() ?? "linear").Split(' ')[0];
 
+            // ★ 학습 메타 정보 저장
+            _currentModelName = modelName;
+            _currentModelType = modelType;
+            _currentTubArg = tubArg;
+            _currentComment = comment;
+            _currentMycarPath = mycarPath;
+            _currentStartTime = startTime;
+
             string cmd =
                 $"cd {mycarPath} && " +
                 $"sed -i 's/train(cfg, tubs, model, model_type, comment)/train(cfg, tubs, model, model_type, transfer=None, comment=comment)/' {mycarPath}/train.py && " +
@@ -621,6 +657,24 @@ namespace DonkeyUi
                 $"~/miniconda3/envs/e2e_env/bin/python train.py " +
                 $"--tubs {tubArg} --model ./models/{modelName}.h5 --type {modelType} --comment=\"{comment}\"" +
                 $"{transferArg}";
+
+            // ★ 학습 상태 초기화
+            _currentEpoch = 0;
+            _totalEpoch = epoch;
+            _lastLoss = double.NaN;
+            _lastValLoss = double.NaN;
+            _prevLoss = double.NaN;
+            _prevValLoss = double.NaN;
+            _lossHistory.Clear();
+            _valLossHistory.Clear();
+            _n0LossHistory.Clear();
+            _valN0LossHistory.Clear();
+            _n1LossHistory.Clear();
+            _valN1LossHistory.Clear();
+            _earlyStopDetected = false;
+
+            UpdateTrainStatusLabels();
+            OpenLiveGraphForm(modelName, epoch);
 
             SetTrainingState(true);
             rtbLog.Clear();
@@ -655,14 +709,20 @@ namespace DonkeyUi
 
                     if (exitCode == 0)
                     {
-
                         AppendLog("─────────────────────────────────────────");
                         AppendLog("✔ 학습 완료!");
+                        SaveTrainRecordToDb(true);
+                        if (_earlyStopDetected && lblEpochStatus != null)
+                        {
+                            lblEpochStatus.Text = $"에포크: {_currentEpoch} / {_totalEpoch}  ⚠ 조기 종료";
+                            lblEpochStatus.ForeColor = Color.FromArgb(220, 120, 50);
+                        }
                     }
                     else
                     {
                         AppendLog("─────────────────────────────────────────");
-                        AppendLog($"✘ 학습 실패 (exit code: {exitCode})");
+                        AppendLog($"✘ 학습 실패 또는 중단 (exit code: {exitCode})");
+                        SaveTrainRecordToDb(false);
                     }
                 }));
             };
@@ -708,6 +768,33 @@ namespace DonkeyUi
             if (this.InvokeRequired)
             {
                 this.Invoke((Action)(() => SetTrainingState(isTraining)));
+                // 그래프/설정 버튼 제어
+                if (isTraining)
+                {
+                    btnShowGraph.Enabled = false;
+                    btnShowConfig.Enabled = false;
+                }
+                else
+                {
+                    bool hasChecked = GetCheckedRow() != null;
+                    btnShowGraph.Enabled = hasChecked;
+                    btnShowConfig.Enabled = hasChecked;
+                }
+
+                // 라벨 색상 변경
+                var idleColor = Color.FromArgb(150, 150, 150);
+                if (!isTraining)
+                {
+                    if (lblEpochStatus != null) lblEpochStatus.ForeColor = idleColor;
+                    if (lblLossStatus != null) lblLossStatus.ForeColor = idleColor;
+                    if (lblValLossStatus != null) lblValLossStatus.ForeColor = idleColor;
+                }
+                else
+                {
+                    if (lblEpochStatus != null) lblEpochStatus.ForeColor = SystemColors.ControlText;
+                    if (lblLossStatus != null) lblLossStatus.ForeColor = SystemColors.ControlText;
+                    if (lblValLossStatus != null) lblValLossStatus.ForeColor = SystemColors.ControlText;
+                }
                 return;
             }
 
@@ -884,7 +971,7 @@ namespace DonkeyUi
                     };
 
                     for (int i = 0; i < history[key].Count; i++)
-                        series.Points.AddXY(i, history[key][i]);
+                        series.Points.AddXY(i + 1, history[key][i]);
 
                     chart.Series.Add(series);
                 }
@@ -1036,16 +1123,84 @@ namespace DonkeyUi
         private void AppendLog(string text)
         {
             if (string.IsNullOrEmpty(text)) return;
-            if (this.InvokeRequired)
-            {
-                this.BeginInvoke(new Action<string>(AppendLog), text);
-                return;
-            }
+            if (this.InvokeRequired) { this.BeginInvoke(new Action<string>(AppendLog), text); return; }
+
             string clean = Regex.Replace(text, @"\x1b\[[0-9;]*[mGKHF]", "");
             clean = Regex.Replace(clean, @"[\x08\r]", "");
             rtbLog.AppendText(clean + Environment.NewLine);
             rtbLog.SelectionStart = rtbLog.TextLength;
             rtbLog.ScrollToCaret();
+
+            // ★ 에포크 시작 파싱: "Epoch 3/32"
+            var epochMatch = Regex.Match(clean, @"Epoch\s+(\d+)/(\d+)");
+            if (epochMatch.Success)
+            {
+                _currentEpoch = int.Parse(epochMatch.Groups[1].Value);
+                _totalEpoch = int.Parse(epochMatch.Groups[2].Value);
+                UpdateTrainStatusLabels();
+                return;
+            }
+
+            // ★ Early Stopping 감지
+            if (Regex.IsMatch(clean, @"Epoch\s+\d+.*val_loss did not improve"))
+            {
+                _earlyStopDetected = true;
+            }
+            if (Regex.IsMatch(clean, @"Epoch\s+\d+.*val_loss improved"))
+            {
+                _earlyStopDetected = false;
+            }
+
+            // ★ 에포크 완료 파싱: "128/128 [====] - loss: X - val_loss: X ..."
+            var epochEndMatch = Regex.Match(clean, @"^\s*\d+/\d+\s*\[=+\].*?\bloss:\s*([\d.eE+\-]+)");
+            if (epochEndMatch.Success && clean.Contains("val_loss:"))
+            {
+                double TryParse(string pattern)
+                {
+                    var m = Regex.Match(clean, pattern);
+                    if (m.Success && double.TryParse(m.Groups[1].Value,
+                        System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out var v)) return v;
+                    return double.NaN;
+                }
+
+                double newLoss = TryParse(@"(?<!_)\bloss:\s*([\d.eE+\-]+)");
+                double newValLoss = TryParse(@"val_loss:\s*([\d.eE+\-]+)");
+                double newN0 = TryParse(@"n_outputs0_loss:\s*([\d.eE+\-]+)");
+                double newValN0 = TryParse(@"val_n_outputs0_loss:\s*([\d.eE+\-]+)");
+                double newN1 = TryParse(@"n_outputs1_loss:\s*([\d.eE+\-]+)");
+                double newValN1 = TryParse(@"val_n_outputs1_loss:\s*([\d.eE+\-]+)");
+
+                if (!double.IsNaN(newLoss) && !double.IsNaN(newValLoss))
+                {
+                    _prevLoss = _lastLoss;
+                    _prevValLoss = _lastValLoss;
+                    _lastLoss = newLoss;
+                    _lastValLoss = newValLoss;
+
+                    _lossHistory.Add(newLoss);
+                    _valLossHistory.Add(newValLoss);
+                    if (!double.IsNaN(newN0)) _n0LossHistory.Add(newN0);
+                    if (!double.IsNaN(newValN0)) _valN0LossHistory.Add(newValN0);
+                    if (!double.IsNaN(newN1)) _n1LossHistory.Add(newN1);
+                    if (!double.IsNaN(newValN1)) _valN1LossHistory.Add(newValN1);
+
+                    UpdateTrainStatusLabels();
+                    UpdateLiveGraph();
+                    return;
+                }
+            }
+
+            // ★ 배치 진행 중 loss 파싱 (에포크 진행률 표시용)
+            var batchMatch = Regex.Match(clean, @"^\s*(\d+)/(\d+)\s*\[.*\].*loss:\s*([\d.]+)");
+            if (batchMatch.Success && !epochEndMatch.Success)
+            {
+                int curBatch = int.Parse(batchMatch.Groups[1].Value);
+                int totalBatch = int.Parse(batchMatch.Groups[2].Value);
+
+                if (lblEpochStatus != null)
+                    lblEpochStatus.Text = $"에포크: {_currentEpoch} / {_totalEpoch}  ({curBatch}/{totalBatch} 배치)";
+            }
         }
 
         private string ConvertToWslPath(string path)
@@ -1063,6 +1218,279 @@ namespace DonkeyUi
         }
 
         private string ConvertToWindowsPath(string winPath) => winPath;
+
+        private string ConvertWslToWindowsPath(string wslPath)
+        {
+            if (string.IsNullOrEmpty(wslPath)) return "";
+            if (wslPath.StartsWith("/mnt/"))
+            {
+                char drive = wslPath[5];
+                return char.ToUpper(drive) + ":" + wslPath.Substring(6).Replace("/", "\\");
+            }
+            return @"\\wsl.localhost\Ubuntu-22.04" + wslPath.Replace("/", "\\");
+        }
+
+        private void SaveTrainRecordToDb(bool completed)
+        {
+            if (string.IsNullOrEmpty(_currentModelName) || string.IsNullOrEmpty(_currentMycarPath)) return;
+
+            string lossJson = "[" + string.Join(",", _lossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
+            string valLossJson = "[" + string.Join(",", _valLossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
+            string n0Json = "[" + string.Join(",", _n0LossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
+            string valN0Json = "[" + string.Join(",", _valN0LossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
+            string n1Json = "[" + string.Join(",", _n1LossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
+            string valN1Json = "[" + string.Join(",", _valN1LossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
+
+            string tempScript = Path.Combine(Path.GetTempPath(), "save_train_record.py");
+            File.WriteAllText(tempScript,
+                $"import json, os\n" +
+                $"db_path = '{_currentMycarPath}/models/database.json'\n" +
+                $"data = []\n" +
+                $"if os.path.exists(db_path):\n" +
+                $"    try: data = json.load(open(db_path, encoding='utf-8'))\n" +
+                $"    except: data = []\n" +
+                $"existing = [x for x in data if x.get('Name') == '{_currentModelName}']\n" +
+                $"if existing:\n" +
+                $"    record = existing[-1]\n" +
+                $"else:\n" +
+                $"    record = {{}}\n" +
+                $"    data.append(record)\n" +
+                $"record['Name'] = '{_currentModelName}'\n" +
+                $"record['Type'] = '{_currentModelType}'\n" +
+                $"record['Tubs'] = '{_currentTubArg}'\n" +
+                $"record['Comment'] = '{_currentComment}'\n" +
+                $"record['StartTime'] = '{_currentStartTime}'\n" +
+                $"record['Completed'] = {(completed ? "True" : "False")}\n" +
+                $"record['History'] = {{}}\n" +
+                $"record['History']['loss'] = {lossJson}\n" +
+                $"record['History']['val_loss'] = {valLossJson}\n" +
+                $"record['History']['n_outputs0_loss'] = {n0Json}\n" +
+                $"record['History']['val_n_outputs0_loss'] = {valN0Json}\n" +
+                $"record['History']['n_outputs1_loss'] = {n1Json}\n" +
+                $"record['History']['val_n_outputs1_loss'] = {valN1Json}\n" +
+                $"json.dump(data, open(db_path, 'w', encoding='utf-8'), indent=4, ensure_ascii=False)\n",
+                new System.Text.UTF8Encoding(false)
+            );
+
+            string wslScript = ConvertToWslPath(tempScript);
+            RunWsl($"python3 {wslScript}", onSuccess: () =>
+            {
+                string mycarWinPath = ConvertWslToWindowsPath(_currentMycarPath);
+                if (!string.IsNullOrEmpty(mycarWinPath))
+                    RefreshModelList(mycarWinPath);
+            });
+        }
+
+        private void OpenLiveGraphForm(string modelName, int totalEpoch)
+        {
+            if (_liveGraphForm != null && !_liveGraphForm.IsDisposed)
+            {
+                _liveGraphForm.Close();
+                _liveGraphForm = null;
+            }
+
+            _liveGraphForm = new Form
+            {
+                Text = $"실시간 학습 그래프 — {modelName}",
+                Size = new Size(800, 750),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(20, 20, 20)
+            };
+
+            var lblDesc = new Label
+            {
+                Text = "그래프 값이 낮을수록 정확한 모델 | 두 선의 차이가 크면 과적합\n훈련 손실(loss): 학습 데이터 오차 | 검증 손실(val_loss): 미학습 데이터 오차",
+                Dock = DockStyle.Top,
+                Height = 40,
+                ForeColor = Color.FromArgb(200, 200, 100),
+                BackColor = Color.FromArgb(40, 40, 20),
+                Font = new Font("맑은 고딕", 8.5F),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 0, 8, 0)
+            };
+
+            var livePanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                RowCount = 3,
+                ColumnCount = 1,
+                BackColor = Color.FromArgb(20, 20, 20)
+            };
+            for (int i = 0; i < 3; i++)
+                livePanel.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3f));
+
+            var chartTitles = new[] { "전체 오차 (loss)", "핸들 방향 오차 (n_outputs0)", "속도 조절 오차 (n_outputs1)" };
+            var chartColors = new[]
+            {
+        new[] { Color.Cyan,    Color.OrangeRed },
+        new[] { Color.Yellow,  Color.DodgerBlue },
+        new[] { Color.LimeGreen, Color.Orange }
+    };
+            var seriesNames = new[]
+            {
+        new[] { "loss",          "val_loss" },
+        new[] { "n_outputs0_loss", "val_n_outputs0_loss" },
+        new[] { "n_outputs1_loss", "val_n_outputs1_loss" }
+    };
+            var legendLabels = new[]
+            {
+        new[] { "훈련 손실 (loss)",   "검증 손실 (val_loss)" },
+        new[] { "핸들 훈련 오차",      "핸들 검증 오차" },
+        new[] { "속도 훈련 오차",      "속도 검증 오차" }
+    };
+
+            var liveCharts = new Chart[3];
+            for (int g = 0; g < 3; g++)
+            {
+                var chart = new Chart { Dock = DockStyle.Fill, BackColor = Color.FromArgb(30, 30, 30) };
+                var ca = new ChartArea
+                {
+                    BackColor = Color.FromArgb(20, 20, 20),
+                    AxisX = { LabelStyle = { ForeColor = Color.Gray }, LineColor = Color.Gray, MajorGrid = { LineColor = Color.FromArgb(50, 50, 50) } },
+                    AxisY = { LabelStyle = { ForeColor = Color.Gray }, LineColor = Color.Gray, MajorGrid = { LineColor = Color.FromArgb(50, 50, 50) } }
+                };
+                chart.ChartAreas.Add(ca);
+                chart.Titles.Add(new Title
+                {
+                    Text = chartTitles[g],
+                    ForeColor = Color.LightGray,
+                    Font = new Font("맑은 고딕", 9F, FontStyle.Bold)
+                });
+                chart.Legends.Add(new Legend
+                {
+                    BackColor = Color.FromArgb(30, 30, 30),
+                    ForeColor = Color.LightGray
+                });
+                for (int s = 0; s < 2; s++)
+                {
+                    chart.Series.Add(new Series
+                    {
+                        Name = seriesNames[g][s],
+                        Color = chartColors[g][s],
+                        ChartType = SeriesChartType.Line,
+                        BorderWidth = 2,
+                        LegendText = legendLabels[g][s]
+                    });
+                }
+                liveCharts[g] = chart;
+                livePanel.Controls.Add(chart, 0, g);
+            }
+
+            _liveChart = liveCharts[0];
+            _liveGraphForm.Tag = liveCharts;
+
+            var btnClose = new Button
+            {
+                Text = "닫기",
+                Dock = DockStyle.Bottom,
+                Height = 36,
+                BackColor = Color.FromArgb(50, 50, 50),
+                ForeColor = Color.FromArgb(200, 200, 200),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnClose.FlatAppearance.BorderSize = 0;
+            btnClose.Click += (s, ev) => _liveGraphForm.Close();
+
+            _liveGraphForm.Controls.Add(livePanel);
+            _liveGraphForm.Controls.Add(lblDesc);
+            _liveGraphForm.Controls.Add(btnClose);
+            _liveGraphForm.Show();
+        }
+
+        private void UpdateLiveGraph()
+        {
+            if (_liveChart == null || _liveGraphForm == null || _liveGraphForm.IsDisposed) return;
+
+            try
+            {
+                var charts = _liveGraphForm.Tag as Chart[];
+                if (charts == null) return;
+
+                // 0번: 전체 오차
+                charts[0].Series["loss"].Points.Clear();
+                for (int i = 0; i < _lossHistory.Count; i++)
+                    charts[0].Series["loss"].Points.AddXY(i + 1, _lossHistory[i]);
+                charts[0].Series["val_loss"].Points.Clear();
+                for (int i = 0; i < _valLossHistory.Count; i++)
+                    charts[0].Series["val_loss"].Points.AddXY(i + 1, _valLossHistory[i]);
+                if (charts[0].Titles.Count > 0)
+                    charts[0].Titles[0].Text = $"전체 오차 (loss) — {_currentEpoch} / {_totalEpoch} 에포크";
+
+                // 1번: 핸들 방향 오차
+                if (_n0LossHistory.Count > 0)
+                {
+                    charts[1].Series["n_outputs0_loss"].Points.Clear();
+                    for (int i = 0; i < _n0LossHistory.Count; i++)
+                        charts[1].Series["n_outputs0_loss"].Points.AddXY(i + 1, _n0LossHistory[i]);
+                    charts[1].Series["val_n_outputs0_loss"].Points.Clear();
+                    for (int i = 0; i < _valN0LossHistory.Count; i++)
+                        charts[1].Series["val_n_outputs0_loss"].Points.AddXY(i + 1, _valN0LossHistory[i]);
+                }
+                if (charts[1].Titles.Count > 0)
+                    charts[1].Titles[0].Text = $"핸들 방향 오차 (n_outputs0) — {_currentEpoch} / {_totalEpoch} 에포크";
+
+                // 2번: 속도 조절 오차
+                if (_n1LossHistory.Count > 0)
+                {
+                    charts[2].Series["n_outputs1_loss"].Points.Clear();
+                    for (int i = 0; i < _n1LossHistory.Count; i++)
+                        charts[2].Series["n_outputs1_loss"].Points.AddXY(i + 1, _n1LossHistory[i]);
+                    charts[2].Series["val_n_outputs1_loss"].Points.Clear();
+                    for (int i = 0; i < _valN1LossHistory.Count; i++)
+                        charts[2].Series["val_n_outputs1_loss"].Points.AddXY(i + 1, _valN1LossHistory[i]);
+                }
+                if (charts[2].Titles.Count > 0)
+                    charts[2].Titles[0].Text = $"속도 조절 오차 (n_outputs1) — {_currentEpoch} / {_totalEpoch} 에포크";
+            }
+            catch { }
+        }
+
+        private void UpdateTrainStatusLabels()
+        {
+            if (lblEpochStatus == null || lblLossStatus == null || lblValLossStatus == null) return;
+
+            lblEpochStatus.Text = $"에포크: {_currentEpoch} / {_totalEpoch}";
+
+            // 훈련 손실
+            if (double.IsNaN(_lastLoss))
+            {
+                lblLossStatus.Text = "훈련 손실: -";
+                lblLossStatus.ForeColor = SystemColors.ControlText;
+            }
+            else
+            {
+                string delta = "";
+                Color color = SystemColors.ControlText;
+                if (!double.IsNaN(_prevLoss))
+                {
+                    double diff = _lastLoss - _prevLoss;
+                    delta = diff != 0 ? $" ({diff:+0.0000;-0.0000})" : " (±0)";
+                    color = diff < 0 ? Color.Green : diff > 0 ? Color.Red : SystemColors.ControlText;
+                }
+                lblLossStatus.Text = $"훈련 손실: {_lastLoss:F4}{delta}";
+                lblLossStatus.ForeColor = color;
+            }
+
+            // 검증 손실
+            if (double.IsNaN(_lastValLoss))
+            {
+                lblValLossStatus.Text = "검증 손실: -";
+                lblValLossStatus.ForeColor = SystemColors.ControlText;
+            }
+            else
+            {
+                string delta = "";
+                Color color = SystemColors.ControlText;
+                if (!double.IsNaN(_prevValLoss))
+                {
+                    double diff = _lastValLoss - _prevValLoss;
+                    delta = diff != 0 ? $" ({diff:+0.0000;-0.0000})" : " (±0)";
+                    color = diff < 0 ? Color.Green : diff > 0 ? Color.Red : SystemColors.ControlText;
+                }
+                lblValLossStatus.Text = $"검증 손실: {_lastValLoss:F4}{delta}";
+                lblValLossStatus.ForeColor = color;
+            }
+        }
 
         private async void RunWsl(string bashCmd, Action onSuccess = null)
         {
@@ -1196,7 +1624,23 @@ namespace DonkeyUi
                 .ToList();
 
             // 변경사항 없으면 갱신 안 함
-            if (currentFiles.SequenceEqual(newFiles)) return;
+            if (currentFiles.SequenceEqual(newFiles))
+            {
+                // 파일 목록 동일 → DB 데이터만 부분 업데이트 (체크박스 점프 버그 방지)
+                foreach (DataGridViewRow row in dgvTrains.Rows)
+                {
+                    string name = row.Cells[1].Value?.ToString() ?? "";
+                    string baseName = Path.GetFileNameWithoutExtension(name);
+                    if (dbDict.ContainsKey(baseName))
+                    {
+                        row.Cells[2].Value = dbDict[baseName].pilot;
+                        row.Cells[3].Value = dbDict[baseName].type;
+                        row.Cells[4].Value = dbDict[baseName].tubs;
+                        row.Cells[7].Value = dbDict[baseName].comment;
+                    }
+                }
+                return;
+            }
 
             dgvTrains.Rows.Clear();
             foreach (var file in files)
