@@ -1,0 +1,1244 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
+
+
+namespace DonkeyUi
+{
+    public partial class ucTrainer : UserControl
+    {
+        // ── 프리셋 데이터 구조 ────────────────────────────────────────
+        private class ConfigEntry
+        {
+            public string Key { get; set; } = "";
+            public string Value { get; set; } = "";
+        }
+
+        private class Preset
+        {
+            public int Epoch { get; set; } = 60;
+            public int Batch { get; set; } = 64;
+            public string LR { get; set; } = "0.001";
+            public string Split { get; set; } = "0.8";
+            public List<ConfigEntry> ConfigRows { get; set; } = new();
+        }
+
+        private readonly Dictionary<string, Preset> _presets = new();
+        private string _activePreset = "";
+        private Process _trainProcess = null;
+        private bool _training = false;
+        private string _tubPath = "./data";
+        private FileSystemWatcher _modelWatcher;
+
+        private string PresetFilePath =>
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "presets.json");
+
+        public ucTrainer()
+        {
+            InitializeComponent();
+            WireEvents();
+            LoadPresetsFromDisk();
+            SetTrainingState(false);
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 이벤트 연결
+        // ════════════════════════════════════════════════════════════
+        private void WireEvents()
+        {
+            // 학습 실행
+            btnTrain.Click += BtnTrain_Click;
+            btnCancelTrain.Click += BtnCancelTrain_Click;
+
+            // Transfer 모델 선택
+            btnChooseTransfer.Click += BtnChooseTransfer_Click;
+            btnClearTransfer.Click += (s, e) =>
+            {
+                txtTransferPath.Text = "선택 안 됨 — 처음부터 학습";
+                txtTransferPath.ForeColor = Color.FromArgb(150, 150, 150);
+            };
+
+            btnAddConfig.Click += BtnAddConfig_Click;
+            btnDeleteConfig.Click += BtnDeleteConfig_Click;
+            dgvConfig.RowHeadersVisible = false;
+            dgvConfig.AllowUserToAddRows = false;
+
+            cmbModelType.Items.Clear();
+            cmbModelType.Items.AddRange(new object[]
+            {
+                "linear", "categorical", "inferred", "rnn", "3d",
+                "memory", "behavior", "localizer",
+                "sq", "sq_imu", "sq_mem", "sq_mem_lap"
+            });
+
+
+
+            // 슬라이더 ↔ 숫자 양방향 동기화
+            trkEpoch.ValueChanged += (s, e) =>
+            {
+                if (nudEpoch.Value != trkEpoch.Value)
+                    nudEpoch.Value = trkEpoch.Value;
+            };
+            nudEpoch.ValueChanged += (s, e) =>
+            {
+                int v = (int)nudEpoch.Value;
+                if (trkEpoch.Value != v)
+                    trkEpoch.Value = Math.Max(trkEpoch.Minimum, Math.Min(trkEpoch.Maximum, v));
+            };
+            trkBatch.ValueChanged += (s, e) =>
+            {
+                if (nudBatch.Value != trkBatch.Value)
+                    nudBatch.Value = trkBatch.Value;
+            };
+            nudBatch.ValueChanged += (s, e) =>
+            {
+                int v = (int)nudBatch.Value;
+                if (trkBatch.Value != v)
+                    trkBatch.Value = Math.Max(trkBatch.Minimum, Math.Min(trkBatch.Maximum, v));
+            };
+
+            // 프리셋
+            btnPresetAdd.Click += BtnPresetAdd_Click;
+            btnPresetSave.Click += BtnPresetSave_Click;
+            btnPresetDelete.Click += BtnPresetDelete_Click;
+            btnSaveDefault.Click += BtnSaveDefault_Click;
+            btnPresetCopy.Click += (s, e) =>
+            {
+                if (string.IsNullOrEmpty(_activePreset)) return;
+
+                // 윈도우 파일 복사처럼 (1), (2) 순서로 이름 생성
+                string baseName = _activePreset;
+                string copyName = baseName + " (1)";
+                int count = 1;
+                while (_presets.ContainsKey(copyName))
+                {
+                    count++;
+                    copyName = baseName + $" ({count})";
+                }
+
+                var original = _presets[_activePreset];
+                _presets[copyName] = new Preset
+                {
+                    Epoch = original.Epoch,
+                    Batch = original.Batch,
+                    LR = original.LR,
+                    Split = original.Split,
+                    ConfigRows = new List<ConfigEntry>(original.ConfigRows)
+                };
+                lstPresets.Items.Add(copyName);
+                lstPresets.SelectedItem = copyName;
+                SavePresetsToDisk();
+            };
+            cmbModelType.SelectedIndexChanged += (s, e) =>
+            {
+                var descriptions = new Dictionary<string, string>
+            {
+                { "linear",      "기본형 모델 (일반 주행 데이터용)" },
+                { "categorical", "분류형 모델 (일반 주행 데이터용)" },
+                { "inferred",    "추론형 모델 (일반 주행 데이터용)" },
+                { "rnn",         "시계열 모델 (이전 주행 흐름을 기억해 학습)" },
+                { "3d",          "3D 시계열 모델 (연속된 사진들을 묶어서 학습)" },
+
+
+                { "memory",      "메모리 모델 (이전 조작 이력이 기록된 데이터 필요)" },
+                { "behavior",    "행동 규칙 모델 (주행 모드/상태 값 데이터 필요)" },
+                { "localizer",   "위치 추정 모델 (로봇의 현재 좌표 데이터 필요)" },
+
+                { "sq",          "경량화 모델 (연산 속도가 빠른 일반 주행용)" },
+                { "sq_imu",      "IMU 센서 필요 (가속도/자이로 센서 데이터 필수)" },
+                { "sq_mem",      "경량화+메모리 (이전 조작 이력 데이터 필요)" },
+                { "sq_mem_lap",  "경량화+메모리+랩타임 (트랙 바퀴 수 데이터 필요)" }
+            };
+
+                string selected = (cmbModelType.SelectedItem?.ToString() ?? "").Split(' ')[0];
+                lblModelTypeDesc.Text = descriptions.ContainsKey(selected) ? descriptions[selected] : "";
+                lblModelTypeDesc.ForeColor = new[] { "memory", "behavior", "localizer", "sq_imu", "sq_mem", "sq_mem_lap" }.Contains(selected)
+                    ? Color.FromArgb(220, 120, 50)
+                    : Color.FromArgb(100, 160, 100);
+            };
+            lstPresets.SelectedIndexChanged += LstPresets_SelectedIndexChanged;
+
+            // 모델 삭제
+            btnDeletePilot.Click += BtnDeletePilot_Click;
+
+            // 그래프 / 설정 보기
+            btnShowGraph.Click += BtnShowGraph_Click;
+            btnShowConfig.Click += BtnShowConfig_Click;
+
+            // 열 표시/숨김 체크박스
+            chkColName.CheckedChanged += (s, e) => ToggleColumn(colName, chkColName.Checked);
+            chkColPilot.CheckedChanged += (s, e) => ToggleColumn(colPilot, chkColPilot.Checked);
+            chkColType.CheckedChanged += (s, e) => ToggleColumn(colType, chkColType.Checked);
+            chkColTubs.CheckedChanged += (s, e) => ToggleColumn(colTubs, chkColTubs.Checked);
+            chkColTime.CheckedChanged += (s, e) => ToggleColumn(colTime, chkColTime.Checked);
+            chkColTransfer.CheckedChanged += (s, e) => ToggleColumn(colTransfer, chkColTransfer.Checked);
+            chkColComment.CheckedChanged += (s, e) => ToggleColumn(colComment, chkColComment.Checked);
+
+            // 삭제 활성화 체크박스
+            chkEnableDelete.CheckedChanged += (s, e) =>
+            {
+                btnDeletePilot.Enabled = chkEnableDelete.Checked;
+                btnDeletePilot.BackColor = chkEnableDelete.Checked
+                    ? Color.FromArgb(163, 45, 45)
+                    : Color.FromArgb(255, 240, 240);
+                btnDeletePilot.ForeColor = chkEnableDelete.Checked
+                    ? Color.White
+                    : Color.FromArgb(163, 45, 45);
+            };
+
+            dgvTrains.AllowUserToAddRows = false;
+
+            dgvTrains.CellValueChanged += (s, e) =>
+            {
+                if (e.ColumnIndex != 0 || e.RowIndex < 0) return;
+
+                bool isChecked = Convert.ToBoolean(dgvTrains.Rows[e.RowIndex].Cells[0].Value);
+
+                if (isChecked)
+                {
+                    foreach (DataGridViewRow row in dgvTrains.Rows)
+                    {
+                        if (row.Index != e.RowIndex && Convert.ToBoolean(row.Cells[0].Value))
+                            row.Cells[0].Value = false; // 다른 행 체크 해제
+                    }
+
+                    var rowActive = dgvTrains.Rows[e.RowIndex];
+                    lblCommentEditTitle.Text = $"메모 수정 — {rowActive.Cells[1].Value}";
+                    txtCommentEdit.Text = rowActive.Cells[7].Value?.ToString() ?? "";
+                    txtCommentEdit.Enabled = btnCommentSave.Enabled = btnShowGraph.Enabled = btnShowConfig.Enabled = true;
+                }
+                else if (GetCheckedRow() == null)
+                {
+                    lblCommentEditTitle.Text = "메모 수정 — 모델을 선택하세요";
+                    txtCommentEdit.Text = "";
+                    txtCommentEdit.Enabled = btnCommentSave.Enabled = btnShowGraph.Enabled = btnShowConfig.Enabled = false;
+                }
+            };
+
+            dgvTrains.CurrentCellDirtyStateChanged += (s, e) =>
+            {
+                if (dgvTrains.CurrentCell?.ColumnIndex == 0)
+                    dgvTrains.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            };
+
+            // 코멘트 저장
+            btnCommentSave.Click += (s, e) =>
+            {
+                var row = GetCheckedRow();
+                if (row == null) return;
+
+                row.Cells[7].Value = txtCommentEdit.Text;
+
+                // database.json에도 저장
+                string name = row.Cells[1].Value?.ToString();
+                string baseName = Path.GetFileNameWithoutExtension(name);
+                string mycarPath = "~/mycar";
+                string lowerTub = _tubPath.ToLower();
+                int dataIdx = lowerTub.IndexOf("/data");
+                if (dataIdx > 0)
+                    mycarPath = _tubPath.Substring(0, dataIdx);
+
+                string tempScript = Path.Combine(Path.GetTempPath(), "save_comment.py");
+                File.WriteAllText(tempScript,
+                    $"import json\n" +
+                    $"path = '{mycarPath}/models/database.json'\n" +
+                    $"data = json.load(open(path, encoding='utf-8'))\n" +
+                    $"m = [x for x in data if x.get('Name') == '{baseName}']\n" +
+                    $"if m: m[-1]['Comment'] = '{txtCommentEdit.Text}'\n" +
+                    $"json.dump(data, open(path, 'w', encoding='utf-8'), indent=4, ensure_ascii=False)\n",
+                    new System.Text.UTF8Encoding(false)
+                );
+
+                string wslScript = ConvertToWslPath(tempScript);
+                RunWsl($"python3 {wslScript}");
+            };
+
+
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // Tub Manager 경로 수신
+        // ════════════════════════════════════════════════════════════
+        public void SetTubPath(string windowsPath)
+        {
+            if (string.IsNullOrEmpty(windowsPath)) return;
+            _tubPath = ConvertToWslPath(windowsPath);
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 1. Transfer model 선택
+        // ════════════════════════════════════════════════════════════
+        private void BtnChooseTransfer_Click(object sender, EventArgs e)
+        {
+            using var form = new Form();
+            form.Text = "전이 학습 모델 선택";
+            form.Size = new Size(480, 320);
+            form.StartPosition = FormStartPosition.CenterParent;
+            form.BackColor = Color.FromArgb(40, 40, 40);
+
+            var lbl = new Label
+            {
+                Text = "히스토리에서 선택하거나 아래에 경로를 직접 입력하세요.",
+                ForeColor = Color.FromArgb(150, 150, 150),
+                Font = new Font("맑은 고딕", 8.5F),
+                Location = new Point(10, 10),
+                AutoSize = true
+            };
+
+            var lst = new ListBox
+            {
+                BackColor = Color.FromArgb(60, 60, 60),
+                ForeColor = Color.FromArgb(220, 220, 220),
+                Font = new Font("Consolas", 9F),
+                Location = new Point(10, 32),
+                Size = new Size(440, 160),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            foreach (DataGridViewRow row in dgvTrains.Rows)
+            {
+                var name = row.Cells[1].Value?.ToString();
+                if (!string.IsNullOrEmpty(name)) lst.Items.Add(name);
+            }
+
+            var lblPath = new Label
+            {
+                Text = "직접 경로 입력",
+                ForeColor = Color.FromArgb(150, 150, 150),
+                Font = new Font("맑은 고딕", 8F),
+                Location = new Point(10, 200),
+                AutoSize = true
+            };
+
+            var txtPath = new TextBox
+            {
+                BackColor = Color.FromArgb(60, 60, 60),
+                ForeColor = Color.FromArgb(220, 220, 220),
+                Font = new Font("Consolas", 9F),
+                Location = new Point(10, 216),
+                Size = new Size(340, 24),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            var btnOk = new Button
+            {
+                Text = "적용",
+                BackColor = Color.FromArgb(24, 95, 165),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Location = new Point(360, 216),
+                Size = new Size(90, 24),
+                DialogResult = DialogResult.OK
+            };
+            btnOk.FlatAppearance.BorderSize = 0;
+            lst.DoubleClick += (s2, e2) => { form.DialogResult = DialogResult.OK; };
+            form.Controls.AddRange(new Control[] { lbl, lst, lblPath, txtPath, btnOk });
+
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                string selected = lst.SelectedItem?.ToString() ?? txtPath.Text.Trim();
+                if (!string.IsNullOrEmpty(selected))
+                {
+                    txtTransferPath.Text = selected;
+                    txtTransferPath.ForeColor = Color.FromArgb(220, 220, 220);
+                }
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 2. 고급 설정 (dgvConfig)
+        // 컬럼 순서: [0]선택(체크박스) [1]KEY [2]VALUE
+        // ════════════════════════════════════════════════════════════
+        private void BtnAddConfig_Click(object sender, EventArgs e)
+        {
+            dgvConfig.Rows.Add(false, "KEY", "VALUE");
+        }
+
+        private void BtnDeleteConfig_Click(object sender, EventArgs e)
+        {
+            var toDelete = dgvConfig.Rows
+                .Cast<DataGridViewRow>()
+                .Where(r => Convert.ToBoolean(r.Cells[0].Value))
+                .ToList();
+
+            foreach (var row in toDelete)
+                dgvConfig.Rows.Remove(row);
+        }
+
+
+
+
+
+
+
+        // ════════════════════════════════════════════════════════════
+        // 3. 프리셋 관리
+        // ════════════════════════════════════════════════════════════
+        private void BtnPresetAdd_Click(object sender, EventArgs e)
+        {
+            string name = txtPresetName.Text.Trim();
+            if (string.IsNullOrEmpty(name))
+                name = "새 프리셋 " + (_presets.Count + 1);
+
+            if (_presets.ContainsKey(name))
+            {
+                MessageBox.Show("같은 이름의 프리셋이 이미 있습니다.");
+                return;
+            }
+
+            _presets[name] = new Preset();
+            lstPresets.Items.Add(name);
+            lstPresets.SelectedItem = name;
+            SavePresetsToDisk();
+        }
+
+        private void BtnPresetSave_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(_activePreset))
+            {
+                MessageBox.Show("저장할 프리셋을 먼저 선택하세요.");
+                return;
+            }
+
+            string newName = txtPresetName.Text.Trim();
+            if (!string.IsNullOrEmpty(newName) && newName != _activePreset)
+            {
+                _presets[newName] = _presets[_activePreset];
+                _presets.Remove(_activePreset);
+                int idx = lstPresets.Items.IndexOf(_activePreset);
+                lstPresets.Items[idx] = newName;
+                _activePreset = newName;
+            }
+
+            var configRows = new List<ConfigEntry>();
+            foreach (DataGridViewRow row in dgvConfig.Rows)
+            {
+                string k = row.Cells[1].Value?.ToString() ?? "";
+                string v = row.Cells[2].Value?.ToString() ?? "";
+                if (!string.IsNullOrEmpty(k))
+                    configRows.Add(new ConfigEntry { Key = k, Value = v });
+            }
+
+            _presets[_activePreset] = new Preset
+            {
+                Epoch = (int)nudEpoch.Value,
+                Batch = (int)nudBatch.Value,
+                LR = "0.001",
+                Split = "0.8",
+                ConfigRows = configRows
+            };
+
+            SavePresetsToDisk();
+        }
+
+        private void BtnPresetDelete_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(_activePreset)) return;
+            if (MessageBox.Show($"'{_activePreset}' 프리셋을 삭제할까요?",
+                    "확인", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
+
+            _presets.Remove(_activePreset);
+            lstPresets.Items.Remove(_activePreset);
+            _activePreset = "";
+
+            SavePresetsToDisk();
+        }
+        private void BtnSaveDefault_Click(object sender, EventArgs e)
+        {
+            string tubArg = string.IsNullOrEmpty(_tubPath) ? "./data" : _tubPath;
+            string mycarPath = "~/mycar";
+            int dataIdx = tubArg.IndexOf("/data/");
+            if (dataIdx > 0)
+                mycarPath = tubArg.Substring(0, dataIdx);
+
+            string myconfigPath = mycarPath + "/myconfig.py";
+            string defaultConfigPath = mycarPath + "/.myconfig_default.py";
+
+            // 현재 myconfig.py를 기본 설정으로 저장
+            string cmd = $"cp {myconfigPath} {defaultConfigPath}";
+            RunWsl(cmd, onSuccess: () =>
+            {
+                MessageBox.Show("기본 설정이 저장되었습니다!");
+            });
+        }
+
+        private void LstPresets_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string name = lstPresets.SelectedItem?.ToString();
+            if (string.IsNullOrEmpty(name) || !_presets.ContainsKey(name)) return;
+
+            _activePreset = name;
+            txtPresetName.Text = name;
+
+            var p = _presets[name];
+            nudEpoch.Value = p.Epoch;
+            trkEpoch.Value = p.Epoch;
+            nudBatch.Value = p.Batch;
+            trkBatch.Value = p.Batch;
+
+            dgvConfig.Rows.Clear();
+            foreach (var entry in p.ConfigRows)
+                dgvConfig.Rows.Add(false, entry.Key, entry.Value);
+
+        }
+
+
+
+        private void SavePresetsToDisk()
+        {
+            try
+            {
+                string json = JsonSerializer.Serialize(_presets,
+                    new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(PresetFilePath, json);
+            }
+            catch { }
+        }
+
+        private void LoadPresetsFromDisk()
+        {
+            if (!File.Exists(PresetFilePath)) return;
+            try
+            {
+                string json = File.ReadAllText(PresetFilePath);
+                var loaded = JsonSerializer.Deserialize<Dictionary<string, Preset>>(json);
+                if (loaded == null) return;
+                foreach (var kv in loaded)
+                {
+                    _presets[kv.Key] = kv.Value;
+                    lstPresets.Items.Add(kv.Key);
+                }
+            }
+            catch { }
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 4. 학습 실행 (경로 매칭 버그 수정 완료)
+        // ════════════════════════════════════════════════════════════
+        private void BtnTrain_Click(object sender, EventArgs e)
+        {
+            if (_training) return;
+
+            if (cmbModelType.SelectedIndex == -1)
+            {
+                MessageBox.Show("모델 유형을 선택하세요 .");
+                return;
+            }
+
+            string modelName = txtModelName.Text.Trim();
+            if (string.IsNullOrEmpty(modelName)) modelName = "mypilot";
+
+            string startTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            string comment = txtComment.Text.Trim();
+
+            // ── [ 여기부터 경로 파싱 버그 수정 구간 ] ───────────────────
+            int epoch = (int)nudEpoch.Value;
+            int batch = (int)nudBatch.Value;
+            string tubArg = string.IsNullOrEmpty(_tubPath) ? "./data" : _tubPath;
+
+            // 기본값 설정
+            string mycarPath = "~/mycar";
+
+            // Tub Manager에서 넘어온 WSL 경로 문자열을 대소문자 구분 없이 분석합니다 .
+            string lowerTub = tubArg.ToLower();
+
+            // 경로에 /data 가 포함되어 있다면 그 직전까지를 mycar(루트) 경로로 잡습니다 .
+            int dataIdx = lowerTub.IndexOf("/data");
+            if (dataIdx > 0)
+            {
+                mycarPath = tubArg.Substring(0, dataIdx);
+            }
+            // 상대경로(./data)나 빈 값일 경우 현재 디렉토리를 기준으로 잡습니다 .
+            else if (tubArg == "./data" || tubArg == "data" || string.IsNullOrEmpty(_tubPath))
+            {
+                mycarPath = ".";
+            }
+            else
+            {
+                mycarPath = tubArg;
+            }
+
+            string myconfigPath = mycarPath + "/myconfig.py";
+            string updateScriptPath = mycarPath + "/update_config.py";
+            // ── [ 여기까지 수정 구간 끝 ] ───────────────────────────────
+
+            string transferArg = "";
+            string tp = txtTransferPath.Text.Trim();
+            if (!string.IsNullOrEmpty(tp) && !tp.Contains("선택 안 됨") && !tp.Contains("처음부터 학습"))
+            {
+                string tpName = Path.GetFileNameWithoutExtension(tp);
+                transferArg = $" --transfer ./models/{tpName}.h5";
+            }
+
+            // update_config.py를 Windows 임시 파일로 생성
+            string tempScript = Path.Combine(Path.GetTempPath(), "update_config.py");
+            File.WriteAllText(tempScript,
+                "import re, sys\n" +
+                "path = sys.argv[1]\n" +
+                "managed_keys = [arg.split('=', 1)[0] for arg in sys.argv[2:]]\n" +
+                "with open(path, 'r') as f:\n" +
+                "    lines = f.readlines()\n" +
+                "lines = [l for l in lines if not any(re.match(r'^' + k + r'\\s*=', l.strip()) for k in managed_keys)]\n" +
+                "content = ''.join(lines)\n" +
+                "for arg in sys.argv[2:]:\n" +
+                "    k, v = arg.split('=', 1)\n" +
+                "    content = content + '\\n' + k + ' = ' + v\n" +
+                "with open(path, 'w') as f:\n" +
+                "    f.write(content)\n",
+                new System.Text.UTF8Encoding(false)
+            );
+
+            // Windows 경로 → WSL 경로 변환
+            string wslTempScript = ConvertToWslPath(tempScript);
+
+            // 고급설정 인자 목록 구성
+            var kvArgs = new System.Text.StringBuilder();
+            kvArgs.Append($"MAX_EPOCHS={epoch} BATCH_SIZE={batch}");
+            foreach (DataGridViewRow row in dgvConfig.Rows)
+            {
+                string key = row.Cells[1].Value?.ToString()?.Trim();
+                string val = row.Cells[2].Value?.ToString()?.Trim();
+                if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(val)) continue;
+                kvArgs.Append($" {key}={val}");
+            }
+
+            string modelType = (cmbModelType.SelectedItem?.ToString() ?? "linear").Split(' ')[0];
+
+            string cmd =
+                $"cd {mycarPath} && " +
+                $"sed -i 's/train(cfg, tubs, model, model_type, comment)/train(cfg, tubs, model, model_type, transfer=None, comment=comment)/' {mycarPath}/train.py && " +
+                $"[ ! -f {mycarPath}/.myconfig_default.py ] && cp {myconfigPath} {mycarPath}/.myconfig_default.py; " +
+                $"cp {mycarPath}/.myconfig_default.py {myconfigPath}; " +
+                $"cp {wslTempScript} {updateScriptPath} && " +
+                $"python3 {updateScriptPath} {myconfigPath} {kvArgs} && " +
+                $"~/miniconda3/envs/e2e_env/bin/python train.py " +
+                $"--tubs {tubArg} --model ./models/{modelName}.h5 --type {modelType} --comment=\"{comment}\"" +
+                $"{transferArg}";
+
+            SetTrainingState(true);
+            rtbLog.Clear();
+            AppendLog($"[{startTime}] 학습 시작: {modelName}");
+            AppendLog($"명령: {cmd}");
+            AppendLog("─────────────────────────────────────────");
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = "wsl",
+                Arguments = $"bash -c \"{cmd}\"",
+                WorkingDirectory = "C:\\",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            _trainProcess = new Process { StartInfo = psi, EnableRaisingEvents = true };
+            _trainProcess.OutputDataReceived += (s, ev) => AppendLog(ev.Data);
+            _trainProcess.ErrorDataReceived += (s, ev) => AppendLog(ev.Data);
+
+            _trainProcess.Exited += (s, ev) =>
+            {
+                int exitCode = _trainProcess.ExitCode;
+                _trainProcess?.Dispose();
+                _trainProcess = null;
+
+                this.BeginInvoke((Action)(() =>
+                {
+                    SetTrainingState(false);
+
+                    if (exitCode == 0)
+                    {
+
+                        AppendLog("─────────────────────────────────────────");
+                        AppendLog("✔ 학습 완료!");
+                    }
+                    else
+                    {
+                        AppendLog("─────────────────────────────────────────");
+                        AppendLog($"✘ 학습 실패 (exit code: {exitCode})");
+                    }
+                }));
+            };
+
+            try
+            {
+                _trainProcess.Start();
+                _trainProcess.BeginOutputReadLine();
+                _trainProcess.BeginErrorReadLine();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("연동 오류: " + ex.Message);
+                SetTrainingState(false);
+                _trainProcess = null;
+            }
+        }
+
+        private void BtnCancelTrain_Click(object sender, EventArgs e)
+        {
+            if (!_training || _trainProcess == null) return;
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "wsl",
+                    Arguments = "bash -c \"pkill -f train.py\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+                _trainProcess.Kill(entireProcessTree: true);
+            }
+            catch { }
+
+            AppendLog("⚠ 학습이 중단되었습니다.");
+            SetTrainingState(false);
+        }
+
+        private void SetTrainingState(bool isTraining)
+        {
+            _training = isTraining;
+
+            if (this.InvokeRequired)
+            {
+                this.Invoke((Action)(() => SetTrainingState(isTraining)));
+                return;
+            }
+
+            btnTrain.Enabled = !isTraining;
+            btnCancelTrain.Enabled = isTraining;
+            btnTrain.Text = isTraining ? "학습 중..." : "▶ 학습 시작";
+            btnTrain.BackColor = isTraining
+                ? Color.FromArgb(59, 109, 17)
+                : Color.FromArgb(24, 95, 165);
+            lblTrainStatus.Text = isTraining ? "학습 진행 중..." : "대기 중";
+            lblTrainStatus.ForeColor = isTraining
+                ? Color.FromArgb(90, 200, 170)
+                : Color.FromArgb(150, 150, 150);
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 5. 모델 히스토리
+        // ════════════════════════════════════════════════════════════
+        private void BtnShowGraph_Click(object sender, EventArgs e)
+        {
+
+
+            var row = GetCheckedRow();
+            if (row == null) return;
+            string name = row.Cells[1].Value?.ToString();
+            string baseName = Path.GetFileNameWithoutExtension(name);
+
+            string mycarPath = "~/mycar";
+            string lowerTub = _tubPath.ToLower();
+            int dataIdx = lowerTub.IndexOf("/data");
+            if (dataIdx > 0)
+                mycarPath = _tubPath.Substring(0, dataIdx);
+
+            string tempScript = Path.Combine(Path.GetTempPath(), "show_graph.py");
+            File.WriteAllText(tempScript,
+                $"import json\n" +
+                $"data=json.load(open('{mycarPath}/models/database.json', encoding='utf-8'))\n" +
+                $"m=[x for x in data if x.get('Name')=='{baseName}']\n" +
+                $"if m:\n" +
+                $"    print(json.dumps(m[-1].get('History',{{}})))\n" +
+                $"else:\n" +
+                $"    print('{{}}')\n",
+                new System.Text.UTF8Encoding(false)
+            );
+
+            string wslScript = ConvertToWslPath(tempScript);
+            RunWslWithOutput($"python3 {wslScript}", output =>
+            {
+                try
+                {
+                    var history = JsonSerializer.Deserialize<Dictionary<string, List<double>>>(output);
+                    if (history == null || history.Count == 0)
+                    {
+                        MessageBox.Show("그래프 데이터가 없습니다.");
+                        return;
+                    }
+                    ShowHistoryChart(baseName, history);
+                }
+                catch
+                {
+                    MessageBox.Show("그래프 데이터를 불러오지 못했습니다.");
+                }
+            });
+        }
+
+        private void ShowHistoryChart(string modelName, Dictionary<string, List<double>> history)
+        {
+            var form = new Form
+            {
+                Text = $"학습 그래프 — {modelName}",
+                Size = new Size(800, 750),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(20, 20, 20)
+            };
+
+            var lblDesc = new Label
+            {
+                Text = "그래프 값이 낮을수록 정확한 모델 | 두 선의 차이가 크면 과적합 (학습 데이터에만 최적화된 상태)\nloss: 학습 데이터 기준 오차 | val_loss: 미학습 데이터 기준 오차 (실제 성능에 가까움)",
+                Dock = DockStyle.Top,
+                Height = 55,
+                ForeColor = Color.FromArgb(200, 200, 100),
+                BackColor = Color.FromArgb(40, 40, 20),
+                Font = new Font("맑은 고딕", 8.5F),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 0, 8, 0)
+            };
+
+            var groups = new[]
+            {
+                new[] { "loss", "val_loss" },
+                new[] { "n_outputs0_loss", "val_n_outputs0_loss" },
+                new[] { "n_outputs1_loss", "val_n_outputs1_loss" }
+            };
+
+            int validGroups = groups.Count(g => g.Any(key => history.ContainsKey(key)));
+
+            var panel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                RowCount = validGroups,
+                ColumnCount = 1,
+                BackColor = Color.FromArgb(20, 20, 20)
+            };
+            for (int i = 0; i < validGroups; i++)
+                panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / validGroups));
+
+            var titles = new[]
+            {
+                "전체 오차 (loss)",
+                "핸들 방향 오차 (steering / n_outputs0)",
+                "속도 조절 오차 (throttle / n_outputs1)"
+            };
+
+            var colors = new[]
+            {
+                new[] { Color.Cyan, Color.OrangeRed },
+                new[] { Color.Yellow, Color.DodgerBlue },
+                new[] { Color.LimeGreen, Color.Orange }
+            };
+            var legendTexts = new Dictionary<string, string>
+            {
+                { "loss",                  "학습 데이터 오차 (loss)" },
+                { "val_loss",              "미학습 데이터 오차 (val_loss)" },
+                { "n_outputs0_loss",       "핸들 학습 오차 (n_outputs0_loss)" },
+                { "val_n_outputs0_loss",   "핸들 미학습 오차 (val_n_outputs0_loss)" },
+                { "n_outputs1_loss",       "속도 학습 오차 (n_outputs1_loss)" },
+                { "val_n_outputs1_loss",   "속도 미학습 오차 (val_n_outputs1_loss)" }
+            };
+
+            for (int g = 0; g < groups.Length; g++)
+            {
+                if (!groups[g].Any(key => history.ContainsKey(key))) continue;
+                var chart = new System.Windows.Forms.DataVisualization.Charting.Chart
+                {
+                    Dock = DockStyle.Fill,
+                    BackColor = Color.FromArgb(30, 30, 30)
+                };
+
+                var chartArea = new System.Windows.Forms.DataVisualization.Charting.ChartArea
+                {
+                    BackColor = Color.FromArgb(20, 20, 20),
+                    AxisX = { LabelStyle = { ForeColor = Color.Gray }, LineColor = Color.Gray, MajorGrid = { LineColor = Color.FromArgb(50, 50, 50) } },
+                    AxisY = { LabelStyle = { ForeColor = Color.Gray }, LineColor = Color.Gray, MajorGrid = { LineColor = Color.FromArgb(50, 50, 50) } }
+                };
+                chart.ChartAreas.Add(chartArea);
+
+                var title = new System.Windows.Forms.DataVisualization.Charting.Title
+                {
+                    Text = titles[g],
+                    ForeColor = Color.LightGray,
+                    Font = new Font("맑은 고딕", 9F, FontStyle.Bold)
+                };
+                chart.Titles.Add(title);
+
+                var legend = new System.Windows.Forms.DataVisualization.Charting.Legend
+                {
+                    BackColor = Color.FromArgb(30, 30, 30),
+                    ForeColor = Color.LightGray
+                };
+                chart.Legends.Add(legend);
+
+                for (int s = 0; s < groups[g].Length; s++)
+                {
+                    string key = groups[g][s];
+                    if (!history.ContainsKey(key)) continue;
+
+                    var series = new System.Windows.Forms.DataVisualization.Charting.Series
+                    {
+                        Name = key,
+                        Color = colors[g][s],
+                        ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line,
+                        BorderWidth = 2,
+                        LegendText = legendTexts.ContainsKey(key) ? legendTexts[key] : key
+                    };
+
+                    for (int i = 0; i < history[key].Count; i++)
+                        series.Points.AddXY(i, history[key][i]);
+
+                    chart.Series.Add(series);
+                }
+
+                panel.Controls.Add(chart, 0, g);
+            }
+
+            var btnClose = new Button
+            {
+                Text = "닫기",
+                Dock = DockStyle.Bottom,
+                Height = 36,
+                BackColor = Color.FromArgb(50, 50, 50),
+                ForeColor = Color.FromArgb(200, 200, 200),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnClose.FlatAppearance.BorderSize = 0;
+            btnClose.Click += (s, e) => form.Close();
+
+            form.Controls.Add(panel);
+            form.Controls.Add(lblDesc);
+            form.Controls.Add(btnClose);
+            form.Show();
+        }
+
+        private void BtnShowConfig_Click(object sender, EventArgs e)
+        {
+            var row = GetCheckedRow();
+            if (row == null) return;
+            string name = row.Cells[1].Value?.ToString();
+            string baseName = Path.GetFileNameWithoutExtension(name);
+
+            string mycarPath = "~/mycar";
+            string lowerTub = _tubPath.ToLower();
+            int dataIdx = lowerTub.IndexOf("/data");
+            if (dataIdx > 0)
+                mycarPath = _tubPath.Substring(0, dataIdx);
+
+            string tempScript = Path.Combine(Path.GetTempPath(), "show_config.py");
+            File.WriteAllText(tempScript,
+                $"import json\n" +
+                $"data=json.load(open('{mycarPath}/models/database.json'))\n" +
+                $"m=[x for x in data if x.get('Name')=='{baseName}']\n" +
+                $"if m:\n" +
+                $"    cfg=m[-1].get('Config',{{}})\n" +
+                $"    for k,v in cfg.items():\n" +
+                $"        print(f'{{k}}: {{v}}')\n" +
+                $"else:\n" +
+                $"    print('설정 없음')\n",
+                new System.Text.UTF8Encoding(false)
+            );
+
+            string wslScript = ConvertToWslPath(tempScript);
+            RunWslWithOutput($"python3 {wslScript}", output =>
+            {
+                var form = new Form
+                {
+                    Text = $"학습 설정 — {baseName}",
+                    Size = new Size(700, 600),
+                    StartPosition = FormStartPosition.CenterParent,
+                    BackColor = Color.FromArgb(30, 30, 30)
+                };
+
+                var dgv = new DataGridView
+                {
+                    Dock = DockStyle.Fill,
+                    BackgroundColor = Color.FromArgb(30, 30, 30),
+                    BorderStyle = BorderStyle.None,
+                    ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
+                    ColumnHeadersDefaultCellStyle = { BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(180, 180, 180), Font = new Font("맑은 고딕", 9F, FontStyle.Bold) },
+                    DefaultCellStyle = { BackColor = Color.FromArgb(40, 40, 40), ForeColor = Color.FromArgb(220, 220, 220), Font = new Font("Consolas", 9F), SelectionBackColor = Color.FromArgb(24, 95, 165), SelectionForeColor = Color.White },
+                    EnableHeadersVisualStyles = false,
+                    GridColor = Color.FromArgb(60, 60, 60),
+                    RowHeadersVisible = false,
+                    AllowUserToAddRows = false,
+                    ReadOnly = true,
+                    SelectionMode = DataGridViewSelectionMode.CellSelect,
+                    AllowUserToResizeRows = false,
+                    RowTemplate = { Height = 24 },
+                    CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                    ColumnHeadersHeight = 28
+                };
+
+                dgv.Columns.Add("colKey", "KEY");
+                dgv.Columns.Add("colValue", "VALUE");
+                dgv.Columns["colKey"].Width = 280;
+                dgv.Columns["colValue"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                dgv.AllowUserToResizeRows = false;
+                dgv.RowTemplate.Height = 24;
+
+                foreach (var line in output.Split('\n'))
+                {
+                    int idx = line.IndexOf(':');
+                    if (idx < 0) continue;
+                    string k = line.Substring(0, idx).Trim();
+                    string v = line.Substring(idx + 1).Trim();
+                    if (!string.IsNullOrEmpty(k))
+                        dgv.Rows.Add(k, v);
+                }
+
+                var btnClose = new Button
+                {
+                    Text = "닫기",
+                    Dock = DockStyle.Bottom,
+                    Height = 36,
+                    BackColor = Color.FromArgb(50, 50, 50),
+                    ForeColor = Color.FromArgb(200, 200, 200),
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnClose.FlatAppearance.BorderSize = 0;
+                btnClose.Click += (s2, e2) => form.Close();
+
+                form.Controls.Add(dgv);
+                form.Controls.Add(btnClose);
+                form.Show();
+            });
+        }
+
+        private void BtnDeletePilot_Click(object sender, EventArgs e)
+        {
+            if (!chkEnableDelete.Checked) return;
+
+            var row = GetCheckedRow();
+            if (row == null) return;
+
+            string name = row.Cells[1].Value?.ToString();
+            string baseName = Path.GetFileNameWithoutExtension(name);
+
+            if (MessageBox.Show($"'{name}' 파일을 삭제할까요?\n이 작업은 되돌릴 수 없습니다.",
+                    "모델 삭제 확인", MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning) != DialogResult.Yes) return;
+
+            string mycarPath = "~/mycar";
+            string lowerTub = _tubPath.ToLower();
+            int dataIdx = lowerTub.IndexOf("/data");
+            if (dataIdx > 0)
+                mycarPath = _tubPath.Substring(0, dataIdx);
+
+            RunWsl($"rm -rf {mycarPath}/models/{baseName}*", onSuccess: () =>
+            {
+                dgvTrains.Rows.Remove(row);
+                chkEnableDelete.Checked = false;
+            });
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 유틸리티
+        // ════════════════════════════════════════════════════════════
+        private void AppendLog(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action<string>(AppendLog), text);
+                return;
+            }
+            string clean = Regex.Replace(text, @"\x1b\[[0-9;]*[mGKHF]", "");
+            clean = Regex.Replace(clean, @"[\x08\r]", "");
+            rtbLog.AppendText(clean + Environment.NewLine);
+            rtbLog.SelectionStart = rtbLog.TextLength;
+            rtbLog.ScrollToCaret();
+        }
+
+        private string ConvertToWslPath(string path)
+        {
+            path = path.Trim();
+            if (path.StartsWith("\\\\wsl.localhost\\"))
+            {
+                int nextSlash = path.IndexOf('\\', 16);
+                if (nextSlash != -1)
+                    return path.Substring(nextSlash).Replace("\\", "/");
+            }
+            if (path.Length >= 2 && path[1] == ':')
+                return "/mnt/" + path[0].ToString().ToLower() + path[2..].Replace("\\", "/");
+            return path;
+        }
+
+        private string ConvertToWindowsPath(string winPath) => winPath;
+
+        private async void RunWsl(string bashCmd, Action onSuccess = null)
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c wsl bash -c \"{bashCmd.Replace("\"", "\\\"")}\"",
+                WorkingDirectory = "C:\\",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            try
+            {
+                var p = Process.Start(psi);
+                await Task.Run(() => p.WaitForExit());
+                onSuccess?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("WSL 오류: " + ex.Message);
+            }
+        }
+
+        private async void RunWslWithOutput(string bashCmd, Action<string> onOutput)
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "wsl",
+                Arguments = $"bash -c \"{bashCmd}\"",
+                WorkingDirectory = "C:\\",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+            try
+            {
+                var p = Process.Start(psi);
+                string output = await Task.Run(() =>
+                {
+                    string o = p.StandardOutput.ReadToEnd();
+                    p.WaitForExit();
+                    return o;
+                });
+                onOutput?.Invoke(string.IsNullOrWhiteSpace(output)
+                    ? "(출력 없음 — 모델 경로를 확인하세요)" : output);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("WSL 오류: " + ex.Message);
+            }
+        }
+
+
+
+
+        public void InitModelWatcher(string mycarPath)
+        {
+            string winModelsPath = mycarPath + "\\models";
+            if (!Directory.Exists(winModelsPath)) return;
+
+            _modelWatcher?.Dispose();
+            try
+            {
+                _modelWatcher = new FileSystemWatcher(winModelsPath)
+                {
+                    Filter = "*.*",
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+                    IncludeSubdirectories = false,
+                    EnableRaisingEvents = true
+                };
+                _modelWatcher.Created += (s, e) => RefreshModelList(mycarPath);
+                _modelWatcher.Deleted += (s, e) => RefreshModelList(mycarPath);
+
+            }
+            catch { }
+
+            var timer = new System.Windows.Forms.Timer { Interval = 5000 };
+            timer.Tick += (s, e) => RefreshModelList(mycarPath);
+            timer.Start();
+
+            RefreshModelList(mycarPath);
+        }
+
+        private void RefreshModelList(string mycarPath)
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke((Action)(() => RefreshModelList(mycarPath)));
+                return;
+            }
+
+            string winPath = Path.Combine(mycarPath, "models");
+            if (!Directory.Exists(winPath)) return;
+
+            var dbDict = new Dictionary<string, (string pilot, string type, string tubs, string comment)>();
+            string dbPath = Path.Combine(winPath, "database.json");
+            if (File.Exists(dbPath))
+            {
+                try
+                {
+                    string json = File.ReadAllText(dbPath);
+                    var db = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(json);
+                    if (db != null)
+                    {
+                        foreach (var item in db)
+                        {
+                            string name = item.ContainsKey("Name") ? item["Name"].GetString() ?? "" : "";
+                            string pilot = item.ContainsKey("Pilot") ? item["Pilot"].GetString() ?? "" : "";
+                            string type = item.ContainsKey("Type") ? item["Type"].GetString() ?? "" : "";
+                            string tubs = item.ContainsKey("Tubs") ? item["Tubs"].GetString() ?? "" : "";
+                            string comment = item.ContainsKey("Comment") ? item["Comment"].GetString() ?? "" : "";
+                            if (!string.IsNullOrEmpty(name))
+                                dbDict[name] = (pilot, type, tubs, comment);
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            var extensions = new[] { "*.h5", "*.tflite", "*.savedmodel", "*.keras", "*.pkl" };
+            var files = extensions
+                .SelectMany(ext => Directory.GetFiles(winPath, ext))
+                .OrderBy(f => f)
+                .ToArray();
+
+            var newFiles = files.Select(f => Path.GetFileName(f)).ToList();
+            var currentFiles = dgvTrains.Rows
+                .Cast<DataGridViewRow>()
+                .Select(r => r.Cells[1].Value?.ToString() ?? "")
+                .ToList();
+
+            // 변경사항 없으면 갱신 안 함
+            if (currentFiles.SequenceEqual(newFiles)) return;
+
+            dgvTrains.Rows.Clear();
+            foreach (var file in files)
+            {
+                string name = Path.GetFileName(file);
+                string baseName = Path.GetFileNameWithoutExtension(name);
+                var info = new FileInfo(file);
+
+                string pilot = "", type = "", tubs = "", comment = "";
+                if (dbDict.ContainsKey(baseName))
+                {
+                    pilot = dbDict[baseName].pilot;
+                    type = dbDict[baseName].type;
+                    tubs = dbDict[baseName].tubs;
+                    comment = dbDict[baseName].comment;
+                }
+
+                dgvTrains.Rows.Add(false, name, pilot, type, tubs, info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"), "", comment);
+            }
+        }
+        private DataGridViewRow GetCheckedRow()
+        {
+            foreach (DataGridViewRow row in dgvTrains.Rows)
+            {
+                if (Convert.ToBoolean(row.Cells[0].Value))
+                    return row;
+            }
+            return null;
+        }
+
+        private void pnlScroll_Paint(object sender, PaintEventArgs e) { }
+
+        private void lstPresets_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            if (e.Index < 0) return;
+
+            // 1. 기존 배경과 글자는 기본값으로 그리게 둡니다.
+            e.DrawBackground();
+            e.Graphics.DrawString(((ListBox)sender).Items[e.Index].ToString(), e.Font, new SolidBrush(e.ForeColor), e.Bounds);
+
+            // 2. 각 항목 맨 아래에 은은한 회색 선을 한 줄 긋습니다.
+            e.Graphics.DrawLine(Pens.LightGray, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
+        }
+    }
+}
