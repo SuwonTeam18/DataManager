@@ -571,8 +571,11 @@ namespace DonkeyUi
                 picTubImage.Image = new Bitmap(img);
 
 
-                txtRecordNumber.Text =
-                    $"기록 {(idx + 1):D6}";
+                // 파일명에서 실제 번호 추출 (예: 4131_cam_image_array_.jpg → 4131)
+                var fileNum = ExtractFirstNumber(Path.GetFileName(_allImageFiles[idx]));
+                txtRecordNumber.Text = fileNum.HasValue
+                    ? $"기록 {fileNum.Value:D6}"
+                    : $"기록 {(idx + 1):D6}";
 
 
                 double? angle = null;
