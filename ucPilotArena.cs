@@ -119,6 +119,10 @@ namespace DonkeyUi
         private Button _btnGenerateFilteredGraph = null;
         private Button _btnResetZoom = null;
         private Label _lblGraphFilterStatus = null;
+        private Label _lblGraphModelName = null;
+
+        // ★ 모델별 오차 누적 저장
+        private readonly Dictionary<string, (double overall, double angle, double throttle)> _modelErrorHistory = new();
         private int _graphBrightness = 0;
         private int _graphBlur = 0;
 
@@ -135,6 +139,7 @@ namespace DonkeyUi
         private List<string> _graphImagePaths = new();
         private List<double> _graphHumanAngles = new();
         private List<double> _graphHumanThrottles = new();
+        private List<int> _graphRecordNumbers = new(); // ★ 실제 레코드 번호
         private double?[] _graphAiAngles = Array.Empty<double?>();
         private double?[] _graphAiThrottles = Array.Empty<double?>();
 
@@ -1370,6 +1375,9 @@ namespace DonkeyUi
                     // tub 경로가 바뀐 경우 → 전체 재로드
                     _currentTubFolderPath = tubPath;
                     _ = LoadGraphDataAsync(catalogFolder, validImages);
+
+                    // ★ tub가 바뀌면 누적 순위 초기화
+                    _modelErrorHistory.Clear();
                 }
                 else if (validImages.Count != _graphImagePaths.Count)
                 {
@@ -1470,6 +1478,7 @@ namespace DonkeyUi
             _btnResetZoom.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
 
             _lblGraphFilterStatus = new Label { Text = "필터값 - 밝기: 0, 흐림: 0", AutoSize = true, ForeColor = Color.FromArgb(100, 100, 100), Font = new Font("맑은 고딕", 8.5f), Margin = new Padding(0, 5, 0, 0) };
+            _lblGraphModelName = new Label { Text = "모델: -", AutoSize = true, ForeColor = Color.FromArgb(24, 95, 165), Font = new Font("맑은 고딕", 8.5f, FontStyle.Bold), Margin = new Padding(12, 5, 0, 0) };
 
             btnRow.Controls.Add(lblTitle);
             btnRow.Controls.Add(_btnGraphError);
@@ -1481,6 +1490,7 @@ namespace DonkeyUi
             btnRow.Controls.Add(_btnGenerateFilteredGraph);
             btnRow.Controls.Add(_btnResetZoom);
             btnRow.Controls.Add(_lblGraphFilterStatus);
+            btnRow.Controls.Add(_lblGraphModelName);
 
             Action updateLegend = () =>
             {
@@ -1720,7 +1730,10 @@ namespace DonkeyUi
                     float fx = toX(idx); if (fx < padL || fx > padL + gw) continue;
                     g.SetClip(new Rectangle(padL, padT, gw, gh)); g.DrawLine(gridPen2, fx, padT, fx, padT + gh);
                     g.SetClip(new Rectangle(padL, padT + gh, gw, padB));
-                    g.DrawString(idx.ToString(), labelFont, labelBrush, fx - 10, padT + gh + 4);
+                    string xLabel = (_graphRecordNumbers != null && idx < _graphRecordNumbers.Count)
+                        ? _graphRecordNumbers[idx].ToString()
+                        : idx.ToString();
+                    g.DrawString(xLabel, labelFont, labelBrush, fx - 10, padT + gh + 4);
                 }
             }
             g.ResetClip();
@@ -1854,6 +1867,11 @@ namespace DonkeyUi
             _graphAiAngles = new double?[imagePaths.Count];
             _graphAiThrottles = new double?[imagePaths.Count];
 
+            // ★ 파일명에서 실제 레코드 번호 추출
+            _graphRecordNumbers = imagePaths
+                .Select(p => GetFileNumber(p))
+                .ToList();
+
             if (!this.IsDisposed && this.IsHandleCreated)
                 this.BeginInvoke(() => _graphDrawPanel?.Invalidate());
         }
@@ -1867,6 +1885,9 @@ namespace DonkeyUi
             var slot = _pilotSlots[0];
             int curIdx = _currentIndex;
 
+            // ★ 시작 시점의 모델명 캡처 (도중에 바뀌면 중단용)
+            string startModelName = slot.ModelFileName;
+
             if (curIdx >= 0 && curIdx < imagePaths.Count && !token.IsCancellationRequested)
             {
                 string fname0 = Path.GetFileName(imagePaths[curIdx]);
@@ -1878,7 +1899,8 @@ namespace DonkeyUi
                     else { using var b0 = GetFilteredBitmap(imagePaths[curIdx], brightness, blur); if (b0 != null) r0 = await RequestPrediction(slot, b0); }
                     if (r0.HasValue) { slot.Cache[ck0] = r0.Value; slot.LastAiAngle = r0.Value.angle; slot.LastAiThrottle = r0.Value.throttle; }
                 }
-                if (slot.Cache.TryGetValue(ck0, out var c0))
+                if (slot.Cache.TryGetValue(ck0, out var c0)
+                    && slot.ModelFileName == startModelName)  // ★ 모델 바뀌지 않았는지 확인
                 {
                     _graphAiAngles[curIdx] = c0.angle;
                     _graphAiThrottles[curIdx] = c0.throttle;
@@ -1916,7 +1938,8 @@ namespace DonkeyUi
                         }
                     }
 
-                    if (slot.Cache.TryGetValue(cacheKey, out var cached))
+                    if (slot.Cache.TryGetValue(cacheKey, out var cached)
+                        && slot.ModelFileName == startModelName)  // ★ 모델 바뀌지 않았는지 확인
                     {
                         _graphAiAngles[i] = cached.angle;
                         _graphAiThrottles[i] = cached.throttle;
@@ -2074,9 +2097,7 @@ namespace DonkeyUi
         {
             if (_graphHumanAngles.Count == 0) return;
 
-            // 슬롯별 오차 계산
-            var rankData = new List<(string modelName, double overall, double angle, double throttle)>();
-
+            // ★ 현재 완료된 모델의 오차 계산 후 누적 저장
             for (int s = 0; s < _pilotSlots.Count; s++)
             {
                 var slot = _pilotSlots[s];
@@ -2102,17 +2123,21 @@ namespace DonkeyUi
                 double avgThrottle = throttleErrs.Count > 0 ? throttleErrs.Average() : 0.0;
                 double avgOverall = (avgAngle + avgThrottle) / 2.0;
 
-                rankData.Add((slot.ModelFileName, avgOverall, avgAngle, avgThrottle));
+                // ★ 모델명을 키로 덮어쓰기 (같은 모델 재실행 시 최신값으로 갱신)
+                _modelErrorHistory[slot.ModelFileName] = (avgOverall, avgAngle, avgThrottle);
             }
 
-            if (rankData.Count == 0) return;
+            if (_modelErrorHistory.Count == 0) return;
 
-            // 정렬 (오차 낮은 순)
+            // ★ 누적된 전체 모델 데이터로 순위 계산
+            var rankData = _modelErrorHistory
+                .Select(kv => (modelName: kv.Key, overall: kv.Value.overall, angle: kv.Value.angle, throttle: kv.Value.throttle))
+                .ToList();
+
             var sortedOverall = rankData.OrderBy(r => r.overall).ToList();
             var sortedAngle = rankData.OrderBy(r => r.angle).ToList();
             var sortedThrottle = rankData.OrderBy(r => r.throttle).ToList();
 
-            // 콤보박스 갱신
             void FillCombo(ComboBox cmb, List<(string modelName, double overall, double angle, double throttle)> sorted, Func<(string modelName, double overall, double angle, double throttle), double> getVal)
             {
                 cmb.Items.Clear();

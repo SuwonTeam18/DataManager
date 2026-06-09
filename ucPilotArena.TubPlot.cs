@@ -60,11 +60,22 @@ namespace DonkeyUi
                 ResetSlotServer(_pilotSlots[0]);
             }
 
+            // ★ 이전 모델의 AI 예측 배열 초기화
+            Array.Clear(_graphAiAngles, 0, _graphAiAngles.Length);
+            Array.Clear(_graphAiThrottles, 0, _graphAiThrottles.Length);
+            _graphDrawPanel?.Invalidate();
+
+            // ★ 모델명 라벨 갱신
+            if (_lblGraphModelName != null)
+                _lblGraphModelName.Text = $"모델: {modelFileName}";
+
             // 그래프용 필터값 저장
             _graphBrightness = brightness;
             _graphBlur = blur;
             if (_lblGraphFilterStatus != null)
                 _lblGraphFilterStatus.Text = $"필터값 - 밝기: {_graphBrightness}, 흐림: {_graphBlur}";
+            if (_lblGraphModelName != null)
+                _lblGraphModelName.Text = $"모델: {modelFileName}";
 
             // 기존 AI 예측 데이터 초기화
             Array.Clear(_graphAiAngles, 0, _graphAiAngles.Length);
