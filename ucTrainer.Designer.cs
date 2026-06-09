@@ -182,6 +182,9 @@
             btnPresetSave = new Button();
             btnPresetDelete = new Button();
             pnlSec4 = new Panel();
+            lblValLossStatus = new Label();
+            lblLossStatus = new Label();
+            lblEpochStatus = new Label();
             lblSec4 = new Label();
             pnlTransfer = new Panel();
             lblTransferTitle = new Label();
@@ -729,6 +732,9 @@
             // 
             pnlSec4.BackColor = Color.White;
             pnlSec4.BorderStyle = BorderStyle.FixedSingle;
+            pnlSec4.Controls.Add(lblValLossStatus);
+            pnlSec4.Controls.Add(lblLossStatus);
+            pnlSec4.Controls.Add(lblEpochStatus);
             pnlSec4.Controls.Add(lblSec4);
             pnlSec4.Controls.Add(pnlTransfer);
             pnlSec4.Controls.Add(btnTrain);
@@ -741,6 +747,43 @@
             pnlSec4.Padding = new Padding(16);
             pnlSec4.Size = new Size(931, 427);
             pnlSec4.TabIndex = 1;
+            // 
+            // lblValLossStatus
+            // 
+            lblValLossStatus.AutoSize = true;
+            lblValLossStatus.Font = new Font("맑은 고딕", 9F);
+            lblValLossStatus.Location = new Point(735, 138);
+            lblValLossStatus.Margin = new Padding(0, 0, 8, 0);
+            lblValLossStatus.Name = "lblValLossStatus";
+            lblValLossStatus.Size = new Size(71, 15);
+            lblValLossStatus.TabIndex = 8;
+            lblValLossStatus.Text = "검증 손실: -";
+            // 
+            // lblLossStatus
+            // 
+            lblLossStatus.AutoSize = true;
+            lblLossStatus.Font = new Font("맑은 고딕", 9F);
+            lblLossStatus.Location = new Point(568, 138);
+            lblLossStatus.Margin = new Padding(0, 0, 96, 0);
+            lblLossStatus.Name = "lblLossStatus";
+            lblLossStatus.Size = new Size(71, 15);
+            lblLossStatus.TabIndex = 7;
+            lblLossStatus.Text = "훈련 손실: -";
+            // 
+            // lblEpochStatus
+            // 
+            lblEpochStatus.AutoSize = true;
+            lblEpochStatus.Font = new Font("맑은 고딕", 9F);
+            lblEpochStatus.Location = new Point(367, 138);
+            lblEpochStatus.Margin = new Padding(8, 0, 128, 0);
+            lblEpochStatus.Name = "lblEpochStatus";
+            lblEpochStatus.Size = new Size(73, 15);
+            lblEpochStatus.TabIndex = 6;
+            lblEpochStatus.Text = "에포크: - / -";
+            // 
+            // lblSec4
+            // 
+            lblSec4.AutoSize = true;
             // 
             // lblSec4
             // 
@@ -1349,5 +1392,8 @@
         private DataGridViewTextBoxColumn colTransfer;
         private DataGridViewTextBoxColumn colComment;
         private Label lblModelTypeDesc;
+        private Label lblValLossStatus;
+        private Label lblLossStatus;
+        private Label lblEpochStatus;
     }
 }
