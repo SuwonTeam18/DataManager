@@ -1239,8 +1239,11 @@ namespace DonkeyUi
 
         private Bitmap MakeBlur(Image image, int blurAmount)
         {
-            int radius = blurAmount / 20; if (radius < 1) return new Bitmap(image);
-            int sw = Math.Max(1, image.Width / (radius + 1)), sh = Math.Max(1, image.Height / (radius + 1));
+            double radius = Math.Sqrt(blurAmount) * 0.5;
+            if (radius < 1) 
+                return new Bitmap(image);
+            int sw = Math.Max(1, (int)(image.Width / (radius * 0.2 + 1)));
+            int sh = Math.Max(1, (int)(image.Height / (radius * 0.2 + 1)));
             using var small = new Bitmap(sw, sh); using var g1 = Graphics.FromImage(small);
             g1.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear; g1.DrawImage(image, 0, 0, sw, sh);
             var result = new Bitmap(image.Width, image.Height); using var g2 = Graphics.FromImage(result);

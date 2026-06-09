@@ -458,17 +458,21 @@ namespace DonkeyUi
 
         private void BtnLoadTub_Click(object? sender, EventArgs e)
         {
-            using var dlg = new FolderBrowserDialog();
+            using var dlg = new OpenFileDialog();
 
-            dlg.Description = "이미지 폴더 선택";
+            dlg.Title = "이미지 선택";
+            dlg.Filter = "이미지 파일|*.jpg;*.jpeg;*.png";
+            dlg.Multiselect = false;
 
             if (dlg.ShowDialog() != DialogResult.OK)
                 return;
 
-            txtTub.Text = dlg.SelectedPath;
-            CurrentTubPath = dlg.SelectedPath;
+            string folder = Path.GetDirectoryName(dlg.FileName)!;
 
-            LoadImagesFromDirectory(dlg.SelectedPath);
+            txtTub.Text = folder;
+            CurrentTubPath = folder;
+
+            LoadImagesFromDirectory(folder);
         }
 
         private void LoadImagesFromDirectory(string folder)
@@ -2044,9 +2048,8 @@ namespace DonkeyUi
 
             _speedFilters.RemoveAt(idx);
             cmbSpeedFilters.Items.RemoveAt(idx);
-            cmbSpeedFilters.Text = "속도 필터 목록";
+            cmbSpeedFilters.Text = "속도 범위";
         }
-        
 
         private void btnAngleRemove_Click(object sender, EventArgs e)
         {
@@ -2057,10 +2060,10 @@ namespace DonkeyUi
 
             _angleFilters.RemoveAt(idx);
             cmbAngleFilters.Items.RemoveAt(idx);
-            cmbAngleFilters.Text = "각도 필터 목록";
+            cmbAngleFilters.Text = "각도 범위";
         }
 
-        
+
     }
 }
 
