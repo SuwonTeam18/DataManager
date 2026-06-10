@@ -48,7 +48,6 @@ namespace DonkeyUi
         private double _prevLoss = double.NaN;
         private double _prevValLoss = double.NaN;
 
-        // 실시간 그래프용 데이터
         private List<double> _lossHistory = new();
         private List<double> _valLossHistory = new();
         private List<double> _n0LossHistory = new();
@@ -56,6 +55,8 @@ namespace DonkeyUi
         private List<double> _n1LossHistory = new();
         private List<double> _valN1LossHistory = new();
         private bool _earlyStopDetected = false;
+        private double _bestLoss = double.NaN;
+        private double _bestValLoss = double.NaN;
 
         // 실시간 그래프 창
         private Form _liveGraphForm = null;
@@ -68,6 +69,15 @@ namespace DonkeyUi
         private string _currentComment = "";
         private string _currentMycarPath = "";
         private string _currentStartTime = "";
+
+        // ════════════════════════════════════════════════════════════
+        // ★ manifest.json deleted_indexes 방식 필터링
+        // ════════════════════════════════════════════════════════════
+        private string _manifestPath = "";
+        private List<int> _originalDeletedIndexes = new List<int>();
+
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+        public ucTubManager TubManagerRef { get; set; } = null;
 
         private string PresetFilePath =>
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "presets.json");
@@ -184,7 +194,7 @@ namespace DonkeyUi
                     : Color.FromArgb(100, 160, 100);
             };
 
-            lstPresets.SelectedIndexChanged += LstPresets_SelectedIndexChanged;
+            // 모델 삭제
             btnDeletePilot.Click += BtnDeletePilot_Click;
             btnShowGraph.Click += BtnShowGraph_Click;
             btnShowConfig.Click += BtnShowConfig_Click;
@@ -217,7 +227,8 @@ namespace DonkeyUi
                 {
                     foreach (DataGridViewRow row in dgvTrains.Rows)
                         if (row.Index != e.RowIndex && Convert.ToBoolean(row.Cells[0].Value))
-                            row.Cells[0].Value = false;
+                            row.Cells[0].Value = false; // 다른 행 체크 해제
+                    }
 
                     var rowActive = dgvTrains.Rows[e.RowIndex];
                     lblCommentEditTitle.Text = $"메모 수정 — {rowActive.Cells[1].Value}";
@@ -244,12 +255,14 @@ namespace DonkeyUi
                 if (row == null) return;
                 row.Cells[7].Value = txtCommentEdit.Text;
 
+                // database.json에도 저장
                 string name = row.Cells[1].Value?.ToString();
                 string baseName = Path.GetFileNameWithoutExtension(name);
                 string mycarPath = "~/mycar";
                 string lowerTub = _tubPath.ToLower();
                 int dataIdx = lowerTub.IndexOf("/data");
-                if (dataIdx > 0) mycarPath = _tubPath.Substring(0, dataIdx);
+                if (dataIdx > 0)
+                    mycarPath = _tubPath.Substring(0, dataIdx);
 
                 string tempScript = Path.Combine(Path.GetTempPath(), "save_comment.py");
                 File.WriteAllText(tempScript,
@@ -308,9 +321,36 @@ namespace DonkeyUi
                 var name = row.Cells[1].Value?.ToString();
                 if (!string.IsNullOrEmpty(name)) lst.Items.Add(name);
             }
-            var lblPath = new Label { Text = "직접 경로 입력", ForeColor = Color.FromArgb(150, 150, 150), Font = new Font("맑은 고딕", 8F), Location = new Point(10, 200), AutoSize = true };
-            var txtPath = new TextBox { BackColor = Color.FromArgb(60, 60, 60), ForeColor = Color.FromArgb(220, 220, 220), Font = new Font("Consolas", 9F), Location = new Point(10, 216), Size = new Size(340, 24), BorderStyle = BorderStyle.FixedSingle };
-            var btnOk = new Button { Text = "적용", BackColor = Color.FromArgb(24, 95, 165), ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Location = new Point(360, 216), Size = new Size(90, 24), DialogResult = DialogResult.OK };
+
+            var lblPath = new Label
+            {
+                Text = "직접 경로 입력",
+                ForeColor = Color.FromArgb(150, 150, 150),
+                Font = new Font("맑은 고딕", 8F),
+                Location = new Point(10, 200),
+                AutoSize = true
+            };
+
+            var txtPath = new TextBox
+            {
+                BackColor = Color.FromArgb(60, 60, 60),
+                ForeColor = Color.FromArgb(220, 220, 220),
+                Font = new Font("Consolas", 9F),
+                Location = new Point(10, 216),
+                Size = new Size(340, 24),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            var btnOk = new Button
+            {
+                Text = "적용",
+                BackColor = Color.FromArgb(24, 95, 165),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Location = new Point(360, 216),
+                Size = new Size(90, 24),
+                DialogResult = DialogResult.OK
+            };
             btnOk.FlatAppearance.BorderSize = 0;
             lst.DoubleClick += (s2, e2) => { form.DialogResult = DialogResult.OK; };
             form.Controls.AddRange(new Control[] { lbl, lst, lblPath, txtPath, btnOk });
@@ -332,8 +372,13 @@ namespace DonkeyUi
         private void BtnAddConfig_Click(object sender, EventArgs e) => dgvConfig.Rows.Add(false, "KEY", "VALUE");
         private void BtnDeleteConfig_Click(object sender, EventArgs e)
         {
-            var toDelete = dgvConfig.Rows.Cast<DataGridViewRow>().Where(r => Convert.ToBoolean(r.Cells[0].Value)).ToList();
-            foreach (var row in toDelete) dgvConfig.Rows.Remove(row);
+            var toDelete = dgvConfig.Rows
+                .Cast<DataGridViewRow>()
+                .Where(r => Convert.ToBoolean(r.Cells[0].Value))
+                .ToList();
+
+            foreach (var row in toDelete)
+                dgvConfig.Rows.Remove(row);
         }
 
         // ════════════════════════════════════════════════════════════
@@ -342,8 +387,15 @@ namespace DonkeyUi
         private void BtnPresetAdd_Click(object sender, EventArgs e)
         {
             string name = txtPresetName.Text.Trim();
-            if (string.IsNullOrEmpty(name)) name = "새 프리셋 " + (_presets.Count + 1);
-            if (_presets.ContainsKey(name)) { MessageBox.Show("같은 이름의 프리셋이 이미 있습니다."); return; }
+            if (string.IsNullOrEmpty(name))
+                name = "새 프리셋 " + (_presets.Count + 1);
+
+            if (_presets.ContainsKey(name))
+            {
+                MessageBox.Show("같은 이름의 프리셋이 이미 있습니다.");
+                return;
+            }
+
             _presets[name] = new Preset();
             lstPresets.Items.Add(name);
             lstPresets.SelectedItem = name;
@@ -352,7 +404,12 @@ namespace DonkeyUi
 
         private void BtnPresetSave_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(_activePreset)) { MessageBox.Show("저장할 프리셋을 먼저 선택하세요."); return; }
+            if (string.IsNullOrEmpty(_activePreset))
+            {
+                MessageBox.Show("저장할 프리셋을 먼저 선택하세요.");
+                return;
+            }
+
             string newName = txtPresetName.Text.Trim();
             if (!string.IsNullOrEmpty(newName) && newName != _activePreset)
             {
@@ -369,14 +426,25 @@ namespace DonkeyUi
                 string v = row.Cells[2].Value?.ToString() ?? "";
                 if (!string.IsNullOrEmpty(k)) configRows.Add(new ConfigEntry { Key = k, Value = v });
             }
-            _presets[_activePreset] = new Preset { Epoch = (int)nudEpoch.Value, Batch = (int)nudBatch.Value, LR = "0.001", Split = "0.8", ConfigRows = configRows };
+
+            _presets[_activePreset] = new Preset
+            {
+                Epoch = (int)nudEpoch.Value,
+                Batch = (int)nudBatch.Value,
+                LR = "0.001",
+                Split = "0.8",
+                ConfigRows = configRows
+            };
+
             SavePresetsToDisk();
         }
 
         private void BtnPresetDelete_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(_activePreset)) return;
-            if (MessageBox.Show($"'{_activePreset}' 프리셋을 삭제할까요?", "확인", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
+            if (MessageBox.Show($"'{_activePreset}' 프리셋을 삭제할까요?",
+                    "확인", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
+
             _presets.Remove(_activePreset);
             lstPresets.Items.Remove(_activePreset);
             _activePreset = "";
@@ -388,10 +456,18 @@ namespace DonkeyUi
             string tubArg = string.IsNullOrEmpty(_tubPath) ? "./data" : _tubPath;
             string mycarPath = "~/mycar";
             int dataIdx = tubArg.IndexOf("/data/");
-            if (dataIdx > 0) mycarPath = tubArg.Substring(0, dataIdx);
+            if (dataIdx > 0)
+                mycarPath = tubArg.Substring(0, dataIdx);
+
             string myconfigPath = mycarPath + "/myconfig.py";
             string defaultConfigPath = mycarPath + "/.myconfig_default.py";
-            RunWsl($"cp {myconfigPath} {defaultConfigPath}", onSuccess: () => MessageBox.Show("기본 설정이 저장되었습니다!"));
+
+            // 현재 myconfig.py를 기본 설정으로 저장
+            string cmd = $"cp {myconfigPath} {defaultConfigPath}";
+            RunWsl(cmd, onSuccess: () =>
+            {
+                MessageBox.Show("기본 설정이 저장되었습니다!");
+            });
         }
 
         private void LstPresets_SelectedIndexChanged(object sender, EventArgs e)
@@ -406,7 +482,9 @@ namespace DonkeyUi
             nudBatch.Value = p.Batch;
             trkBatch.Value = p.Batch;
             dgvConfig.Rows.Clear();
-            foreach (var entry in p.ConfigRows) dgvConfig.Rows.Add(false, entry.Key, entry.Value);
+            foreach (var entry in p.ConfigRows)
+                dgvConfig.Rows.Add(false, entry.Key, entry.Value);
+
         }
 
         private void SavePresetsToDisk()
@@ -434,6 +512,12 @@ namespace DonkeyUi
             if (_training) return;
             if (cmbModelType.SelectedIndex == -1) { MessageBox.Show("모델 유형을 선택하세요."); return; }
 
+            if (cmbModelType.SelectedIndex == -1)
+            {
+                MessageBox.Show("모델 유형을 선택하세요 .");
+                return;
+            }
+
             string modelName = txtModelName.Text.Trim();
             if (string.IsNullOrEmpty(modelName)) modelName = "mypilot";
 
@@ -447,21 +531,23 @@ namespace DonkeyUi
             string mycarPath = "~/mycar";
             string lowerTub = tubArg.ToLower();
             int dataIdx = lowerTub.IndexOf("/data");
-            if (dataIdx > 0) mycarPath = tubArg.Substring(0, dataIdx);
-            else if (tubArg == "./data" || tubArg == "data" || string.IsNullOrEmpty(_tubPath)) mycarPath = ".";
-            else mycarPath = tubArg;
+            if (dataIdx > 0)
+            {
+                mycarPath = tubArg.Substring(0, dataIdx);
+            }
+            // 상대경로(./data)나 빈 값일 경우 현재 디렉토리를 기준으로 잡습니다 .
+            else if (tubArg == "./data" || tubArg == "data" || string.IsNullOrEmpty(_tubPath))
+            {
+                mycarPath = ".";
+            }
+            else
+            {
+                mycarPath = tubArg;
+            }
 
             string myconfigPath = mycarPath + "/myconfig.py";
             string updateScriptPath = mycarPath + "/update_config.py";
             string modelType = (cmbModelType.SelectedItem?.ToString() ?? "linear").Split(' ')[0];
-
-            // ★ 학습 메타 정보 저장 (중단 시 DB 기록용)
-            _currentModelName = modelName;
-            _currentModelType = modelType;
-            _currentTubArg = tubArg;
-            _currentComment = comment;
-            _currentMycarPath = mycarPath;
-            _currentStartTime = startTime;
 
             string transferArg = "";
             string tp = txtTransferPath.Text.Trim();
@@ -506,13 +592,15 @@ namespace DonkeyUi
                 $"--tubs {tubArg} --model ./models/{modelName}.h5 --type {modelType} --comment=\"{comment}\"" +
                 $"{transferArg}";
 
+            // ★ manifest.json deleted_indexes에 필터 반영
+            ApplyFilterToManifest(tubArg);
+
             // ★ 학습 상태 초기화
             _currentEpoch = 0;
             _totalEpoch = epoch;
             _lastLoss = double.NaN;
             _lastValLoss = double.NaN;
-            _prevLoss = double.NaN;
-            _prevValLoss = double.NaN;
+            
             _lossHistory.Clear();
             _valLossHistory.Clear();
             _n0LossHistory.Clear();
@@ -520,13 +608,14 @@ namespace DonkeyUi
             _n1LossHistory.Clear();
             _valN1LossHistory.Clear();
             _earlyStopDetected = false;
+            _bestLoss = double.NaN;
+            _bestValLoss = double.NaN;
 
             // ★ 라벨 초기화
             UpdateTrainStatusLabels();
 
             // ★ 실시간 그래프 창 열기
             OpenLiveGraphForm(modelName, epoch);
-
             SetTrainingState(true);
             rtbLog.Clear();
             AppendLog($"[{startTime}] 학습 시작: {modelName}");
@@ -556,6 +645,8 @@ namespace DonkeyUi
 
                 this.BeginInvoke((Action)(() =>
                 {
+                    // ★ 학습 완료/실패 시 manifest.json 복구
+                    RestoreManifest();
                     SetTrainingState(false);
 
                     if (exitCode == 0)
@@ -613,7 +704,58 @@ namespace DonkeyUi
             }
             catch { }
             AppendLog("⚠ 학습이 중단되었습니다.");
+            // ★ 중단 시 manifest.json 복구
+            RestoreManifest();
             SetTrainingState(false);
+        }
+
+        private void SetTrainingState(bool isTraining)
+        {
+            _training = isTraining;
+
+            if (this.InvokeRequired)
+            {
+                this.Invoke((Action)(() => SetTrainingState(isTraining)));
+                // 그래프/설정 버튼 제어
+                if (isTraining)
+                {
+                    btnShowGraph.Enabled = false;
+                    btnShowConfig.Enabled = false;
+                }
+                else
+                {
+                    bool hasChecked = GetCheckedRow() != null;
+                    btnShowGraph.Enabled = hasChecked;
+                    btnShowConfig.Enabled = hasChecked;
+                }
+
+                // 라벨 색상 변경
+                var idleColor = Color.FromArgb(150, 150, 150);
+                if (!isTraining)
+                {
+                    if (lblEpochStatus != null) lblEpochStatus.ForeColor = idleColor;
+                    if (lblLossStatus != null) lblLossStatus.ForeColor = idleColor;
+                    if (lblValLossStatus != null) lblValLossStatus.ForeColor = idleColor;
+                }
+                else
+                {
+                    if (lblEpochStatus != null) lblEpochStatus.ForeColor = SystemColors.ControlText;
+                    if (lblLossStatus != null) lblLossStatus.ForeColor = SystemColors.ControlText;
+                    if (lblValLossStatus != null) lblValLossStatus.ForeColor = SystemColors.ControlText;
+                }
+                return;
+            }
+
+            btnTrain.Enabled = !isTraining;
+            btnCancelTrain.Enabled = isTraining;
+            btnTrain.Text = isTraining ? "학습 중..." : "▶ 학습 시작";
+            btnTrain.BackColor = isTraining
+                ? Color.FromArgb(59, 109, 17)
+                : Color.FromArgb(24, 95, 165);
+            lblTrainStatus.Text = isTraining ? "학습 진행 중..." : "대기 중";
+            lblTrainStatus.ForeColor = isTraining
+                ? Color.FromArgb(90, 200, 170)
+                : Color.FromArgb(150, 150, 150);
         }
 
         // ════════════════════════════════════════════════════════════
@@ -621,17 +763,20 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         private void SaveTrainRecordToDb(bool completed)
         {
-            if (string.IsNullOrEmpty(_currentModelName) || string.IsNullOrEmpty(_currentMycarPath)) return;
 
-            // 현재까지의 loss 히스토리를 JSON으로 직렬화
-            string lossJson = "[" + string.Join(",", _lossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
-            string valLossJson = "[" + string.Join(",", _valLossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
-            string n0Json = "[" + string.Join(",", _n0LossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
-            string valN0Json = "[" + string.Join(",", _valN0LossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
-            string n1Json = "[" + string.Join(",", _n1LossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
-            string valN1Json = "[" + string.Join(",", _valN1LossHistory.Select(v => v.ToString("F6", System.Globalization.CultureInfo.InvariantCulture))) + "]";
 
-            string tempScript = Path.Combine(Path.GetTempPath(), "save_train_record.py");
+            var row = GetCheckedRow();
+            if (row == null) return;
+            string name = row.Cells[1].Value?.ToString();
+            string baseName = Path.GetFileNameWithoutExtension(name);
+
+            string mycarPath = "~/mycar";
+            string lowerTub = _tubPath.ToLower();
+            int dataIdx = lowerTub.IndexOf("/data");
+            if (dataIdx > 0)
+                mycarPath = _tubPath.Substring(0, dataIdx);
+
+            string tempScript = Path.Combine(Path.GetTempPath(), "show_graph.py");
             File.WriteAllText(tempScript,
                 $"import json, os\n" +
                 $"db_path = '{_currentMycarPath}/models/database.json'\n" +
@@ -719,6 +864,15 @@ namespace DonkeyUi
             // ShowHistoryChart와 동일한 3개 그래프 구조
             var livePanel = new TableLayoutPanel
             {
+                new[] { "loss", "val_loss" },
+                new[] { "n_outputs0_loss", "val_n_outputs0_loss" },
+                new[] { "n_outputs1_loss", "val_n_outputs1_loss" }
+            };
+
+            int validGroups = groups.Count(g => g.Any(key => history.ContainsKey(key)));
+
+            var panel = new TableLayoutPanel
+            {
                 Dock = DockStyle.Fill,
                 RowCount = 3,
                 ColumnCount = 1,
@@ -730,50 +884,79 @@ namespace DonkeyUi
             var chartTitles = new[] { "전체 오차 (loss)", "핸들 방향 오차 (n_outputs0)", "속도 조절 오차 (n_outputs1)" };
             var chartColors = new[]
             {
+                "전체 오차 (loss)",
+                "핸들 방향 오차 (steering / n_outputs0)",
+                "속도 조절 오차 (throttle / n_outputs1)"
+            };
+
+            var colors = new[]
+            {
                 new[] { Color.Cyan, Color.OrangeRed },
                 new[] { Color.Yellow, Color.DodgerBlue },
                 new[] { Color.LimeGreen, Color.Orange }
             };
             var seriesNames = new[]
             {
-                new[] { "loss", "val_loss" },
-                new[] { "n_outputs0_loss", "val_n_outputs0_loss" },
-                new[] { "n_outputs1_loss", "val_n_outputs1_loss" }
+                { "loss",                  "학습 데이터 오차 (loss)" },
+                { "val_loss",              "미학습 데이터 오차 (val_loss)" },
+                { "n_outputs0_loss",       "핸들 학습 오차 (n_outputs0_loss)" },
+                { "val_n_outputs0_loss",   "핸들 미학습 오차 (val_n_outputs0_loss)" },
+                { "n_outputs1_loss",       "속도 학습 오차 (n_outputs1_loss)" },
+                { "val_n_outputs1_loss",   "속도 미학습 오차 (val_n_outputs1_loss)" }
             };
             var legendLabels = new[]
             {
-                new[] { "훈련 손실 (loss)", "검증 손실 (val_loss)" },
-                new[] { "핸들 훈련 오차", "핸들 검증 오차" },
-                new[] { "속도 훈련 오차", "속도 검증 오차" }
-            };
+                if (!groups[g].Any(key => history.ContainsKey(key))) continue;
+                var chart = new System.Windows.Forms.DataVisualization.Charting.Chart
+                {
+                    Dock = DockStyle.Fill,
+                    BackColor = Color.FromArgb(30, 30, 30)
+                };
 
-            // _liveChart는 전체 오차(0번) 차트를 참조 (업데이트용)
-            var liveCharts = new Chart[3];
-            for (int g = 0; g < 3; g++)
-            {
-                var chart = new Chart { Dock = DockStyle.Fill, BackColor = Color.FromArgb(30, 30, 30) };
-                var ca = new ChartArea
+                var chartArea = new System.Windows.Forms.DataVisualization.Charting.ChartArea
                 {
                     BackColor = Color.FromArgb(20, 20, 20),
                     AxisX = { LabelStyle = { ForeColor = Color.Gray }, LineColor = Color.Gray, MajorGrid = { LineColor = Color.FromArgb(50, 50, 50) } },
                     AxisY = { LabelStyle = { ForeColor = Color.Gray }, LineColor = Color.Gray, MajorGrid = { LineColor = Color.FromArgb(50, 50, 50) } }
                 };
-                chart.ChartAreas.Add(ca);
-                chart.Titles.Add(new Title { Text = chartTitles[g], ForeColor = Color.LightGray, Font = new Font("맑은 고딕", 9F, FontStyle.Bold) });
-                chart.Legends.Add(new Legend { BackColor = Color.FromArgb(30, 30, 30), ForeColor = Color.LightGray });
-                for (int s = 0; s < 2; s++)
+                chart.ChartAreas.Add(chartArea);
+
+                var title = new System.Windows.Forms.DataVisualization.Charting.Title
                 {
-                    chart.Series.Add(new Series
+                    Text = titles[g],
+                    ForeColor = Color.LightGray,
+                    Font = new Font("맑은 고딕", 9F, FontStyle.Bold)
+                };
+                chart.Titles.Add(title);
+
+                var legend = new System.Windows.Forms.DataVisualization.Charting.Legend
+                {
+                    BackColor = Color.FromArgb(30, 30, 30),
+                    ForeColor = Color.LightGray
+                };
+                chart.Legends.Add(legend);
+
+                for (int s = 0; s < groups[g].Length; s++)
+                {
+                    string key = groups[g][s];
+                    if (!history.ContainsKey(key)) continue;
+
+                    var series = new System.Windows.Forms.DataVisualization.Charting.Series
                     {
-                        Name = seriesNames[g][s],
-                        Color = chartColors[g][s],
-                        ChartType = SeriesChartType.Line,
+                        Name = key,
+                        Color = colors[g][s],
+                        ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line,
                         BorderWidth = 2,
-                        LegendText = legendLabels[g][s]
-                    });
+                        LegendText = legendTexts.ContainsKey(key) ? legendTexts[key] : key
+                    };
+
+                    for (int i = 0; i < history[key].Count; i++)
+                        series.Points.AddXY(i + 1, history[key][i]);
+
+                    chart.Series.Add(series);
                 }
-                liveCharts[g] = chart;
-                livePanel.Controls.Add(chart, 0, g);
+
+                panel.Controls.Add(chart, 0, g);
             }
             _liveChart = liveCharts[0]; // 업데이트 참조용
             // 나머지 차트들도 업데이트할 수 있도록 폼에 태그로 저장
@@ -789,13 +972,12 @@ namespace DonkeyUi
                 FlatStyle = FlatStyle.Flat
             };
             btnClose.FlatAppearance.BorderSize = 0;
-            btnClose.Click += (s, ev) => _liveGraphForm.Close();
+            btnClose.Click += (s, e) => form.Close();
 
-            _liveGraphForm.Size = new Size(800, 750);
-            _liveGraphForm.Controls.Add(livePanel);
-            _liveGraphForm.Controls.Add(lblDesc);
-            _liveGraphForm.Controls.Add(btnClose);
-            _liveGraphForm.Show();
+            form.Controls.Add(panel);
+            form.Controls.Add(lblDesc);
+            form.Controls.Add(btnClose);
+            form.Show();
         }
 
         // ★ 에포크 완료 시 실시간 그래프 업데이트
@@ -835,59 +1017,92 @@ namespace DonkeyUi
                 // 2번: 속도 조절 오차
                 if (_n1LossHistory.Count > 0)
                 {
-                    charts[2].Series["n_outputs1_loss"].Points.Clear();
-                    for (int i = 0; i < _n1LossHistory.Count; i++)
-                        charts[2].Series["n_outputs1_loss"].Points.AddXY(i + 1, _n1LossHistory[i]);
-                    charts[2].Series["val_n_outputs1_loss"].Points.Clear();
-                    for (int i = 0; i < _valN1LossHistory.Count; i++)
-                        charts[2].Series["val_n_outputs1_loss"].Points.AddXY(i + 1, _valN1LossHistory[i]);
+                    Text = $"학습 설정 — {baseName}",
+                    Size = new Size(700, 600),
+                    StartPosition = FormStartPosition.CenterParent,
+                    BackColor = Color.FromArgb(30, 30, 30)
+                };
+
+                var dgv = new DataGridView
+                {
+                    Dock = DockStyle.Fill,
+                    BackgroundColor = Color.FromArgb(30, 30, 30),
+                    BorderStyle = BorderStyle.None,
+                    ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
+                    ColumnHeadersDefaultCellStyle = { BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(180, 180, 180), Font = new Font("맑은 고딕", 9F, FontStyle.Bold) },
+                    DefaultCellStyle = { BackColor = Color.FromArgb(40, 40, 40), ForeColor = Color.FromArgb(220, 220, 220), Font = new Font("Consolas", 9F), SelectionBackColor = Color.FromArgb(24, 95, 165), SelectionForeColor = Color.White },
+                    EnableHeadersVisualStyles = false,
+                    GridColor = Color.FromArgb(60, 60, 60),
+                    RowHeadersVisible = false,
+                    AllowUserToAddRows = false,
+                    ReadOnly = true,
+                    SelectionMode = DataGridViewSelectionMode.CellSelect,
+                    AllowUserToResizeRows = false,
+                    RowTemplate = { Height = 24 },
+                    CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                    ColumnHeadersHeight = 28
+                };
+
+                dgv.Columns.Add("colKey", "KEY");
+                dgv.Columns.Add("colValue", "VALUE");
+                dgv.Columns["colKey"].Width = 280;
+                dgv.Columns["colValue"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                dgv.AllowUserToResizeRows = false;
+                dgv.RowTemplate.Height = 24;
+
+                foreach (var line in output.Split('\n'))
+                {
+                    int idx = line.IndexOf(':');
+                    if (idx < 0) continue;
+                    string k = line.Substring(0, idx).Trim();
+                    string v = line.Substring(idx + 1).Trim();
+                    if (!string.IsNullOrEmpty(k))
+                        dgv.Rows.Add(k, v);
                 }
-                if (charts[2].Titles.Count > 0)
-                    charts[2].Titles[0].Text = $"속도 조절 오차 (n_outputs1) — {_currentEpoch} / {_totalEpoch} 에포크";
-            }
-            catch { }
+
+                var btnClose = new Button
+                {
+                    Text = "닫기",
+                    Dock = DockStyle.Bottom,
+                    Height = 36,
+                    BackColor = Color.FromArgb(50, 50, 50),
+                    ForeColor = Color.FromArgb(200, 200, 200),
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnClose.FlatAppearance.BorderSize = 0;
+                btnClose.Click += (s2, e2) => form.Close();
+
+                form.Controls.Add(dgv);
+                form.Controls.Add(btnClose);
+                form.Show();
+            });
         }
 
-        private void SetTrainingState(bool isTraining)
+        private void BtnDeletePilot_Click(object sender, EventArgs e)
         {
-            _training = isTraining;
-            if (this.InvokeRequired) { this.Invoke((Action)(() => SetTrainingState(isTraining))); return; }
+            if (!chkEnableDelete.Checked) return;
 
-            btnTrain.Enabled = !isTraining;
-            btnCancelTrain.Enabled = isTraining;
-            btnTrain.Text = isTraining ? "학습 중..." : "▶ 학습 시작";
-            btnTrain.BackColor = isTraining ? Color.FromArgb(59, 109, 17) : Color.FromArgb(24, 95, 165);
-            lblTrainStatus.Text = isTraining ? "학습 진행 중..." : "대기 중";
-            lblTrainStatus.ForeColor = isTraining ? Color.FromArgb(90, 200, 170) : Color.FromArgb(150, 150, 150);
+            var row = GetCheckedRow();
+            if (row == null) return;
 
-            // ★ 학습 중에는 그래프/설정 보기 비활성화 (불완전한 데이터 방지)
-            // 학습 완료 후에는 체크된 행이 있을 때만 활성화
-            if (isTraining)
-            {
-                btnShowGraph.Enabled = false;
-                btnShowConfig.Enabled = false;
-            }
-            else
-            {
-                bool hasChecked = GetCheckedRow() != null;
-                btnShowGraph.Enabled = hasChecked;
-                btnShowConfig.Enabled = hasChecked;
-            }
+            string name = row.Cells[1].Value?.ToString();
+            string baseName = Path.GetFileNameWithoutExtension(name);
 
-            // 학습 상태에 따라 라벨 색상 변경
-            var idleColor = Color.FromArgb(150, 150, 150);
-            if (!isTraining)
+            if (MessageBox.Show($"'{name}' 파일을 삭제할까요?\n이 작업은 되돌릴 수 없습니다.",
+                    "모델 삭제 확인", MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning) != DialogResult.Yes) return;
+
+            string mycarPath = "~/mycar";
+            string lowerTub = _tubPath.ToLower();
+            int dataIdx = lowerTub.IndexOf("/data");
+            if (dataIdx > 0)
+                mycarPath = _tubPath.Substring(0, dataIdx);
+
+            RunWsl($"rm -rf {mycarPath}/models/{baseName}*", onSuccess: () =>
             {
-                if (lblEpochStatus != null) lblEpochStatus.ForeColor = idleColor;
-                if (lblLossStatus != null) lblLossStatus.ForeColor = idleColor;
-                if (lblValLossStatus != null) lblValLossStatus.ForeColor = idleColor;
-            }
-            else
-            {
-                if (lblEpochStatus != null) lblEpochStatus.ForeColor = SystemColors.ControlText;
-                if (lblLossStatus != null) lblLossStatus.ForeColor = SystemColors.ControlText;
-                if (lblValLossStatus != null) lblValLossStatus.ForeColor = SystemColors.ControlText;
-            }
+                dgvTrains.Rows.Remove(row);
+                chkEnableDelete.Checked = false;
+            });
         }
 
         // ════════════════════════════════════════════════════════════
@@ -904,7 +1119,7 @@ namespace DonkeyUi
             rtbLog.SelectionStart = rtbLog.TextLength;
             rtbLog.ScrollToCaret();
 
-            // ★ 에포크 시작 파싱: "Epoch 3/32"
+            // ★ 에포크 시작 파싱
             var epochMatch = Regex.Match(clean, @"Epoch\s+(\d+)/(\d+)");
             if (epochMatch.Success)
             {
@@ -918,15 +1133,13 @@ namespace DonkeyUi
             // "Epoch N: val_loss did not improve" 패턴
             if (Regex.IsMatch(clean, @"Epoch\s+\d+.*val_loss did not improve"))
             {
-                // patience 카운트는 별도 추적 없이 학습 완료 시 조기 종료 여부만 표시
                 _earlyStopDetected = true;
-            }
             if (Regex.IsMatch(clean, @"Epoch\s+\d+.*val_loss improved"))
             {
-                _earlyStopDetected = false; // 개선되면 리셋
+                _earlyStopDetected = false;
             }
 
-            // ★ 에포크 완료 파싱: "128/128 [====] - loss: X - n_outputs0_loss: X - n_outputs1_loss: X - val_loss: X ..."
+            // ★ 에포크 완료 파싱: "128/128 [====] - loss: X - val_loss: X ..."
             var epochEndMatch = Regex.Match(clean, @"^\s*\d+/\d+\s*\[=+\].*?\bloss:\s*([\d.eE+\-]+)");
             if (epochEndMatch.Success && clean.Contains("val_loss:"))
             {
@@ -946,10 +1159,10 @@ namespace DonkeyUi
 
                 if (!double.IsNaN(newLoss) && !double.IsNaN(newValLoss))
                 {
-                    _prevLoss = _lastLoss;
-                    _prevValLoss = _lastValLoss;
                     _lastLoss = newLoss;
                     _lastValLoss = newValLoss;
+                    if (double.IsNaN(_bestLoss) || newLoss < _bestLoss) _bestLoss = newLoss;
+                    if (double.IsNaN(_bestValLoss) || newValLoss < _bestValLoss) _bestValLoss = newValLoss;
 
                     _lossHistory.Add(newLoss);
                     _valLossHistory.Add(newValLoss);
@@ -964,16 +1177,14 @@ namespace DonkeyUi
                 }
             }
 
-            // ★ 배치 진행 중 loss 파싱 (에포크 진행률 표시용)
+            // ★ 배치 진행 중 표시
             var batchMatch = Regex.Match(clean, @"^\s*(\d+)/(\d+)\s*\[.*\].*loss:\s*([\d.]+)");
             if (batchMatch.Success && !epochEndMatch.Success)
             {
                 // 배치 진행 중에는 loss만 임시로 표시 (val_loss는 에포크 완료 시에만 나옴)
                 int curBatch = int.Parse(batchMatch.Groups[1].Value);
                 int totalBatch = int.Parse(batchMatch.Groups[2].Value);
-                double curLoss = double.Parse(batchMatch.Groups[3].Value, System.Globalization.CultureInfo.InvariantCulture);
 
-                // 배치 진행 중에는 에포크 상태만 업데이트 (loss는 완료 후 확정)
                 if (lblEpochStatus != null)
                     lblEpochStatus.Text = $"에포크: {_currentEpoch} / {_totalEpoch}  ({curBatch}/{totalBatch} 배치)";
             }
@@ -1104,14 +1315,25 @@ namespace DonkeyUi
             var panel = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = validGroups, ColumnCount = 1, BackColor = Color.FromArgb(20, 20, 20) };
             for (int i = 0; i < validGroups; i++) panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / validGroups));
 
-            var titles = new[] { "전체 오차 (loss)", "핸들 방향 오차 (steering / n_outputs0)", "속도 조절 오차 (throttle / n_outputs1)" };
-            var colors = new[] { new[] { Color.Cyan, Color.OrangeRed }, new[] { Color.Yellow, Color.DodgerBlue }, new[] { Color.LimeGreen, Color.Orange } };
-            var legendTexts = new Dictionary<string, string>
+            var chartTitles = new[] { "전체 오차 (loss)", "핸들 방향 오차 (n_outputs0)", "속도 조절 오차 (n_outputs1)" };
+            var chartColors = new[]
             {
-                { "loss", "훈련 손실 (loss)" }, { "val_loss", "검증 손실 (val_loss)" },
-                { "n_outputs0_loss", "핸들 훈련 오차" }, { "val_n_outputs0_loss", "핸들 검증 오차" },
-                { "n_outputs1_loss", "속도 훈련 오차" }, { "val_n_outputs1_loss", "속도 검증 오차" }
-            };
+        new[] { Color.Cyan,    Color.OrangeRed },
+        new[] { Color.Yellow,  Color.DodgerBlue },
+        new[] { Color.LimeGreen, Color.Orange }
+    };
+            var seriesNames = new[]
+            {
+        new[] { "loss",          "val_loss" },
+        new[] { "n_outputs0_loss", "val_n_outputs0_loss" },
+        new[] { "n_outputs1_loss", "val_n_outputs1_loss" }
+    };
+            var legendLabels = new[]
+            {
+        new[] { "훈련 손실 (loss)",   "검증 손실 (val_loss)" },
+        new[] { "핸들 훈련 오차",      "핸들 검증 오차" },
+        new[] { "속도 훈련 오차",      "속도 검증 오차" }
+    };
 
             for (int g = 0; g < groups.Length; g++)
             {
@@ -1123,11 +1345,19 @@ namespace DonkeyUi
                     AxisX = { LabelStyle = { ForeColor = Color.Gray }, LineColor = Color.Gray, MajorGrid = { LineColor = Color.FromArgb(50, 50, 50) } },
                     AxisY = { LabelStyle = { ForeColor = Color.Gray }, LineColor = Color.Gray, MajorGrid = { LineColor = Color.FromArgb(50, 50, 50) } }
                 };
-                chart.ChartAreas.Add(chartArea);
-                chart.Titles.Add(new Title { Text = titles[g], ForeColor = Color.LightGray, Font = new Font("맑은 고딕", 9F, FontStyle.Bold) });
-                chart.Legends.Add(new Legend { BackColor = Color.FromArgb(30, 30, 30), ForeColor = Color.LightGray });
-
-                for (int s = 0; s < groups[g].Length; s++)
+                chart.ChartAreas.Add(ca);
+                chart.Titles.Add(new Title
+                {
+                    Text = chartTitles[g],
+                    ForeColor = Color.LightGray,
+                    Font = new Font("맑은 고딕", 9F, FontStyle.Bold)
+                });
+                chart.Legends.Add(new Legend
+                {
+                    BackColor = Color.FromArgb(30, 30, 30),
+                    ForeColor = Color.LightGray
+                });
+                for (int s = 0; s < 2; s++)
                 {
                     string key = groups[g][s];
                     if (!history.ContainsKey(key)) continue;
@@ -1147,57 +1377,48 @@ namespace DonkeyUi
 
             var btnClose = new Button { Text = "닫기", Dock = DockStyle.Bottom, Height = 36, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(200, 200, 200), FlatStyle = FlatStyle.Flat };
             btnClose.FlatAppearance.BorderSize = 0;
-            btnClose.Click += (s, e) => form.Close();
-            form.Controls.Add(panel);
-            form.Controls.Add(lblDesc);
-            form.Controls.Add(btnClose);
-            form.Show();
+            btnClose.Click += (s, ev) => _liveGraphForm.Close();
+
+            _liveGraphForm.Controls.Add(livePanel);
+            _liveGraphForm.Controls.Add(lblDesc);
+            _liveGraphForm.Controls.Add(btnClose);
+            _liveGraphForm.Show();
         }
 
         private void BtnShowConfig_Click(object sender, EventArgs e)
         {
-            var row = GetCheckedRow();
-            if (row == null) return;
-            string name = row.Cells[1].Value?.ToString();
-            string baseName = Path.GetFileNameWithoutExtension(name);
+            if (_liveChart == null || _liveGraphForm == null || _liveGraphForm.IsDisposed) return;
 
-            string mycarPath = "~/mycar";
-            string lowerTub = _tubPath.ToLower();
-            int dataIdx = lowerTub.IndexOf("/data");
-            if (dataIdx > 0) mycarPath = _tubPath.Substring(0, dataIdx);
-
-            string tempScript = Path.Combine(Path.GetTempPath(), "show_config.py");
-            File.WriteAllText(tempScript,
-                $"import json\ndata=json.load(open('{mycarPath}/models/database.json'))\nm=[x for x in data if x.get('Name')=='{baseName}']\nif m:\n    cfg=m[-1].get('Config',{{}})\n    for k,v in cfg.items():\n        print(f'{{k}}: {{v}}')\nelse:\n    print('설정 없음')\n",
-                new System.Text.UTF8Encoding(false)
-            );
-
-            string wslScript = ConvertToWslPath(tempScript);
-            RunWslWithOutput($"python3 {wslScript}", output =>
+            try
             {
-                var form = new Form { Text = $"학습 설정 — {baseName}", Size = new Size(700, 600), StartPosition = FormStartPosition.CenterParent, BackColor = Color.FromArgb(30, 30, 30) };
-                var dgv = new DataGridView
+                var charts = _liveGraphForm.Tag as Chart[];
+                if (charts == null) return;
+
+                // 0번: 전체 오차
+                charts[0].Series["loss"].Points.Clear();
+                for (int i = 0; i < _lossHistory.Count; i++)
+                    charts[0].Series["loss"].Points.AddXY(i + 1, _lossHistory[i]);
+                charts[0].Series["val_loss"].Points.Clear();
+                for (int i = 0; i < _valLossHistory.Count; i++)
+                    charts[0].Series["val_loss"].Points.AddXY(i + 1, _valLossHistory[i]);
+                if (charts[0].Titles.Count > 0)
+                    charts[0].Titles[0].Text = $"전체 오차 (loss) — {_currentEpoch} / {_totalEpoch} 에포크";
+
+                // 1번: 핸들 방향 오차
+                if (_n0LossHistory.Count > 0)
                 {
-                    Dock = DockStyle.Fill,
-                    BackgroundColor = Color.FromArgb(30, 30, 30),
-                    BorderStyle = BorderStyle.None,
-                    ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
-                    ColumnHeadersDefaultCellStyle = { BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(180, 180, 180), Font = new Font("맑은 고딕", 9F, FontStyle.Bold) },
-                    DefaultCellStyle = { BackColor = Color.FromArgb(40, 40, 40), ForeColor = Color.FromArgb(220, 220, 220), Font = new Font("Consolas", 9F), SelectionBackColor = Color.FromArgb(24, 95, 165), SelectionForeColor = Color.White },
-                    EnableHeadersVisualStyles = false,
-                    GridColor = Color.FromArgb(60, 60, 60),
-                    RowHeadersVisible = false,
-                    AllowUserToAddRows = false,
-                    ReadOnly = true,
-                    SelectionMode = DataGridViewSelectionMode.CellSelect,
-                    AllowUserToResizeRows = false,
-                    RowTemplate = { Height = 24 },
-                    CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
-                    ColumnHeadersHeight = 28
-                };
-                dgv.Columns.Add("colKey", "KEY"); dgv.Columns.Add("colValue", "VALUE");
-                dgv.Columns["colKey"].Width = 280; dgv.Columns["colValue"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                foreach (var line in output.Split('\n'))
+                    charts[1].Series["n_outputs0_loss"].Points.Clear();
+                    for (int i = 0; i < _n0LossHistory.Count; i++)
+                        charts[1].Series["n_outputs0_loss"].Points.AddXY(i + 1, _n0LossHistory[i]);
+                    charts[1].Series["val_n_outputs0_loss"].Points.Clear();
+                    for (int i = 0; i < _valN0LossHistory.Count; i++)
+                        charts[1].Series["val_n_outputs0_loss"].Points.AddXY(i + 1, _valN0LossHistory[i]);
+                }
+                if (charts[1].Titles.Count > 0)
+                    charts[1].Titles[0].Text = $"핸들 방향 오차 (n_outputs0) — {_currentEpoch} / {_totalEpoch} 에포크";
+
+                // 2번: 속도 조절 오차
+                if (_n1LossHistory.Count > 0)
                 {
                     int idx = line.IndexOf(':');
                     if (idx < 0) continue;
@@ -1214,30 +1435,48 @@ namespace DonkeyUi
 
         private void BtnDeletePilot_Click(object sender, EventArgs e)
         {
-            if (!chkEnableDelete.Checked) return;
-            var row = GetCheckedRow();
-            if (row == null) return;
-            string name = row.Cells[1].Value?.ToString();
-            string baseName = Path.GetFileNameWithoutExtension(name);
-            if (MessageBox.Show($"'{name}' 파일을 삭제할까요?\n이 작업은 되돌릴 수 없습니다.", "모델 삭제 확인", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
+            if (lblEpochStatus == null || lblLossStatus == null || lblValLossStatus == null) return;
 
-            string mycarPath = "~/mycar";
-            string lowerTub = _tubPath.ToLower();
-            int dataIdx = lowerTub.IndexOf("/data");
-            if (dataIdx > 0) mycarPath = _tubPath.Substring(0, dataIdx);
-            RunWsl($"rm -rf {mycarPath}/models/{baseName}*", onSuccess: () => { dgvTrains.Rows.Remove(row); chkEnableDelete.Checked = false; });
-        }
+            lblEpochStatus.Text = $"에포크: {_currentEpoch} / {_totalEpoch}";
 
-        // ════════════════════════════════════════════════════════════
-        // 유틸리티
-        // ════════════════════════════════════════════════════════════
-        private string ConvertToWslPath(string path)
-        {
-            path = path.Trim();
-            if (path.StartsWith("\\\\wsl.localhost\\"))
+            // 훈련 손실
+            if (double.IsNaN(_lastLoss))
             {
-                int nextSlash = path.IndexOf('\\', 16);
-                if (nextSlash != -1) return path.Substring(nextSlash).Replace("\\", "/");
+                lblLossStatus.Text = "훈련 손실: -";
+                lblLossStatus.ForeColor = SystemColors.ControlText;
+            }
+            else
+            {
+                string delta = "";
+                Color color = SystemColors.ControlText;
+                if (!double.IsNaN(_prevLoss))
+                {
+                    double diff = _lastLoss - _prevLoss;
+                    delta = diff != 0 ? $" ({diff:+0.0000;-0.0000})" : " (±0)";
+                    color = diff < 0 ? Color.Green : diff > 0 ? Color.Red : SystemColors.ControlText;
+                }
+                lblLossStatus.Text = $"훈련 손실: {_lastLoss:F4}{delta}";
+                lblLossStatus.ForeColor = color;
+            }
+
+            // 검증 손실
+            if (double.IsNaN(_lastValLoss))
+            {
+                lblValLossStatus.Text = "검증 손실: -";
+                lblValLossStatus.ForeColor = SystemColors.ControlText;
+            }
+            else
+            {
+                string delta = "";
+                Color color = SystemColors.ControlText;
+                if (!double.IsNaN(_prevValLoss))
+                {
+                    double diff = _lastValLoss - _prevValLoss;
+                    delta = diff != 0 ? $" ({diff:+0.0000;-0.0000})" : " (±0)";
+                    color = diff < 0 ? Color.Green : diff > 0 ? Color.Red : SystemColors.ControlText;
+                }
+                lblValLossStatus.Text = $"검증 손실: {_lastValLoss:F4}{delta}";
+                lblValLossStatus.ForeColor = color;
             }
             if (path.Length >= 2 && path[1] == ':')
                 return "/mnt/" + path[0].ToString().ToLower() + path[2..].Replace("\\", "/");
@@ -1326,16 +1565,7 @@ namespace DonkeyUi
                         {
                             string name = item.ContainsKey("Name") ? item["Name"].GetString() ?? "" : "";
                             string pilot = item.ContainsKey("Pilot") ? item["Pilot"].GetString() ?? "" : "";
-                            string rawType = item.ContainsKey("Type") ? item["Type"].GetString() ?? "" : "";
-                            var typeMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                            {
-                                {"KerasLinear","linear"},{"KerasCategorical","categorical"},
-                                {"KerasInferred","inferred"},{"KerasRNN","rnn"},
-                                {"KerasMemory","memory"},{"KerasBehavioral","behavior"},
-                                {"KerasLocalizer","localizer"},{"SquashedModelWithMemory","sq_mem"}
-                            };
-                            string baseType = rawType.Contains("-") ? rawType.Split('-')[0].Trim() : rawType;
-                            string type = typeMap.ContainsKey(baseType) ? typeMap[baseType] : rawType;
+                            string type = item.ContainsKey("Type") ? item["Type"].GetString() ?? "" : "";
                             string tubs = item.ContainsKey("Tubs") ? item["Tubs"].GetString() ?? "" : "";
                             string comment = item.ContainsKey("Comment") ? item["Comment"].GetString() ?? "" : "";
                             if (!string.IsNullOrEmpty(name)) dbDict[name] = (pilot, type, tubs, comment);
@@ -1352,8 +1582,7 @@ namespace DonkeyUi
 
             if (currentFiles.SequenceEqual(newFiles))
             {
-                // ★ 파일 목록이 같으면 Rows.Clear() 없이 DB 데이터만 업데이트
-                // Rows.Clear()하면 선택 상태가 초기화되어 체크박스가 맨 위로 점프하는 버그 발생
+                // 파일 목록 동일 → DB 데이터만 부분 업데이트 (체크박스 점프 버그 방지)
                 foreach (DataGridViewRow row in dgvTrains.Rows)
                 {
                     string name = row.Cells[1].Value?.ToString() ?? "";
@@ -1377,7 +1606,14 @@ namespace DonkeyUi
                 string baseName = Path.GetFileNameWithoutExtension(name);
                 var info = new FileInfo(file);
                 string pilot = "", type = "", tubs = "", comment = "";
-                if (dbDict.ContainsKey(baseName)) { pilot = dbDict[baseName].pilot; type = dbDict[baseName].type; tubs = dbDict[baseName].tubs; comment = dbDict[baseName].comment; }
+                if (dbDict.ContainsKey(baseName))
+                {
+                    pilot = dbDict[baseName].pilot;
+                    type = dbDict[baseName].type;
+                    tubs = dbDict[baseName].tubs;
+                    comment = dbDict[baseName].comment;
+                }
+
                 dgvTrains.Rows.Add(false, name, pilot, type, tubs, info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"), "", comment);
             }
         }
@@ -1396,6 +1632,8 @@ namespace DonkeyUi
             if (e.Index < 0) return;
             e.DrawBackground();
             e.Graphics.DrawString(((ListBox)sender).Items[e.Index].ToString(), e.Font, new SolidBrush(e.ForeColor), e.Bounds);
+
+            // 2. 각 항목 맨 아래에 은은한 회색 선을 한 줄 긋습니다.
             e.Graphics.DrawLine(Pens.LightGray, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
         }
     }
