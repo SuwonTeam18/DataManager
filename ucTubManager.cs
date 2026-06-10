@@ -410,27 +410,29 @@ namespace DonkeyUi
             try
             {
                 var txt = txtRecordNumber.Text ?? string.Empty;
-
                 var m = Regex.Match(txt, "(\\d+)");
                 if (!m.Success) return;
+                if (!int.TryParse(m.Groups[1].Value, out var num)) return;
+                if (num <= 0) num = 1;
 
-                if (!int.TryParse(m.Groups[1].Value, out var num))
-                    return;
+                // ★ 파일명에서 추출한 번호와 입력값을 매칭
+                for (int i = 0; i < _allImageFiles.Count; i++)
+                {
+                    var fileNum = ExtractFirstNumber(Path.GetFileName(_allImageFiles[i]));
+                    if (fileNum.HasValue && fileNum.Value == num)
+                    {
+                        trkRecord.Value = i;
+                        return;
+                    }
+                }
 
-                if (num <= 0)
-                    num = 1;
-
-                int originalIndex = num - 1;
-
-                if (originalIndex < 0 ||
-                    originalIndex >= _allImageFiles.Count)
-                    return;
-
-                trkRecord.Value = originalIndex;
+                // ★ 파일명 매칭 실패 시 기존 방식으로 fallback (1-based → 0-based)
+                int fallbackIndex = num - 1;
+                if (fallbackIndex < 0) fallbackIndex = 0;
+                if (fallbackIndex >= _allImageFiles.Count) fallbackIndex = _allImageFiles.Count - 1;
+                trkRecord.Value = fallbackIndex;
             }
-            catch
-            {
-            }
+            catch { }
         }
 
 
