@@ -47,6 +47,8 @@ namespace DonkeyUi
         private int _angleMinX = 20;
         private int _angleMaxX = 815;
         private List<string> _filteredImages = new();
+        public IReadOnlyList<string> GetDeletedImages() => _deletedImages;
+        public IReadOnlyList<string> GetFilteredImages() => _filteredImages;
         private bool _dragAngleMin = false;
         private bool _dragAngleMax = false;
         private int _selectStart = -1;

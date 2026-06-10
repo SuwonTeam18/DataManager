@@ -15,6 +15,9 @@ namespace DonkeyUi
         public Form1()
         {
             InitializeComponent();
+
+            _trainer.TubManagerRef = _tubManager;
+            
             // 프로그램 시작 시 데이터 관리 화면 표시
             LoadControl(_tubManager);
             // Ensure pilot arena timeline changes update the tub manager instance
