@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.ComponentModel;
@@ -58,7 +58,7 @@ namespace DonkeyUi
         }
 
         private readonly List<PilotSlot> _pilotSlots = new();
-        private PilotSlot _graphSlot = new PilotSlot(); 
+        private PilotSlot _graphSlot = new PilotSlot();
         private readonly List<PictureBox> _displayPictureBoxes = new();
         private readonly List<Label> _aiAngleLabels = new();
         private readonly List<Label> _angleErrorLabels = new();
@@ -352,8 +352,6 @@ namespace DonkeyUi
                 try { OnTimelineIndexChanged?.Invoke(_currentIndex); } catch { }
             }
 
-            // ── 재생 타이머 Tick ──
-            // ── 재생 타이머 Tick ──
             // ── 다른 탭에서 재생 시작 시 내 재생 강제 정지 ──
             OnPlaybackStateChanged += (sender, playing) =>
             {
@@ -694,6 +692,10 @@ namespace DonkeyUi
 
             if (!slot.PythonReady)
             {
+                // ★ _graphTaskCts.Cancel() 제거
+                // Python 서버 실패는 해당 슬롯만의 문제이므로
+                // 그래프 생성이나 다른 슬롯 순위 계산에 영향을 주면 안 됨
+
                 // ★ 슬롯0이 실패한 경우에만 그래프 생성 플래그 해제
                 if (_pilotSlots.Count > 0 && _pilotSlots[0] == slot)
                 {
@@ -844,16 +846,20 @@ namespace DonkeyUi
                     _pilotSlots[slotIdx].ModelType = sel;
                     ResetSlotServer(_pilotSlots[slotIdx]);
 
+                    // ★ 그래프 배열 초기화 제거
+                    // Array.Clear(_graphAiAngles, 0, _graphAiAngles.Length);  ← 삭제
+                    // Array.Clear(_graphAiThrottles, 0, _graphAiThrottles.Length);  ← 삭제
+                    // _graphDrawPanel?.Invalidate();  ← 삭제
+
                     if (!string.IsNullOrEmpty(_lastImagePath))
                         _ = RequestAndUpdateSlot(slotIdx, _lastImagePath, trkBrightness.Value, trkBlur.Value);
 
                     if (_graphImagePaths.Count > 0)
                     {
+                        // ★ 해당 슬롯의 순위 계산만 취소
                         _rankSlotCts[slotIdx]?.Cancel();
                         _rankSlotCts[slotIdx] = new CancellationTokenSource();
                         _ = FillRankCacheAsync(_graphImagePaths, _rankSlotCts[slotIdx].Token, _graphBrightness, _graphBlur, slotIdx);
-
-                        
                     }
                 };
 
@@ -879,18 +885,21 @@ namespace DonkeyUi
 
                     ResetSlotServer(_pilotSlots[slotIdx]);
 
+                    // ★ 그래프 배열 초기화 제거 — 그래프는 "그래프 생성" 버튼에서만 바꿈
+                    // Array.Clear(_graphAiAngles, 0, _graphAiAngles.Length);  ← 삭제
+                    // Array.Clear(_graphAiThrottles, 0, _graphAiThrottles.Length);  ← 삭제
+                    // _graphDrawPanel?.Invalidate();  ← 삭제
+
                     if (!string.IsNullOrEmpty(_lastImagePath))
                         _ = RequestAndUpdateSlot(slotIdx, _lastImagePath, trkBrightness.Value, trkBlur.Value);
 
-                    // ★ 모델 선택 시 자동으로 그래프+순위 계산 시작
+                    // ★ 순위 계산은 별도 그래프 배열(_rankAiAngles)로 진행
                     if (_graphImagePaths.Count > 0)
                     {
-                        // 해당 슬롯 순위 계산 취소 후 재시작
+                        // ★ 해당 슬롯의 순위 계산만 취소 — 다른 슬롯과 그래프 생성에 영향 없음
                         _rankSlotCts[slotIdx]?.Cancel();
                         _rankSlotCts[slotIdx] = new CancellationTokenSource();
                         _ = FillRankCacheAsync(_graphImagePaths, _rankSlotCts[slotIdx].Token, _graphBrightness, _graphBlur, slotIdx);
-
-                        
                     }
                 };
 
@@ -961,8 +970,8 @@ namespace DonkeyUi
             if (!this.IsDisposed && this.IsHandleCreated)
                 this.BeginInvoke(() =>
                 {
-                    // ★ 기존에 있던 slotIdx == 0 검사 후 그래프에 덮어씌우던 로직을 완전히 삭제했습니다.
-                    // 오직 파일럿 창 본인의 슬롯 이미지만 갱신하도록 만듭니다.
+                    // ★ _graphSlot 도입으로 RequestAndUpdateSlot에서 그래프 배열에 쓰는 로직 제거
+                    // 그래프 생성은 FillGraphFromDedicatedSlotAsync가 전담
                     if (imagePath == _lastImagePath)
                         RefreshSlot(slotIdx);
                 });
@@ -1157,7 +1166,6 @@ namespace DonkeyUi
                     _rankSlotCts[captured].Token, _graphBrightness, _graphBlur, captured);
             }
 
-            
             UpdateRecordIndexLabel();
         }
 
@@ -1414,6 +1422,9 @@ namespace DonkeyUi
                     _graphAiThrottles = new double?[validImages.Count];
                     _graphGenerating = false;  // ★ 진행 중이던 그래프 생성 상태 초기화
                     _graphDrawPanel?.Invalidate();  // 빈 그래프로 다시 그리기
+
+                    // ★ FillGraphFromSlotCacheAsync 자동 호출 제거
+                    // 사용자가 직접 "그래프 생성" 버튼을 눌러야 함
                 }
             }
 
@@ -1560,12 +1571,14 @@ namespace DonkeyUi
                 _graphDrawPanel?.Invalidate();
                 RefreshAllSlots();
 
+                // ★ 그래프 전용 CTS 사용 — 순위 계산에 영향 없음
                 _graphTaskCts?.Cancel();
                 _graphTaskCts = new CancellationTokenSource();
 
+                // ★ 그래프 생성 시작 플래그
                 _graphGenerating = true;
 
-                // ★ 옛날 함수 대신, 새로 만든 독립 슬롯 함수 호출!
+                // ★ 독립된 _graphSlot을 사용하는 전용 함수 호출
                 _ = FillGraphFromDedicatedSlotAsync(_graphImagePaths, _graphTaskCts.Token, _graphBrightness, _graphBlur);
             };
 
@@ -1916,7 +1929,7 @@ namespace DonkeyUi
         }
 
         // ════════════════════════════════════════════════════════════
-        // [파일1 추가] 슬롯 캐시로 그래프 전체 채우기
+        // [파일1 추가] 슬롯 캐시로 그래프 전체 채우기 (슬롯0 기반 — 하위 호환용)
         // ════════════════════════════════════════════════════════════
         private async Task FillGraphFromSlotCacheAsync(
             List<string> imagePaths,
@@ -2047,7 +2060,7 @@ namespace DonkeyUi
         }
 
         // ════════════════════════════════════════════════════════════
-        // [파일1 추가] 슬롯 캐시로 그래프 전체 채우기
+        // [파일1 추가] 순위 계산용 슬롯 캐시 채우기
         // ════════════════════════════════════════════════════════════
         private async Task FillRankCacheAsync(
             List<string> imagePaths,
@@ -2219,10 +2232,12 @@ namespace DonkeyUi
         {
             if (_graphHumanAngles.Count == 0) return;
 
-            // 완료된 슬롯의 오차 계산 후 히스토리에 저장
+            // ★ 완료된 슬롯의 모델만 캐시 기반으로 오차 계산 후 저장
             if (completedModelName != null && completedSlotIdx >= 0 && completedSlotIdx < _pilotSlots.Count)
             {
                 var slot = _pilotSlots[completedSlotIdx];
+
+                // 완료 시점에 모델이 바뀌었으면 저장하지 않음
                 if (slot.ModelFileName != completedModelName) return;
 
                 var angleErrs = new List<double>();
@@ -2236,18 +2251,18 @@ namespace DonkeyUi
 
                     if (slot.Cache.TryGetValue(ck, out var cached))
                     {
-                        angleErrs.Add(Math.Abs(cached.angle - _graphHumanAngles[i]));
-                        throttleErrs.Add(Math.Abs(cached.throttle - _graphHumanThrottles[i]));
+                        angleErrs.Add(Math.Abs(cached.angle - _graphHumanAngles[i]) * 100.0);
+                        throttleErrs.Add(Math.Abs(cached.throttle - _graphHumanThrottles[i]) * 100.0);
                     }
                 }
 
-                if (angleErrs.Count == 0) return;
+                if (angleErrs.Count == 0 && throttleErrs.Count == 0) return;
 
-                double avgAngle = angleErrs.Average() * 100.0;
-                double avgThrottle = throttleErrs.Count > 0 ? throttleErrs.Average() * 100.0 : 0.0;
+                double avgAngle = angleErrs.Count > 0 ? angleErrs.Average() : 0.0;
+                double avgThrottle = throttleErrs.Count > 0 ? throttleErrs.Average() : 0.0;
                 double avgOverall = (avgAngle + avgThrottle) / 2.0;
 
-                // 모델명으로 저장 (슬롯이 바뀌어도 기록 유지)
+                // ★ 완료된 모델명으로만 저장 — 슬롯이 바뀌어도 기존 기록 유지
                 _modelErrorHistory[completedModelName] = (avgOverall, avgAngle, avgThrottle);
 
                 // avgLbl 업데이트 (해당 슬롯의 평균 오차율 라벨)
@@ -2263,6 +2278,7 @@ namespace DonkeyUi
 
             if (_modelErrorHistory.Count == 0) return;
 
+            // ★ _modelErrorHistory 전체로 순위 계산 (슬롯 순회 없음)
             var rankData = _modelErrorHistory
                 .Select(kv => (modelName: kv.Key,
                                overall: kv.Value.overall,
@@ -2299,9 +2315,6 @@ namespace DonkeyUi
         }
 
         private Panel MakeSeparator() => new Panel { Width = 1, Height = 22, Margin = new Padding(2, 7, 2, 0), BackColor = Color.FromArgb(180, 180, 180) };
-
-        // 기존에 있던 소문자 btnTubPlot_Click과 대문자 BtnTubPlot_Click을 전부 지우고
-        // 이 코드 딱 하나만 남겨두세요!
 
         private void btnTubPlot_Click(object sender, EventArgs e)
         {
