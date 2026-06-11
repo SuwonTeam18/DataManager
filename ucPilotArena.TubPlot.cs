@@ -83,9 +83,9 @@ namespace DonkeyUi
             _graphDrawPanel?.Invalidate();
 
             // 백그라운드로 전체 그래프 채우기 시작
-            _bgTaskCts?.Cancel();
-            _bgTaskCts = new CancellationTokenSource();
-            _ = FillGraphFromSlotCacheAsync(_graphImagePaths, _bgTaskCts.Token, _graphBrightness, _graphBlur);
+            _graphTaskCts?.Cancel();
+            _graphTaskCts = new CancellationTokenSource();
+            _ = FillGraphFromSlotCacheAsync(_graphImagePaths, _graphTaskCts.Token, _graphBrightness, _graphBlur);
         }
 
         // ════════════════════════════════════════════════════════
