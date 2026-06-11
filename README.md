@@ -364,7 +364,7 @@ Config 파일의 세부 항목을 직접 수정할 수 있습니다.
 
 # 📈 3. 주행 분석
 
-<img width="1140" height="1165" alt="image" src="https://github.com/user-attachments/assets/c8629d3e-10da-4d91-a02b-09ab303537e8" />
+
 
 
 ## 개요
@@ -374,6 +374,8 @@ Config 파일의 세부 항목을 직접 수정할 수 있습니다.
 단순히 모델을 학습시키는 것에서 끝나는 것이 아니라, 실제로 어느 구간에서 오차가 발생했는지 시각적으로 확인할 수 있어 모델 성능 개선에 도움을 줍니다.
 
 ---
+
+<img width="1140" height="1165" alt="image" src="https://github.com/user-attachments/assets/c8629d3e-10da-4d91-a02b-09ab303537e8" />
 
 ### 📂 데이터 불러오기
 
