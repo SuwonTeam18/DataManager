@@ -905,7 +905,7 @@ namespace DonkeyUi
                 }
                 catch
                 {
-            }
+                }
             }
 
             // Build filename->index map and compute maximum _index
@@ -922,7 +922,7 @@ namespace DonkeyUi
                         if (!_maxCatalogIndex.HasValue || parsed.index.Value > _maxCatalogIndex.Value)
                             _maxCatalogIndex = parsed.index.Value;
                     }
-                
+
                     // try extract cam image filename
                     string? fname = null;
                     try
@@ -1400,11 +1400,11 @@ namespace DonkeyUi
                 List<string> filteredLines = new();
 
                 foreach (string line in lines)
-            {
+                {
                     string? fileName = null;
 
-                try
-                {
+                    try
+                    {
                         var doc = System.Text.Json.JsonDocument.Parse(line);
 
                         if (doc.RootElement.TryGetProperty(
@@ -1414,12 +1414,12 @@ namespace DonkeyUi
                             fileName =
                                 Path.GetFileName(
                                     p.GetString());
-                }
+                        }
                     }
                     catch
-                {
+                    {
                         continue;
-                }
+                    }
 
                     if (string.IsNullOrEmpty(fileName))
                         continue;
@@ -1441,7 +1441,7 @@ namespace DonkeyUi
                         continue;
 
                     filteredLines.Add(line);
-            }
+                }
 
                 string targetCatalog =
                     Path.Combine(
@@ -1451,9 +1451,9 @@ namespace DonkeyUi
                 File.WriteAllLines(
                     targetCatalog,
                     filteredLines);
-        }
-                MessageBox.Show(
-                 $"Filtered 저장 완료\n{saveFolder}");
+            }
+            MessageBox.Show(
+             $"Filtered 저장 완료\n{saveFolder}");
 
         }
 
@@ -1798,41 +1798,41 @@ namespace DonkeyUi
                     $"각도 {angleMin:F3} ~ {angleMax:F3}");
             }
             _filteredImages.Clear();
-          
+
 
             foreach (var img in _allImageFiles)
-      {
+            {
                 int idx = _allImageFiles.IndexOf(img);
 
-          if (idx >= _catalogLines.Count)
+                if (idx >= _catalogLines.Count)
                     continue;
 
-          var parsed = ParseCatalogLine(_catalogLines[idx]);
+                var parsed = ParseCatalogLine(_catalogLines[idx]);
 
-          bool speedMatch = false;
-          bool angleMatch = false;
+                bool speedMatch = false;
+                bool angleMatch = false;
 
-          foreach (var filter in _speedFilters)
-          {
-              if (parsed.throttle.HasValue &&
-                  parsed.throttle.Value >= filter.Min &&
-                  parsed.throttle.Value <= filter.Max)
-              {
-                  speedMatch = true;
-                  break;
-              }
-          }
+                foreach (var filter in _speedFilters)
+                {
+                    if (parsed.throttle.HasValue &&
+                        parsed.throttle.Value >= filter.Min &&
+                        parsed.throttle.Value <= filter.Max)
+                    {
+                        speedMatch = true;
+                        break;
+                    }
+                }
 
-          foreach (var filter in _angleFilters)
-          {
-              if (parsed.angle.HasValue &&
-                  parsed.angle.Value >= filter.Min &&
-                  parsed.angle.Value <= filter.Max)
-              {
-                  angleMatch = true;
-                  break;
-              }
-          }
+                foreach (var filter in _angleFilters)
+                {
+                    if (parsed.angle.HasValue &&
+                        parsed.angle.Value >= filter.Min &&
+                        parsed.angle.Value <= filter.Max)
+                    {
+                        angleMatch = true;
+                        break;
+                    }
+                }
                 pnlTimeline.Invalidate();
 
                 if (!(speedMatch && angleMatch))
@@ -1851,7 +1851,7 @@ namespace DonkeyUi
             }
 
             MessageBox.Show(
-                $"필터 적용 완료\n남은 프레임: {_imageFiles.Count}개");
+                $"필터 적용 완료");
         }
 
         private void btnClearFilter_Click(object sender, EventArgs e)
@@ -2031,7 +2031,7 @@ namespace DonkeyUi
             _deletedRanges.Add(range);
             int start = range.Start - 1;
             int end = range.End - 1;
-           
+
             for (int i = start; i <= end; i++)
             {
                 string deletedImage = _allImageFiles[i];
