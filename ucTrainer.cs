@@ -95,12 +95,7 @@ namespace DonkeyUi
             btnTrain.Click += BtnTrain_Click;
             btnCancelTrain.Click += BtnCancelTrain_Click;
 
-            btnChooseTransfer.Click += BtnChooseTransfer_Click;
-            btnClearTransfer.Click += (s, e) =>
-            {
-                txtTransferPath.Text = "선택 안 됨 — 처음부터 학습";
-                txtTransferPath.ForeColor = Color.FromArgb(150, 150, 150);
-            };
+
 
             btnAddConfig.Click += BtnAddConfig_Click;
             btnDeleteConfig.Click += BtnDeleteConfig_Click;
@@ -160,7 +155,7 @@ namespace DonkeyUi
                     Batch = original.Batch,
                     LR = original.LR,
                     Split = original.Split,
-                    ConfigRows = new List<ConfigEntry>(original.ConfigRows)
+                    ConfigRows = original.ConfigRows.Select(c => new ConfigEntry { Key = c.Key, Value = c.Value }).ToList()
                 };
                 lstPresets.Items.Add(copyName);
                 lstPresets.SelectedItem = copyName;
@@ -200,7 +195,7 @@ namespace DonkeyUi
             chkColType.CheckedChanged += (s, e) => ToggleColumn(colType, chkColType.Checked);
             chkColTubs.CheckedChanged += (s, e) => ToggleColumn(colTubs, chkColTubs.Checked);
             chkColTime.CheckedChanged += (s, e) => ToggleColumn(colTime, chkColTime.Checked);
-            chkColTransfer.CheckedChanged += (s, e) => ToggleColumn(colTransfer, chkColTransfer.Checked);
+
             chkColComment.CheckedChanged += (s, e) => ToggleColumn(colComment, chkColComment.Checked);
 
             chkEnableDelete.CheckedChanged += (s, e) =>
@@ -229,7 +224,7 @@ namespace DonkeyUi
                     }
                     var rowActive = dgvTrains.Rows[e.RowIndex];
                     lblCommentEditTitle.Text = $"메모 수정 — {rowActive.Cells[1].Value}";
-                    txtCommentEdit.Text = rowActive.Cells[7].Value?.ToString() ?? "";
+                    txtCommentEdit.Text = rowActive.Cells[6].Value?.ToString() ?? "";
                     txtCommentEdit.Enabled = btnCommentSave.Enabled = btnShowGraph.Enabled = btnShowConfig.Enabled = true;
                 }
                 else if (GetCheckedRow() == null)
@@ -250,7 +245,7 @@ namespace DonkeyUi
             {
                 var row = GetCheckedRow();
                 if (row == null) return;
-                row.Cells[7].Value = txtCommentEdit.Text;
+                row.Cells[6].Value = txtCommentEdit.Text;
                 string name = row.Cells[1].Value?.ToString();
                 string baseName = Path.GetFileNameWithoutExtension(name);
                 string mycarPath = "~/mycar";
@@ -285,77 +280,7 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         // 1. Transfer model 선택
         // ════════════════════════════════════════════════════════════
-        private void BtnChooseTransfer_Click(object sender, EventArgs e)
-        {
-            using var form = new Form();
-            form.Text = "전이 학습 모델 선택";
-            form.Size = new Size(480, 320);
-            form.StartPosition = FormStartPosition.CenterParent;
-            form.BackColor = Color.FromArgb(40, 40, 40);
 
-            var lbl = new Label
-            {
-                Text = "히스토리에서 선택하거나 아래에 경로를 직접 입력하세요.",
-                ForeColor = Color.FromArgb(150, 150, 150),
-                Font = new Font("맑은 고딕", 8.5F),
-                Location = new Point(10, 10),
-                AutoSize = true
-            };
-            var lst = new ListBox
-            {
-                BackColor = Color.FromArgb(60, 60, 60),
-                ForeColor = Color.FromArgb(220, 220, 220),
-                Font = new Font("Consolas", 9F),
-                Location = new Point(10, 32),
-                Size = new Size(440, 160),
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            foreach (DataGridViewRow row in dgvTrains.Rows)
-            {
-                var name = row.Cells[1].Value?.ToString();
-                if (!string.IsNullOrEmpty(name)) lst.Items.Add(name);
-            }
-            var lblPath = new Label
-            {
-                Text = "직접 경로 입력",
-                ForeColor = Color.FromArgb(150, 150, 150),
-                Font = new Font("맑은 고딕", 8F),
-                Location = new Point(10, 200),
-                AutoSize = true
-            };
-            var txtPath = new TextBox
-            {
-                BackColor = Color.FromArgb(60, 60, 60),
-                ForeColor = Color.FromArgb(220, 220, 220),
-                Font = new Font("Consolas", 9F),
-                Location = new Point(10, 216),
-                Size = new Size(340, 24),
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            var btnOk = new Button
-            {
-                Text = "적용",
-                BackColor = Color.FromArgb(24, 95, 165),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Location = new Point(360, 216),
-                Size = new Size(90, 24),
-                DialogResult = DialogResult.OK
-            };
-            btnOk.FlatAppearance.BorderSize = 0;
-            lst.DoubleClick += (s2, e2) => { form.DialogResult = DialogResult.OK; };
-            form.Controls.AddRange(new Control[] { lbl, lst, lblPath, txtPath, btnOk });
-
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                string selected = lst.SelectedItem?.ToString() ?? txtPath.Text.Trim();
-                if (!string.IsNullOrEmpty(selected))
-                {
-                    txtTransferPath.Text = selected;
-                    txtTransferPath.ForeColor = Color.FromArgb(220, 220, 220);
-                }
-            }
-        }
 
         // ════════════════════════════════════════════════════════════
         // 2. 고급 설정
@@ -542,13 +467,7 @@ namespace DonkeyUi
             _currentMycarPath = mycarPath;
             _currentStartTime = startTime;
 
-            string transferArg = "";
-            string tp = txtTransferPath.Text.Trim();
-            if (!string.IsNullOrEmpty(tp) && !tp.Contains("선택 안 됨") && !tp.Contains("처음부터 학습"))
-            {
-                string tpName = Path.GetFileNameWithoutExtension(tp);
-                transferArg = $" --transfer ./models/{tpName}.h5";
-            }
+
 
             string tempScript = Path.Combine(Path.GetTempPath(), "update_config.py");
             File.WriteAllText(tempScript,
@@ -576,14 +495,12 @@ namespace DonkeyUi
 
             string cmd =
                 $"cd {mycarPath} && " +
-                $"sed -i 's/train(cfg, tubs, model, model_type, comment)/train(cfg, tubs, model, model_type, transfer=None, comment=comment)/' {mycarPath}/train.py && " +
                 $"[ ! -f {mycarPath}/.myconfig_default.py ] && cp {myconfigPath} {mycarPath}/.myconfig_default.py; " +
                 $"cp {mycarPath}/.myconfig_default.py {myconfigPath}; " +
                 $"cp {wslTempScript} {updateScriptPath} && " +
                 $"python3 {updateScriptPath} {myconfigPath} {kvArgs} && " +
                 $"~/miniconda3/envs/e2e_env/bin/python train.py " +
-                $"--tubs {tubArg} --model ./models/{modelName}.h5 --type {modelType} --comment=\"{comment}\"" +
-                $"{transferArg}";
+                $"--tubs {tubArg} --model ./models/{modelName}.h5 --type {modelType} --comment=\"{comment}\"";
 
             // ★ manifest.json deleted_indexes에 필터 반영
             ApplyFilterToManifest(tubArg);
@@ -1681,7 +1598,7 @@ namespace DonkeyUi
                         row.Cells[2].Value = dbDict[baseName].pilot;
                         row.Cells[3].Value = dbDict[baseName].type;
                         row.Cells[4].Value = dbDict[baseName].tubs;
-                        row.Cells[7].Value = dbDict[baseName].comment;
+                        row.Cells[6].Value = dbDict[baseName].comment;
                     }
                 }
                 return;
@@ -1702,7 +1619,7 @@ namespace DonkeyUi
                     comment = dbDict[baseName].comment;
                 }
                 dgvTrains.Rows.Add(false, name, pilot, type, tubs,
-                    info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"), "", comment);
+                    info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"), comment);
             }
         }
 
