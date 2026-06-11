@@ -21,8 +21,6 @@
         private static readonly Color ClrGreen = Color.FromArgb(34, 120, 34);
         private static readonly Color ClrRed = Color.FromArgb(163, 45, 45);
 
-        // ── 헬퍼 ─────────────────────────────────────────────────────
-
         private Panel MakeSecPanel(int y, int h)
         {
             var p = new Panel();
@@ -44,8 +42,7 @@
             return l;
         }
 
-        private Label MakeLabel(string text, int x, int y,
-                                 Color color, float size = 9F)
+        private Label MakeLabel(string text, int x, int y, Color color, float size = 9F)
         {
             var l = new Label();
             l.AutoSize = true;
@@ -56,8 +53,7 @@
             return l;
         }
 
-        private TextBox MakeTextBox(int x, int y, int w,
-                                     string text = "", string ph = "")
+        private TextBox MakeTextBox(int x, int y, int w, string text = "", string ph = "")
         {
             var t = new TextBox();
             t.BackColor = ClrCard;
@@ -137,7 +133,6 @@
             col.Visible = visible;
         }
 
-        // ── InitializeComponent ───────────────────────────────────────
         private void InitializeComponent()
         {
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
@@ -186,11 +181,6 @@
             lblLossStatus = new Label();
             lblEpochStatus = new Label();
             lblSec4 = new Label();
-            pnlTransfer = new Panel();
-            lblTransferTitle = new Label();
-            btnChooseTransfer = new Button();
-            txtTransferPath = new TextBox();
-            btnClearTransfer = new Button();
             btnTrain = new Button();
             btnCancelTrain = new Button();
             lblTrainStatus = new Label();
@@ -206,7 +196,6 @@
             chkColName = new CheckBox();
             chkColPilot = new CheckBox();
             chkColType = new CheckBox();
-            chkColTransfer = new CheckBox();
             chkColComment = new CheckBox();
             chkColTubs = new CheckBox();
             chkColTime = new CheckBox();
@@ -222,7 +211,6 @@
             colType = new DataGridViewTextBoxColumn();
             colTubs = new DataGridViewTextBoxColumn();
             colTime = new DataGridViewTextBoxColumn();
-            colTransfer = new DataGridViewTextBoxColumn();
             colComment = new DataGridViewTextBoxColumn();
             lblHistHint = new Label();
             pnlScroll = new Panel();
@@ -235,7 +223,6 @@
             ((System.ComponentModel.ISupportInitialize)dgvConfig).BeginInit();
             pnlSec3.SuspendLayout();
             pnlSec4.SuspendLayout();
-            pnlTransfer.SuspendLayout();
             pnlSec5.SuspendLayout();
             pnlCommentEdit.SuspendLayout();
             pnlColToggle.SuspendLayout();
@@ -278,7 +265,6 @@
             lblSec1.AutoSize = true;
             lblSec1.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
             lblSec1.Location = new Point(16, 16);
-            lblSec1.Margin = new Padding(0, 0, 16, 16);
             lblSec1.Name = "lblSec1";
             lblSec1.Size = new Size(73, 15);
             lblSec1.TabIndex = 0;
@@ -289,7 +275,6 @@
             lblModelType.AutoSize = true;
             lblModelType.Font = new Font("맑은 고딕", 8.5F);
             lblModelType.Location = new Point(16, 47);
-            lblModelType.Margin = new Padding(0, 0, 8, 0);
             lblModelType.Name = "lblModelType";
             lblModelType.Size = new Size(31, 15);
             lblModelType.TabIndex = 1;
@@ -304,7 +289,6 @@
             cmbModelType.Font = new Font("맑은 고딕", 9F);
             cmbModelType.Items.AddRange(new object[] { "KerasLinear", "KerasInferred", "KerasCategorical", "KerasRNN", "Other" });
             cmbModelType.Location = new Point(55, 43);
-            cmbModelType.Margin = new Padding(0, 0, 80, 0);
             cmbModelType.Name = "cmbModelType";
             cmbModelType.Size = new Size(120, 23);
             cmbModelType.TabIndex = 2;
@@ -314,7 +298,6 @@
             lblModelName.AutoSize = true;
             lblModelName.Font = new Font("맑은 고딕", 8.5F);
             lblModelName.Location = new Point(255, 47);
-            lblModelName.Margin = new Padding(0, 0, 8, 0);
             lblModelName.Name = "lblModelName";
             lblModelName.Size = new Size(31, 15);
             lblModelName.TabIndex = 3;
@@ -327,7 +310,6 @@
             txtModelName.BorderStyle = BorderStyle.FixedSingle;
             txtModelName.Font = new Font("맑은 고딕", 9F);
             txtModelName.Location = new Point(294, 43);
-            txtModelName.Margin = new Padding(0, 0, 80, 0);
             txtModelName.Name = "txtModelName";
             txtModelName.Size = new Size(120, 23);
             txtModelName.TabIndex = 4;
@@ -338,7 +320,6 @@
             lblComment.AutoSize = true;
             lblComment.Font = new Font("맑은 고딕", 8.5F);
             lblComment.Location = new Point(494, 47);
-            lblComment.Margin = new Padding(0, 0, 8, 0);
             lblComment.Name = "lblComment";
             lblComment.Size = new Size(31, 15);
             lblComment.TabIndex = 5;
@@ -351,7 +332,6 @@
             txtComment.BorderStyle = BorderStyle.FixedSingle;
             txtComment.Font = new Font("맑은 고딕", 9F);
             txtComment.Location = new Point(533, 44);
-            txtComment.Margin = new Padding(0);
             txtComment.Name = "txtComment";
             txtComment.PlaceholderText = "이번 학습 메모...";
             txtComment.Size = new Size(380, 23);
@@ -376,7 +356,6 @@
             pnlSec2.Controls.Add(btnAddConfig);
             pnlSec2.Controls.Add(btnDeleteConfig);
             pnlSec2.Location = new Point(8, 117);
-            pnlSec2.Margin = new Padding(8, 0, 8, 8);
             pnlSec2.Name = "pnlSec2";
             pnlSec2.Padding = new Padding(16);
             pnlSec2.Size = new Size(931, 342);
@@ -389,7 +368,6 @@
             btnSaveDefault.FlatStyle = FlatStyle.Flat;
             btnSaveDefault.Font = new Font("맑은 고딕", 9F);
             btnSaveDefault.Location = new Point(529, 284);
-            btnSaveDefault.Margin = new Padding(8, 8, 0, 8);
             btnSaveDefault.Name = "btnSaveDefault";
             btnSaveDefault.Size = new Size(120, 32);
             btnSaveDefault.TabIndex = 13;
@@ -401,7 +379,6 @@
             lblSec2.AutoSize = true;
             lblSec2.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
             lblSec2.Location = new Point(12, 16);
-            lblSec2.Margin = new Padding(0, 0, 16, 16);
             lblSec2.Name = "lblSec2";
             lblSec2.Size = new Size(97, 15);
             lblSec2.TabIndex = 0;
@@ -412,7 +389,6 @@
             lblEpochKo.AutoSize = true;
             lblEpochKo.Font = new Font("맑은 고딕", 8.5F);
             lblEpochKo.Location = new Point(16, 70);
-            lblEpochKo.Margin = new Padding(0);
             lblEpochKo.Name = "lblEpochKo";
             lblEpochKo.Size = new Size(115, 15);
             lblEpochKo.TabIndex = 1;
@@ -423,7 +399,6 @@
             lblEpochEn.AutoSize = true;
             lblEpochEn.Font = new Font("맑은 고딕", 7.5F);
             lblEpochEn.Location = new Point(16, 89);
-            lblEpochEn.Margin = new Padding(0, 4, 0, 16);
             lblEpochEn.Name = "lblEpochEn";
             lblEpochEn.Size = new Size(76, 12);
             lblEpochEn.TabIndex = 2;
@@ -445,7 +420,6 @@
             // trkEpoch
             // 
             trkEpoch.Location = new Point(16, 117);
-            trkEpoch.Margin = new Padding(0, 0, 32, 16);
             trkEpoch.Maximum = 200;
             trkEpoch.Minimum = 1;
             trkEpoch.Name = "trkEpoch";
@@ -459,7 +433,6 @@
             lblBatchKo.AutoSize = true;
             lblBatchKo.Font = new Font("맑은 고딕", 8.5F);
             lblBatchKo.Location = new Point(16, 178);
-            lblBatchKo.Margin = new Padding(0);
             lblBatchKo.Name = "lblBatchKo";
             lblBatchKo.Size = new Size(71, 15);
             lblBatchKo.TabIndex = 5;
@@ -470,7 +443,6 @@
             lblBatchEn.AutoSize = true;
             lblBatchEn.Font = new Font("맑은 고딕", 7.5F);
             lblBatchEn.Location = new Point(16, 197);
-            lblBatchEn.Margin = new Padding(0, 4, 0, 16);
             lblBatchEn.Name = "lblBatchEn";
             lblBatchEn.Size = new Size(67, 12);
             lblBatchEn.TabIndex = 6;
@@ -481,7 +453,6 @@
             nudBatch.BorderStyle = BorderStyle.FixedSingle;
             nudBatch.Font = new Font("맑은 고딕", 9F);
             nudBatch.Location = new Point(176, 178);
-            nudBatch.Margin = new Padding(0);
             nudBatch.Maximum = new decimal(new int[] { 512, 0, 0, 0 });
             nudBatch.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             nudBatch.Name = "nudBatch";
@@ -506,7 +477,6 @@
             lblAdvanced.AutoSize = true;
             lblAdvanced.Font = new Font("맑은 고딕", 8.5F);
             lblAdvanced.Location = new Point(288, 47);
-            lblAdvanced.Margin = new Padding(8, 0, 8, 8);
             lblAdvanced.Name = "lblAdvanced";
             lblAdvanced.Size = new Size(59, 15);
             lblAdvanced.TabIndex = 9;
@@ -537,7 +507,6 @@
             dgvConfig.DefaultCellStyle = dataGridViewCellStyle5;
             dgvConfig.GridColor = SystemColors.WindowText;
             dgvConfig.Location = new Point(288, 70);
-            dgvConfig.Margin = new Padding(0, 0, 8, 0);
             dgvConfig.Name = "dgvConfig";
             dgvConfig.RowHeadersVisible = false;
             dgvConfig.Size = new Size(617, 206);
@@ -581,7 +550,6 @@
             btnAddConfig.FlatStyle = FlatStyle.Flat;
             btnAddConfig.Font = new Font("맑은 고딕", 9F);
             btnAddConfig.Location = new Point(657, 284);
-            btnAddConfig.Margin = new Padding(8);
             btnAddConfig.Name = "btnAddConfig";
             btnAddConfig.Size = new Size(120, 32);
             btnAddConfig.TabIndex = 11;
@@ -597,7 +565,6 @@
             btnDeleteConfig.Font = new Font("맑은 고딕", 9F);
             btnDeleteConfig.ForeColor = Color.Black;
             btnDeleteConfig.Location = new Point(785, 284);
-            btnDeleteConfig.Margin = new Padding(0);
             btnDeleteConfig.Name = "btnDeleteConfig";
             btnDeleteConfig.Size = new Size(120, 32);
             btnDeleteConfig.TabIndex = 12;
@@ -617,7 +584,6 @@
             pnlSec3.Controls.Add(btnPresetSave);
             pnlSec3.Controls.Add(btnPresetDelete);
             pnlSec3.Location = new Point(8, 467);
-            pnlSec3.Margin = new Padding(8, 0, 8, 8);
             pnlSec3.Name = "pnlSec3";
             pnlSec3.Padding = new Padding(16);
             pnlSec3.Size = new Size(931, 278);
@@ -630,7 +596,6 @@
             btnPresetCopy.FlatStyle = FlatStyle.Flat;
             btnPresetCopy.Font = new Font("맑은 고딕", 9F);
             btnPresetCopy.Location = new Point(793, 140);
-            btnPresetCopy.Margin = new Padding(0, 0, 0, 8);
             btnPresetCopy.Name = "btnPresetCopy";
             btnPresetCopy.Size = new Size(120, 32);
             btnPresetCopy.TabIndex = 8;
@@ -642,7 +607,6 @@
             lblSec3.AutoSize = true;
             lblSec3.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
             lblSec3.Location = new Point(16, 16);
-            lblSec3.Margin = new Padding(0, 0, 16, 16);
             lblSec3.Name = "lblSec3";
             lblSec3.Size = new Size(85, 15);
             lblSec3.TabIndex = 0;
@@ -653,7 +617,6 @@
             lblPresetListTitle.AutoSize = true;
             lblPresetListTitle.Font = new Font("맑은 고딕", 8.5F);
             lblPresetListTitle.Location = new Point(16, 47);
-            lblPresetListTitle.Margin = new Padding(8, 0, 8, 8);
             lblPresetListTitle.Name = "lblPresetListTitle";
             lblPresetListTitle.Size = new Size(83, 15);
             lblPresetListTitle.TabIndex = 1;
@@ -666,7 +629,6 @@
             lstPresets.Font = new Font("맑은 고딕", 12F);
             lstPresets.ItemHeight = 30;
             lstPresets.Location = new Point(16, 70);
-            lstPresets.Margin = new Padding(0, 0, 16, 8);
             lstPresets.Name = "lstPresets";
             lstPresets.Size = new Size(761, 182);
             lstPresets.TabIndex = 2;
@@ -677,7 +639,6 @@
             txtPresetName.BorderStyle = BorderStyle.FixedSingle;
             txtPresetName.Font = new Font("맑은 고딕", 9F);
             txtPresetName.Location = new Point(793, 69);
-            txtPresetName.Margin = new Padding(0, 0, 0, 8);
             txtPresetName.Name = "txtPresetName";
             txtPresetName.PlaceholderText = "이름 입력...";
             txtPresetName.Size = new Size(120, 23);
@@ -690,7 +651,6 @@
             btnPresetAdd.FlatStyle = FlatStyle.Flat;
             btnPresetAdd.Font = new Font("맑은 고딕", 9F);
             btnPresetAdd.Location = new Point(793, 100);
-            btnPresetAdd.Margin = new Padding(0, 0, 0, 8);
             btnPresetAdd.Name = "btnPresetAdd";
             btnPresetAdd.Size = new Size(120, 32);
             btnPresetAdd.TabIndex = 5;
@@ -706,7 +666,6 @@
             btnPresetSave.Font = new Font("맑은 고딕", 9F);
             btnPresetSave.ForeColor = SystemColors.ControlText;
             btnPresetSave.Location = new Point(793, 180);
-            btnPresetSave.Margin = new Padding(0, 0, 0, 8);
             btnPresetSave.Name = "btnPresetSave";
             btnPresetSave.Size = new Size(120, 32);
             btnPresetSave.TabIndex = 6;
@@ -721,7 +680,6 @@
             btnPresetDelete.FlatStyle = FlatStyle.Flat;
             btnPresetDelete.Font = new Font("맑은 고딕", 9F);
             btnPresetDelete.Location = new Point(793, 220);
-            btnPresetDelete.Margin = new Padding(0, 0, 0, 8);
             btnPresetDelete.Name = "btnPresetDelete";
             btnPresetDelete.Size = new Size(120, 32);
             btnPresetDelete.TabIndex = 7;
@@ -736,13 +694,11 @@
             pnlSec4.Controls.Add(lblLossStatus);
             pnlSec4.Controls.Add(lblEpochStatus);
             pnlSec4.Controls.Add(lblSec4);
-            pnlSec4.Controls.Add(pnlTransfer);
             pnlSec4.Controls.Add(btnTrain);
             pnlSec4.Controls.Add(btnCancelTrain);
             pnlSec4.Controls.Add(lblTrainStatus);
             pnlSec4.Controls.Add(rtbLog);
             pnlSec4.Location = new Point(8, 753);
-            pnlSec4.Margin = new Padding(8, 0, 8, 8);
             pnlSec4.Name = "pnlSec4";
             pnlSec4.Padding = new Padding(16);
             pnlSec4.Size = new Size(931, 427);
@@ -752,8 +708,7 @@
             // 
             lblValLossStatus.AutoSize = true;
             lblValLossStatus.Font = new Font("맑은 고딕", 9F);
-            lblValLossStatus.Location = new Point(735, 138);
-            lblValLossStatus.Margin = new Padding(0, 0, 8, 0);
+            lblValLossStatus.Location = new Point(735, 54);
             lblValLossStatus.Name = "lblValLossStatus";
             lblValLossStatus.Size = new Size(71, 15);
             lblValLossStatus.TabIndex = 8;
@@ -763,8 +718,7 @@
             // 
             lblLossStatus.AutoSize = true;
             lblLossStatus.Font = new Font("맑은 고딕", 9F);
-            lblLossStatus.Location = new Point(568, 138);
-            lblLossStatus.Margin = new Padding(0, 0, 96, 0);
+            lblLossStatus.Location = new Point(568, 54);
             lblLossStatus.Name = "lblLossStatus";
             lblLossStatus.Size = new Size(71, 15);
             lblLossStatus.TabIndex = 7;
@@ -774,8 +728,7 @@
             // 
             lblEpochStatus.AutoSize = true;
             lblEpochStatus.Font = new Font("맑은 고딕", 9F);
-            lblEpochStatus.Location = new Point(367, 138);
-            lblEpochStatus.Margin = new Padding(8, 0, 128, 0);
+            lblEpochStatus.Location = new Point(367, 54);
             lblEpochStatus.Name = "lblEpochStatus";
             lblEpochStatus.Size = new Size(73, 15);
             lblEpochStatus.TabIndex = 6;
@@ -784,83 +737,12 @@
             // lblSec4
             // 
             lblSec4.AutoSize = true;
-            // 
-            // lblSec4
-            // 
-            lblSec4.AutoSize = true;
             lblSec4.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
             lblSec4.Location = new Point(16, 16);
-            lblSec4.Margin = new Padding(0, 0, 16, 16);
             lblSec4.Name = "lblSec4";
             lblSec4.Size = new Size(73, 15);
             lblSec4.TabIndex = 0;
             lblSec4.Text = "4. 학습 실행";
-            // 
-            // pnlTransfer
-            // 
-            pnlTransfer.BackColor = Color.White;
-            pnlTransfer.Controls.Add(lblTransferTitle);
-            pnlTransfer.Controls.Add(btnChooseTransfer);
-            pnlTransfer.Controls.Add(txtTransferPath);
-            pnlTransfer.Controls.Add(btnClearTransfer);
-            pnlTransfer.Location = new Point(16, 50);
-            pnlTransfer.Margin = new Padding(0, 0, 0, 16);
-            pnlTransfer.Name = "pnlTransfer";
-            pnlTransfer.Padding = new Padding(8);
-            pnlTransfer.Size = new Size(897, 63);
-            pnlTransfer.TabIndex = 1;
-            // 
-            // lblTransferTitle
-            // 
-            lblTransferTitle.AutoSize = true;
-            lblTransferTitle.Font = new Font("맑은 고딕", 8F);
-            lblTransferTitle.Location = new Point(0, 8);
-            lblTransferTitle.Margin = new Padding(0);
-            lblTransferTitle.Name = "lblTransferTitle";
-            lblTransferTitle.Size = new Size(194, 13);
-            lblTransferTitle.TabIndex = 0;
-            lblTransferTitle.Text = "전이 학습 모델 선택 (Transfer model)";
-            // 
-            // btnChooseTransfer
-            // 
-            btnChooseTransfer.BackColor = Color.FromArgb(244, 243, 238);
-            btnChooseTransfer.Cursor = Cursors.Hand;
-            btnChooseTransfer.FlatStyle = FlatStyle.Flat;
-            btnChooseTransfer.Font = new Font("맑은 고딕", 9F);
-            btnChooseTransfer.Location = new Point(0, 29);
-            btnChooseTransfer.Margin = new Padding(0, 8, 8, 0);
-            btnChooseTransfer.Name = "btnChooseTransfer";
-            btnChooseTransfer.Size = new Size(119, 24);
-            btnChooseTransfer.TabIndex = 1;
-            btnChooseTransfer.Text = "📁 모델 선택";
-            btnChooseTransfer.UseVisualStyleBackColor = false;
-            // 
-            // txtTransferPath
-            // 
-            txtTransferPath.BackColor = Color.White;
-            txtTransferPath.BorderStyle = BorderStyle.FixedSingle;
-            txtTransferPath.Font = new Font("Consolas", 8.5F);
-            txtTransferPath.Location = new Point(127, 32);
-            txtTransferPath.Margin = new Padding(0, 0, 8, 0);
-            txtTransferPath.Name = "txtTransferPath";
-            txtTransferPath.ReadOnly = true;
-            txtTransferPath.Size = new Size(722, 21);
-            txtTransferPath.TabIndex = 2;
-            txtTransferPath.Text = "선택 안 됨 — 처음부터 학습";
-            // 
-            // btnClearTransfer
-            // 
-            btnClearTransfer.BackColor = Color.FromArgb(255, 240, 240);
-            btnClearTransfer.Cursor = Cursors.Hand;
-            btnClearTransfer.FlatAppearance.BorderColor = Color.FromArgb(240, 180, 180);
-            btnClearTransfer.FlatStyle = FlatStyle.Flat;
-            btnClearTransfer.Font = new Font("맑은 고딕", 9F);
-            btnClearTransfer.Location = new Point(860, 29);
-            btnClearTransfer.Name = "btnClearTransfer";
-            btnClearTransfer.Size = new Size(24, 24);
-            btnClearTransfer.TabIndex = 3;
-            btnClearTransfer.Text = "✕";
-            btnClearTransfer.UseVisualStyleBackColor = false;
             // 
             // btnTrain
             // 
@@ -870,8 +752,7 @@
             btnTrain.FlatStyle = FlatStyle.Flat;
             btnTrain.Font = new Font("맑은 고딕", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
             btnTrain.ForeColor = SystemColors.ControlText;
-            btnTrain.Location = new Point(16, 129);
-            btnTrain.Margin = new Padding(0, 0, 8, 0);
+            btnTrain.Location = new Point(16, 45);
             btnTrain.Name = "btnTrain";
             btnTrain.Size = new Size(120, 32);
             btnTrain.TabIndex = 2;
@@ -886,8 +767,7 @@
             btnCancelTrain.FlatStyle = FlatStyle.Flat;
             btnCancelTrain.Font = new Font("맑은 고딕", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
             btnCancelTrain.ForeColor = SystemColors.ControlText;
-            btnCancelTrain.Location = new Point(144, 129);
-            btnCancelTrain.Margin = new Padding(0, 0, 8, 0);
+            btnCancelTrain.Location = new Point(144, 45);
             btnCancelTrain.Name = "btnCancelTrain";
             btnCancelTrain.Size = new Size(120, 32);
             btnCancelTrain.TabIndex = 3;
@@ -898,7 +778,7 @@
             // 
             lblTrainStatus.AutoSize = true;
             lblTrainStatus.Font = new Font("맑은 고딕", 9F);
-            lblTrainStatus.Location = new Point(275, 138);
+            lblTrainStatus.Location = new Point(275, 54);
             lblTrainStatus.Name = "lblTrainStatus";
             lblTrainStatus.Size = new Size(47, 15);
             lblTrainStatus.TabIndex = 4;
@@ -910,11 +790,10 @@
             rtbLog.BorderStyle = BorderStyle.None;
             rtbLog.Font = new Font("Consolas", 9.5F);
             rtbLog.ForeColor = Color.FromArgb(180, 180, 180);
-            rtbLog.Location = new Point(16, 169);
-            rtbLog.Margin = new Padding(0, 8, 0, 0);
+            rtbLog.Location = new Point(16, 85);
             rtbLog.Name = "rtbLog";
             rtbLog.ReadOnly = true;
-            rtbLog.Size = new Size(897, 240);
+            rtbLog.Size = new Size(897, 321);
             rtbLog.TabIndex = 5;
             rtbLog.Text = "";
             rtbLog.WordWrap = false;
@@ -930,7 +809,6 @@
             pnlSec5.Controls.Add(dgvTrains);
             pnlSec5.Controls.Add(lblHistHint);
             pnlSec5.Location = new Point(8, 1188);
-            pnlSec5.Margin = new Padding(8, 0, 8, 8);
             pnlSec5.Name = "pnlSec5";
             pnlSec5.Padding = new Padding(16);
             pnlSec5.Size = new Size(931, 612);
@@ -941,7 +819,6 @@
             lblSec5.AutoSize = true;
             lblSec5.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
             lblSec5.Location = new Point(16, 16);
-            lblSec5.Margin = new Padding(0, 0, 16, 16);
             lblSec5.Name = "lblSec5";
             lblSec5.Size = new Size(113, 15);
             lblSec5.TabIndex = 0;
@@ -954,7 +831,6 @@
             pnlCommentEdit.Controls.Add(txtCommentEdit);
             pnlCommentEdit.Controls.Add(btnCommentSave);
             pnlCommentEdit.Location = new Point(16, 455);
-            pnlCommentEdit.Margin = new Padding(0, 8, 0, 0);
             pnlCommentEdit.Name = "pnlCommentEdit";
             pnlCommentEdit.Padding = new Padding(8);
             pnlCommentEdit.Size = new Size(897, 62);
@@ -965,7 +841,6 @@
             lblCommentEditTitle.AutoSize = true;
             lblCommentEditTitle.Font = new Font("맑은 고딕", 8F);
             lblCommentEditTitle.Location = new Point(8, 8);
-            lblCommentEditTitle.Margin = new Padding(0, 0, 0, 8);
             lblCommentEditTitle.Name = "lblCommentEditTitle";
             lblCommentEditTitle.Size = new Size(59, 13);
             lblCommentEditTitle.TabIndex = 0;
@@ -977,7 +852,6 @@
             txtCommentEdit.Enabled = false;
             txtCommentEdit.Font = new Font("맑은 고딕", 9F);
             txtCommentEdit.Location = new Point(7, 29);
-            txtCommentEdit.Margin = new Padding(0, 0, 8, 0);
             txtCommentEdit.Name = "txtCommentEdit";
             txtCommentEdit.PlaceholderText = "코멘트 입력...";
             txtCommentEdit.Size = new Size(776, 23);
@@ -993,7 +867,6 @@
             btnCommentSave.Font = new Font("맑은 고딕", 9F);
             btnCommentSave.ForeColor = SystemColors.ControlText;
             btnCommentSave.Location = new Point(791, 28);
-            btnCommentSave.Margin = new Padding(0);
             btnCommentSave.Name = "btnCommentSave";
             btnCommentSave.Size = new Size(96, 24);
             btnCommentSave.TabIndex = 2;
@@ -1007,12 +880,10 @@
             pnlColToggle.Controls.Add(chkColName);
             pnlColToggle.Controls.Add(chkColPilot);
             pnlColToggle.Controls.Add(chkColType);
-            pnlColToggle.Controls.Add(chkColTransfer);
             pnlColToggle.Controls.Add(chkColComment);
             pnlColToggle.Controls.Add(chkColTubs);
             pnlColToggle.Controls.Add(chkColTime);
             pnlColToggle.Location = new Point(16, 47);
-            pnlColToggle.Margin = new Padding(0);
             pnlColToggle.Name = "pnlColToggle";
             pnlColToggle.Padding = new Padding(8, 8, 8, 0);
             pnlColToggle.Size = new Size(897, 69);
@@ -1023,7 +894,6 @@
             lblColToggleTitle.AutoSize = true;
             lblColToggleTitle.Font = new Font("맑은 고딕", 8F);
             lblColToggleTitle.Location = new Point(0, 8);
-            lblColToggleTitle.Margin = new Padding(0, 0, 0, 8);
             lblColToggleTitle.Name = "lblColToggleTitle";
             lblColToggleTitle.Size = new Size(55, 13);
             lblColToggleTitle.TabIndex = 0;
@@ -1034,7 +904,6 @@
             chkColName.Checked = true;
             chkColName.CheckState = CheckState.Checked;
             chkColName.Location = new Point(8, 37);
-            chkColName.Margin = new Padding(0, 0, 8, 0);
             chkColName.Name = "chkColName";
             chkColName.Size = new Size(104, 24);
             chkColName.TabIndex = 1;
@@ -1043,10 +912,9 @@
             // chkColPilot
             // 
             chkColPilot.BackColor = Color.White;
-            chkColPilot.Checked = true;
-            chkColPilot.CheckState = CheckState.Checked;
+            chkColPilot.Checked = false;
+            chkColPilot.CheckState = CheckState.Unchecked;
             chkColPilot.Location = new Point(120, 37);
-            chkColPilot.Margin = new Padding(0, 0, 8, 0);
             chkColPilot.Name = "chkColPilot";
             chkColPilot.Size = new Size(104, 24);
             chkColPilot.TabIndex = 2;
@@ -1058,29 +926,16 @@
             chkColType.Checked = true;
             chkColType.CheckState = CheckState.Checked;
             chkColType.Location = new Point(232, 37);
-            chkColType.Margin = new Padding(0, 0, 8, 0);
             chkColType.Name = "chkColType";
             chkColType.Size = new Size(104, 24);
             chkColType.TabIndex = 3;
             chkColType.Text = "유형";
             // 
-            // chkColTransfer
-            // 
-            chkColTransfer.Checked = true;
-            chkColTransfer.CheckState = CheckState.Checked;
-            chkColTransfer.Location = new Point(568, 37);
-            chkColTransfer.Margin = new Padding(0, 0, 8, 0);
-            chkColTransfer.Name = "chkColTransfer";
-            chkColTransfer.Size = new Size(104, 24);
-            chkColTransfer.TabIndex = 6;
-            chkColTransfer.Text = "전이 모델";
-            // 
             // chkColComment
             // 
             chkColComment.Checked = true;
             chkColComment.CheckState = CheckState.Checked;
-            chkColComment.Location = new Point(680, 37);
-            chkColComment.Margin = new Padding(0, 0, 8, 0);
+            chkColComment.Location = new Point(566, 37);
             chkColComment.Name = "chkColComment";
             chkColComment.Size = new Size(104, 24);
             chkColComment.TabIndex = 7;
@@ -1091,7 +946,6 @@
             chkColTubs.Checked = true;
             chkColTubs.CheckState = CheckState.Checked;
             chkColTubs.Location = new Point(344, 37);
-            chkColTubs.Margin = new Padding(0, 0, 8, 0);
             chkColTubs.Name = "chkColTubs";
             chkColTubs.Size = new Size(104, 24);
             chkColTubs.TabIndex = 4;
@@ -1102,7 +956,6 @@
             chkColTime.Checked = true;
             chkColTime.CheckState = CheckState.Checked;
             chkColTime.Location = new Point(456, 37);
-            chkColTime.Margin = new Padding(0, 0, 8, 0);
             chkColTime.Name = "chkColTime";
             chkColTime.Size = new Size(104, 24);
             chkColTime.TabIndex = 5;
@@ -1116,7 +969,6 @@
             pnlHistControls.Controls.Add(btnShowGraph);
             pnlHistControls.Controls.Add(btnShowConfig);
             pnlHistControls.Location = new Point(16, 525);
-            pnlHistControls.Margin = new Padding(0, 8, 0, 0);
             pnlHistControls.Name = "pnlHistControls";
             pnlHistControls.Padding = new Padding(8);
             pnlHistControls.Size = new Size(897, 48);
@@ -1127,7 +979,6 @@
             chkEnableDelete.AutoSize = true;
             chkEnableDelete.Font = new Font("맑은 고딕", 9F);
             chkEnableDelete.Location = new Point(8, 16);
-            chkEnableDelete.Margin = new Padding(0);
             chkEnableDelete.Name = "chkEnableDelete";
             chkEnableDelete.Size = new Size(90, 19);
             chkEnableDelete.TabIndex = 0;
@@ -1142,7 +993,6 @@
             btnDeletePilot.FlatStyle = FlatStyle.Flat;
             btnDeletePilot.Font = new Font("맑은 고딕", 9F);
             btnDeletePilot.Location = new Point(106, 8);
-            btnDeletePilot.Margin = new Padding(8, 0, 0, 0);
             btnDeletePilot.Name = "btnDeletePilot";
             btnDeletePilot.Size = new Size(120, 32);
             btnDeletePilot.TabIndex = 1;
@@ -1157,7 +1007,6 @@
             btnShowGraph.FlatStyle = FlatStyle.Flat;
             btnShowGraph.Font = new Font("맑은 고딕", 9F);
             btnShowGraph.Location = new Point(641, 8);
-            btnShowGraph.Margin = new Padding(0, 0, 8, 0);
             btnShowGraph.Name = "btnShowGraph";
             btnShowGraph.Size = new Size(120, 32);
             btnShowGraph.TabIndex = 2;
@@ -1172,7 +1021,6 @@
             btnShowConfig.FlatStyle = FlatStyle.Flat;
             btnShowConfig.Font = new Font("맑은 고딕", 9F);
             btnShowConfig.Location = new Point(769, 8);
-            btnShowConfig.Margin = new Padding(0);
             btnShowConfig.Name = "btnShowConfig";
             btnShowConfig.Size = new Size(120, 32);
             btnShowConfig.TabIndex = 3;
@@ -1184,9 +1032,8 @@
             dgvTrains.AllowUserToAddRows = false;
             dgvTrains.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvTrains.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            dgvTrains.Columns.AddRange(new DataGridViewColumn[] { 선택, colName, colPilot, colType, colTubs, colTime, colTransfer, colComment });
+            dgvTrains.Columns.AddRange(new DataGridViewColumn[] { 선택, colName, colPilot, colType, colTubs, colTime, colComment });
             dgvTrains.Location = new Point(16, 124);
-            dgvTrains.Margin = new Padding(0, 8, 0, 0);
             dgvTrains.Name = "dgvTrains";
             dgvTrains.RowHeadersVisible = false;
             dgvTrains.Size = new Size(897, 323);
@@ -1214,6 +1061,7 @@
             colPilot.HeaderText = "파일럿";
             colPilot.Name = "colPilot";
             colPilot.ReadOnly = true;
+            colPilot.Visible = false;
             // 
             // colType
             // 
@@ -1238,12 +1086,6 @@
             colTime.ReadOnly = true;
             colTime.Resizable = DataGridViewTriState.True;
             // 
-            // colTransfer
-            // 
-            colTransfer.HeaderText = "전이 모델";
-            colTransfer.Name = "colTransfer";
-            colTransfer.ReadOnly = true;
-            // 
             // colComment
             // 
             colComment.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -1256,7 +1098,6 @@
             lblHistHint.AutoSize = true;
             lblHistHint.Font = new Font("맑은 고딕", 8F);
             lblHistHint.Location = new Point(16, 581);
-            lblHistHint.Margin = new Padding(0, 8, 0, 0);
             lblHistHint.Name = "lblHistHint";
             lblHistHint.Size = new Size(253, 13);
             lblHistHint.TabIndex = 5;
@@ -1271,18 +1112,19 @@
             pnlScroll.Controls.Add(pnlSec3);
             pnlScroll.Controls.Add(pnlSec2);
             pnlScroll.Controls.Add(pnlSec1);
+            pnlScroll.Dock = DockStyle.Fill;
             pnlScroll.ForeColor = Color.Black;
             pnlScroll.Location = new Point(0, 0);
             pnlScroll.Name = "pnlScroll";
             pnlScroll.Size = new Size(947, 1808);
             pnlScroll.TabIndex = 0;
+            pnlScroll.SizeChanged += PnlScroll_SizeChanged;
             pnlScroll.Paint += pnlScroll_Paint;
             // 
             // ucTrainer
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            AutoScroll = true;
             Controls.Add(pnlScroll);
             Name = "ucTrainer";
             Size = new Size(947, 1808);
@@ -1299,8 +1141,6 @@
             pnlSec3.PerformLayout();
             pnlSec4.ResumeLayout(false);
             pnlSec4.PerformLayout();
-            pnlTransfer.ResumeLayout(false);
-            pnlTransfer.PerformLayout();
             pnlSec5.ResumeLayout(false);
             pnlSec5.PerformLayout();
             pnlCommentEdit.ResumeLayout(false);
@@ -1345,11 +1185,6 @@
         private Button btnPresetDelete;
         private Panel pnlSec4;
         private Label lblSec4;
-        private Panel pnlTransfer;
-        private Label lblTransferTitle;
-        private Button btnChooseTransfer;
-        private TextBox txtTransferPath;
-        private Button btnClearTransfer;
         private Button btnTrain;
         private Button btnCancelTrain;
         private Label lblTrainStatus;
@@ -1367,7 +1202,6 @@
         private CheckBox chkColType;
         private CheckBox chkColTubs;
         private CheckBox chkColTime;
-        private CheckBox chkColTransfer;
         private CheckBox chkColComment;
         private Panel pnlHistControls;
         private CheckBox chkEnableDelete;
@@ -1383,17 +1217,63 @@
         private DataGridViewTextBoxColumn colConfigValue;
         private Button btnPresetCopy;
         private Button btnSaveDefault;
+        private Label lblModelTypeDesc;
+        private Label lblValLossStatus;
+        private Label lblLossStatus;
+        private Label lblEpochStatus;
+
+        private void PnlScroll_SizeChanged(object sender, EventArgs e)
+        {
+            int w = pnlScroll.ClientSize.Width - 16;
+            if (w < 100) return;
+
+            pnlSec1.Width = w;
+            pnlSec2.Width = w;
+            pnlSec3.Width = w;
+            pnlSec4.Width = w;
+            pnlSec5.Width = w;
+
+            // pnlSec1: txtComment 우측까지
+            txtComment.Width = w - 533 - 16;
+
+            // pnlSec2: dgvConfig, 버튼들
+            int s2 = w - 16;
+            dgvConfig.Width = s2 - 288 - 8;
+            btnAddConfig.Left = s2 - 248;
+            btnDeleteConfig.Left = s2 - 120;
+
+            // pnlSec3: lstPresets, 버튼들
+            lstPresets.Width = w - 16 - 16 - 136;
+            int rb = w - 16 - 128;
+            txtPresetName.Left = rb;
+            btnPresetAdd.Left = rb;
+            btnPresetSave.Left = rb;
+            btnPresetDelete.Left = rb;
+            btnPresetCopy.Left = rb;
+
+            // pnlSec4: pnlTransfer, rtbLog
+            int s4 = w - 16;
+
+            rtbLog.Width = s4 - 16;
+
+            // pnlSec5: 내부 컨트롤들
+            int s5 = w - 16;
+            pnlColToggle.Width = s5 - 16;
+            dgvTrains.Width = s5 - 16;
+            pnlCommentEdit.Width = s5 - 16;
+            txtCommentEdit.Width = pnlCommentEdit.Width - 7 - 104;
+            btnCommentSave.Left = pnlCommentEdit.Width - 104;
+            pnlHistControls.Width = s5 - 16;
+            btnShowGraph.Left = pnlHistControls.Width - 248;
+            btnShowConfig.Left = pnlHistControls.Width - 120;
+        }
+
         private DataGridViewCheckBoxColumn 선택;
         private DataGridViewTextBoxColumn colName;
         private DataGridViewTextBoxColumn colPilot;
         private DataGridViewTextBoxColumn colType;
         private DataGridViewTextBoxColumn colTubs;
         private DataGridViewTextBoxColumn colTime;
-        private DataGridViewTextBoxColumn colTransfer;
         private DataGridViewTextBoxColumn colComment;
-        private Label lblModelTypeDesc;
-        private Label lblValLossStatus;
-        private Label lblLossStatus;
-        private Label lblEpochStatus;
     }
 }
