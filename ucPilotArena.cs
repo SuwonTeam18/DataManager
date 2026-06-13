@@ -1842,6 +1842,7 @@ namespace DonkeyUi
                 g.DrawString(zoomInfo.Trim(), new Font("맑은 고딕", 8f), new SolidBrush(Color.FromArgb(120, 0, 0, 0)), panelW - 80, padT);
         }
 
+
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 그래프 데이터 로드 (catalog 파일 파싱)
         // ════════════════════════════════════════════════════════════
