@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.ComponentModel;
@@ -18,11 +18,9 @@ namespace DonkeyUi
 {
     public partial class ucPilotArena : UserControl
     {
-        
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 타임라인 인덱스 변경 시 외부(TubManager)에 알리는 이벤트
         // ════════════════════════════════════════════════════════════
-        
 
         // ════════════════════════════════════════════════════════════
         // 재생 상태 공유 이벤트
@@ -60,6 +58,7 @@ namespace DonkeyUi
         }
 
         private readonly List<PilotSlot> _pilotSlots = new();
+        private PilotSlot _graphSlot = new PilotSlot();
         private readonly List<PictureBox> _displayPictureBoxes = new();
         private readonly List<Label> _aiAngleLabels = new();
         private readonly List<Label> _angleErrorLabels = new();
@@ -353,8 +352,6 @@ namespace DonkeyUi
                 try { OnTimelineIndexChanged?.Invoke(_currentIndex); } catch { }
             }
 
-            // ── 재생 타이머 Tick ──
-            // ── 재생 타이머 Tick ──
             // ── 다른 탭에서 재생 시작 시 내 재생 강제 정지 ──
             OnPlaybackStateChanged += (sender, playing) =>
             {
@@ -453,7 +450,7 @@ namespace DonkeyUi
                 if (_imageFiles.Count == 0) return;
                 NavigateTo(_currentIndex + 100);
             };
-        
+
             // ── < 이전 프레임 ──
             btnPrev.Click += (s, e) =>
             {
@@ -598,8 +595,6 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         // [파일1 추가] 외부에서 타임라인 인덱스 조회/설정
         // ════════════════════════════════════════════════════════════
-
-
         public void SetTimelineIndexFromExternal(int index)
         {
             if (this.InvokeRequired) { this.BeginInvoke(() => SetTimelineIndexFromExternal(index)); return; }
@@ -644,7 +639,6 @@ namespace DonkeyUi
             if (dataIdx > 0) { _mycarWinPath = imagePath.Substring(0, dataIdx); _mycarWslPath = ConvertToWslPath(_mycarWinPath); }
         }
 
-        // 변경
         private List<string> GetModelFiles()
         {
             if (string.IsNullOrEmpty(_mycarWinPath)) return new List<string>();
@@ -900,13 +894,13 @@ namespace DonkeyUi
                         _ = RequestAndUpdateSlot(slotIdx, _lastImagePath, trkBrightness.Value, trkBlur.Value);
 
                     // ★ 순위 계산은 별도 그래프 배열(_rankAiAngles)로 진행
-                        if (_graphImagePaths.Count > 0)
-                        {
-                            // ★ 해당 슬롯의 순위 계산만 취소 — 다른 슬롯과 그래프 생성에 영향 없음
-                            _rankSlotCts[slotIdx]?.Cancel();
-                            _rankSlotCts[slotIdx] = new CancellationTokenSource();
-                            _ = FillRankCacheAsync(_graphImagePaths, _rankSlotCts[slotIdx].Token, _graphBrightness, _graphBlur, slotIdx);
-                        }
+                    if (_graphImagePaths.Count > 0)
+                    {
+                        // ★ 해당 슬롯의 순위 계산만 취소 — 다른 슬롯과 그래프 생성에 영향 없음
+                        _rankSlotCts[slotIdx]?.Cancel();
+                        _rankSlotCts[slotIdx] = new CancellationTokenSource();
+                        _ = FillRankCacheAsync(_graphImagePaths, _rankSlotCts[slotIdx].Token, _graphBrightness, _graphBlur, slotIdx);
+                    }
                 };
 
                 var aiAngleLbl = new Label { ForeColor = Color.White, AutoSize = true, Text = "AI 각도 : N/A" };
@@ -976,25 +970,8 @@ namespace DonkeyUi
             if (!this.IsDisposed && this.IsHandleCreated)
                 this.BeginInvoke(() =>
                 {
-                    // ★ 그래프 생성이 진행 중일 때만 그래프 배열에 씀
-                    if (slotIdx == 0 &&
-                        _graphGenerating &&
-                        slot.Cache.ContainsKey(cacheKey) &&
-                        brightness == _graphBrightness && blur == _graphBlur)
-                    {
-                        int graphIdx = -1;
-                        for (int gi = 0; gi < _graphImagePaths.Count; gi++)
-                        {
-                            if (string.Equals(Path.GetFileName(_graphImagePaths[gi]), fname, StringComparison.OrdinalIgnoreCase))
-                            { graphIdx = gi; break; }
-                        }
-                        if (graphIdx >= 0 && graphIdx < _graphAiAngles.Length)
-                        {
-                            _graphAiAngles[graphIdx] = slot.Cache[cacheKey].angle;
-                            _graphAiThrottles[graphIdx] = slot.Cache[cacheKey].throttle;
-                            _graphDrawPanel?.Invalidate();
-                        }
-                    }
+                    // ★ _graphSlot 도입으로 RequestAndUpdateSlot에서 그래프 배열에 쓰는 로직 제거
+                    // 그래프 생성은 FillGraphFromDedicatedSlotAsync가 전담
                     if (imagePath == _lastImagePath)
                         RefreshSlot(slotIdx);
                 });
@@ -1153,7 +1130,7 @@ namespace DonkeyUi
         // ════════════════════════════════════════════════════════════
         // 이미지 로드 / 타임라인
         // ════════════════════════════════════════════════════════════
-        private void LoadImages(string folder)
+        private async void LoadImages(string folder)
         {
             if (!Directory.Exists(folder)) return;
             _imageFiles = Directory.GetFiles(folder)
@@ -1165,7 +1142,6 @@ namespace DonkeyUi
 
             trkTimeline.Minimum = 0; trkTimeline.Maximum = _imageFiles.Count - 1; trkTimeline.Value = 0; _currentIndex = 0;
             ShowFrame(0);
-            UpdateRecordIndexLabel();
 
             string tubFolder = FixPath(ucTubManager.CurrentTubPath) ?? Directory.GetParent(folder)?.FullName ?? folder;
             if (tubFolder.EndsWith("images", StringComparison.OrdinalIgnoreCase)) tubFolder = Directory.GetParent(tubFolder)?.FullName ?? tubFolder;
@@ -1176,7 +1152,21 @@ namespace DonkeyUi
             if (_lblGraphFilterStatus != null)
                 _lblGraphFilterStatus.Text = $"필터값 - 밝기: {_graphBrightness}, 흐림: {_graphBlur}";
 
-            _ = LoadGraphDataAsync(tubFolder, _imageFiles);
+            // ★ 수정: 기준값(사람 데이터) 파싱을 먼저 완전히 끝날 때까지 대기
+            await LoadGraphDataAsync(tubFolder, _imageFiles);
+
+            // ★ 수정: 파싱이 끝난 후 슬롯별 예측 및 그래프 계산 시작
+            for (int si = 0; si < _pilotSlots.Count; si++)
+            {
+                if (string.IsNullOrEmpty(_pilotSlots[si].ModelFileName)) continue;
+                int captured = si;
+                _rankSlotCts[captured]?.Cancel();
+                _rankSlotCts[captured] = new CancellationTokenSource();
+                _ = FillRankCacheAsync(_graphImagePaths.Count > 0 ? _graphImagePaths : _imageFiles,
+                    _rankSlotCts[captured].Token, _graphBrightness, _graphBlur, captured);
+            }
+
+            UpdateRecordIndexLabel();
         }
 
         private void ShowFrame(int index)
@@ -1192,28 +1182,22 @@ namespace DonkeyUi
             catch { }
         }
 
-        // Return image path at specified index
-     
-
         private void trkTimeline_Scroll(object sender, EventArgs e)
-        
+        {
+            if (_suppressTimelineNotify)
+            {
+                _suppressTimelineNotify = false;
+                return;
+            }
 
-            
-{
-    if (_suppressTimelineNotify)
-    {
-        _suppressTimelineNotify = false;
-        return;
-    }
+            _currentIndex = trkTimeline.Value;
 
-    _currentIndex = trkTimeline.Value;
-
-    if (_imageFiles.Count > 0 &&
-        _currentIndex >= 0 &&
-        _currentIndex < _imageFiles.Count)
-    {
-        _lastImagePath = _imageFiles[_currentIndex];
-    }
+            if (_imageFiles.Count > 0 &&
+                _currentIndex >= 0 &&
+                _currentIndex < _imageFiles.Count)
+            {
+                _lastImagePath = _imageFiles[_currentIndex];
+            }
 
             RefreshAllSlots();
             UpdateRecordIndexLabel();
@@ -1222,11 +1206,11 @@ namespace DonkeyUi
             _pendingTimelineIndex = trkTimeline.Value;
 
             _sliderDebounce.Stop();
-    _sliderDebounce.Start();
+            _sliderDebounce.Start();
 
-    _timelineDebounce.Stop();
-    _timelineDebounce.Start();
-}
+            _timelineDebounce.Stop();
+            _timelineDebounce.Start();
+        }
 
         private void ShowFrameByPath(string path)
         {
@@ -1257,7 +1241,6 @@ namespace DonkeyUi
                 foreach (var child in FindControlsRecursive(c.Controls))
                     yield return child;
             }
-
         }
 
         private void trkBrightness_Scroll(object sender, EventArgs e)
@@ -1288,7 +1271,7 @@ namespace DonkeyUi
         private Bitmap MakeBlur(Image image, int blurAmount)
         {
             double radius = Math.Sqrt(blurAmount) * 0.5;
-            if (radius < 1) 
+            if (radius < 1)
                 return new Bitmap(image);
             int sw = Math.Max(1, (int)(image.Width / (radius * 0.2 + 1)));
             int sh = Math.Max(1, (int)(image.Height / (radius * 0.2 + 1)));
@@ -1559,23 +1542,32 @@ namespace DonkeyUi
             {
                 _graphBrightness = trkBrightness.Value;
                 _graphBlur = trkBlur.Value;
-                _lblGraphFilterStatus.Text = $"필터값 - 밝기: {_graphBrightness}, 흐림: {_graphBlur}";
-                if (_graphImagePaths.Count == 0) return;
+
+                if (_lblGraphFilterStatus != null)
+                    _lblGraphFilterStatus.Text = $"필터값 - 밝기: {_graphBrightness}, 흐림: {_graphBlur}";
+
+                // 그래프 전용 슬롯에 모델이 없다면 경고창 띄우고 중지
+                if (_graphImagePaths.Count == 0 || string.IsNullOrEmpty(_graphSlot.ModelFileName))
+                {
+                    MessageBox.Show("먼저 [Tub Plot] 창에서 모델을 선택하여 그래프를 생성해주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
 
                 Array.Clear(_graphAiAngles, 0, _graphAiAngles.Length);
                 Array.Clear(_graphAiThrottles, 0, _graphAiThrottles.Length);
 
-                if (_pilotSlots.Count > 0 && _currentIndex >= 0 && _currentIndex < _graphAiAngles.Length)
+                // _pilotSlots[0] 대신 독립된 _graphSlot 사용
+                if (_currentIndex >= 0 && _currentIndex < _graphAiAngles.Length)
                 {
-                    var slot0 = _pilotSlots[0];
                     string fname0 = _currentIndex < _graphImagePaths.Count ? Path.GetFileName(_graphImagePaths[_currentIndex]) : "";
                     string ck0 = $"{fname0}_{_graphBrightness}_{_graphBlur}";
-                    if (slot0.Cache.TryGetValue(ck0, out var cur))
+                    if (_graphSlot.Cache.TryGetValue(ck0, out var cur))
                     {
                         _graphAiAngles[_currentIndex] = cur.angle;
                         _graphAiThrottles[_currentIndex] = cur.throttle;
                     }
                 }
+
                 _graphDrawPanel?.Invalidate();
                 RefreshAllSlots();
 
@@ -1586,7 +1578,8 @@ namespace DonkeyUi
                 // ★ 그래프 생성 시작 플래그
                 _graphGenerating = true;
 
-                _ = FillGraphFromSlotCacheAsync(_graphImagePaths, _graphTaskCts.Token, _graphBrightness, _graphBlur);
+                // ★ 독립된 _graphSlot을 사용하는 전용 함수 호출
+                _ = FillGraphFromDedicatedSlotAsync(_graphImagePaths, _graphTaskCts.Token, _graphBrightness, _graphBlur);
             };
 
             _btnResetZoom.Click += (s, e) => { _graphZoom = 1.0; _graphZoomY = 1.0; _graphScrollX = 0; _graphOffsetY = 0.0; _graphDrawPanel?.Invalidate(); };
@@ -1849,7 +1842,7 @@ namespace DonkeyUi
         private async Task LoadGraphDataAsync(string tubFolder, List<string> validImagePaths)
         {
             if (string.IsNullOrEmpty(tubFolder) || validImagePaths.Count == 0) return;
-            
+
             if (_graphGenerating)
             {
                 _graphGenerating = false;
@@ -1937,13 +1930,13 @@ namespace DonkeyUi
         }
 
         // ════════════════════════════════════════════════════════════
-        // [파일1 추가] 슬롯 캐시로 그래프 전체 채우기
+        // [파일1 추가] 슬롯 캐시로 그래프 전체 채우기 (슬롯0 기반 — 하위 호환용)
         // ════════════════════════════════════════════════════════════
         private async Task FillGraphFromSlotCacheAsync(
-    List<string> imagePaths,
-    CancellationToken token,
-    int brightness,
-    int blur)
+            List<string> imagePaths,
+            CancellationToken token,
+            int brightness,
+            int blur)
         {
             if (_pilotSlots.Count == 0) return;
             var slot = _pilotSlots[0];
@@ -2068,14 +2061,14 @@ namespace DonkeyUi
         }
 
         // ════════════════════════════════════════════════════════════
-        // [파일1 추가] 슬롯 캐시로 그래프 전체 채우기
+        // [파일1 추가] 순위 계산용 슬롯 캐시 채우기
         // ════════════════════════════════════════════════════════════
         private async Task FillRankCacheAsync(
-    List<string> imagePaths,
-    CancellationToken token,
-    int brightness,
-    int blur,
-    int slotIdx)
+            List<string> imagePaths,
+            CancellationToken token,
+            int brightness,
+            int blur,
+            int slotIdx)
         {
             if (_pilotSlots.Count == 0 || slotIdx >= _pilotSlots.Count) return;
             var slot = _pilotSlots[slotIdx];
@@ -2119,7 +2112,6 @@ namespace DonkeyUi
             if (!token.IsCancellationRequested && !this.IsDisposed && this.IsHandleCreated)
                 this.BeginInvoke(() => UpdateRankings(startModelName, slotIdx));
         }
-
 
         // ════════════════════════════════════════════════════════════
         // 순위 컨트롤 초기화
@@ -2165,7 +2157,7 @@ namespace DonkeyUi
 
             // 순위 라벨 3개 생성
             var rankLabels = new Label[3];
-            Color[] medalColors = 
+            Color[] medalColors =
             {
                 Color.FromArgb(212, 175, 55),  // 1위 금
                 Color.FromArgb(160, 160, 160), // 2위 은
@@ -2204,18 +2196,16 @@ namespace DonkeyUi
                     _ => cmbRankOverall
                 };
 
-                string[] medals = { "🥇", "🥈", "🥉" };
                 for (int i = 0; i < 3; i++)
                 {
-                    if (srcCombo.Items.Count > i)
+                    if (i < srcCombo.Items.Count)
                     {
-                        string item = srcCombo.Items[i]?.ToString() ?? "-";
-                        rankLabels[i].Text = $"{medals[i]} {item}";
+                        rankLabels[i].Text = $"{medals[i]} {srcCombo.Items[i]}";
                         rankLabels[i].ForeColor = medalColors[i];
                     }
                     else
                     {
-                        rankLabels[i].Text = $"{medals[i]} {i + 1}위  -";
+                        rankLabels[i].Text = $"{medals[i]} -";
                         rankLabels[i].ForeColor = Color.FromArgb(180, 180, 180);
                     }
                 }
@@ -2275,6 +2265,16 @@ namespace DonkeyUi
 
                 // ★ 완료된 모델명으로만 저장 — 슬롯이 바뀌어도 기존 기록 유지
                 _modelErrorHistory[completedModelName] = (avgOverall, avgAngle, avgThrottle);
+
+                // avgLbl 업데이트 (해당 슬롯의 평균 오차율 라벨)
+                if (completedSlotIdx < _avgErrorLabels.Count)
+                {
+                    this.BeginInvoke((Action)(() =>
+                    {
+                        _avgErrorLabels[completedSlotIdx].Text =
+                            $"평균 오차율 — 각도: {avgAngle:F2}%  속도: {avgThrottle:F2}%  종합: {avgOverall:F2}%";
+                    }));
+                }
             }
 
             if (_modelErrorHistory.Count == 0) return;
@@ -2319,7 +2319,160 @@ namespace DonkeyUi
 
         private void btnTubPlot_Click(object sender, EventArgs e)
         {
-            BtnTubPlot_Click(sender, e);
+            var modelFiles = GetModelFiles();
+            using var dlg = new TubPlotDialog(modelFiles, _mycarWinPath, _imageFiles.Count, _currentIndex);
+
+            if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+            if (_imageFiles.Count == 0)
+            {
+                MessageBox.Show("이미지 파일이 없습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 팝업창에서 고른 설정을 그래프 전용 함수로 전달
+            GenerateGraphFromDialog(
+                dlg.SelectedModelFileName,
+                dlg.SelectedModelType,
+                dlg.ApplyBrightness,
+                dlg.ApplyBlur
+            );
+        }
+
+        public void GenerateGraphFromDialog(string modelName, string modelType, bool applyBrightness, bool applyBlur)
+        {
+            if (string.IsNullOrEmpty(modelName)) return;
+
+            // 그래프 전용 슬롯 설정
+            _graphSlot.ModelFileName = modelName;
+            _graphSlot.ModelType = modelType;
+            ResetSlotServer(_graphSlot);
+
+            _graphBrightness = applyBrightness ? trkBrightness.Value : 0;
+            _graphBlur = applyBlur ? trkBlur.Value : 0;
+
+            if (_lblGraphFilterStatus != null)
+                _lblGraphFilterStatus.Text = $"필터값 - 밝기: {_graphBrightness}, 흐림: {_graphBlur}";
+            if (_lblGraphModelName != null)
+                _lblGraphModelName.Text = $"모델: {modelName}";
+
+            _graphTaskCts?.Cancel();
+            _graphTaskCts = new CancellationTokenSource();
+
+            Array.Clear(_graphAiAngles, 0, _graphAiAngles.Length);
+            Array.Clear(_graphAiThrottles, 0, _graphAiThrottles.Length);
+
+            _graphGenerating = true;
+            _graphDrawPanel?.Invalidate();
+
+            _ = FillGraphFromDedicatedSlotAsync(_graphImagePaths, _graphTaskCts.Token, _graphBrightness, _graphBlur);
+        }
+
+        private async Task FillGraphFromDedicatedSlotAsync(List<string> imagePaths, CancellationToken token, int brightness, int blur)
+        {
+            var slot = _graphSlot;
+            int curIdx = _currentIndex;
+            string startModelName = slot.ModelFileName;
+
+            // 현재 프레임 우선 처리
+            if (curIdx >= 0 && curIdx < imagePaths.Count && !token.IsCancellationRequested)
+            {
+                string fname0 = Path.GetFileName(imagePaths[curIdx]);
+                string ck0 = $"{fname0}_{brightness}_{blur}";
+
+                if (!slot.Cache.ContainsKey(ck0) && !string.IsNullOrEmpty(slot.ModelFileName))
+                {
+                    (double angle, double throttle)? r0 = null;
+                    if (brightness == 0 && blur == 0)
+                        r0 = await RequestPrediction(slot, ConvertToWslPath(imagePaths[curIdx]));
+                    else
+                    {
+                        using var b0 = GetFilteredBitmap(imagePaths[curIdx], brightness, blur);
+                        if (b0 != null) r0 = await RequestPrediction(slot, b0);
+                    }
+                    if (r0.HasValue) slot.Cache[ck0] = r0.Value;
+                }
+
+                if (slot.Cache.TryGetValue(ck0, out var c0) && slot.ModelFileName == startModelName)
+                {
+                    _graphAiAngles[curIdx] = c0.angle;
+                    _graphAiThrottles[curIdx] = c0.throttle;
+                }
+
+                if (!this.IsDisposed && this.IsHandleCreated)
+                    this.BeginInvoke(() => _graphDrawPanel?.Invalidate());
+            }
+
+            // 나머지 전체 이미지 백그라운드 처리
+            await Task.Run(async () =>
+            {
+                for (int i = 0; i < imagePaths.Count; i++)
+                {
+                    if (token.IsCancellationRequested) break;
+                    if (i == curIdx) continue;
+
+                    if (slot.ModelFileName != startModelName)
+                    {
+                        if (!this.IsDisposed && this.IsHandleCreated)
+                            this.BeginInvoke(() => _graphGenerating = false);
+                        return;
+                    }
+
+                    string fname = Path.GetFileName(imagePaths[i]);
+                    string cacheKey = $"{fname}_{brightness}_{blur}";
+
+                    if (!slot.Cache.ContainsKey(cacheKey) && !string.IsNullOrEmpty(slot.ModelFileName))
+                    {
+                        (double angle, double throttle)? result = null;
+                        if (brightness == 0 && blur == 0)
+                            result = await RequestPrediction(slot, ConvertToWslPath(imagePaths[i]));
+                        else
+                        {
+                            using var bmp = GetFilteredBitmap(imagePaths[i], brightness, blur);
+                            if (bmp != null) result = await RequestPrediction(slot, bmp);
+                        }
+                        if (result.HasValue) slot.Cache[cacheKey] = result.Value;
+                    }
+
+                    if (slot.Cache.TryGetValue(cacheKey, out var cached) && slot.ModelFileName == startModelName)
+                    {
+                        _graphAiAngles[i] = cached.angle;
+                        _graphAiThrottles[i] = cached.throttle;
+                    }
+
+                    if (i > 0 && i % 50 == 0 && !token.IsCancellationRequested)
+                    {
+                        if (!this.IsDisposed && this.IsHandleCreated)
+                            this.BeginInvoke(() => _graphDrawPanel?.Invalidate());
+                        await Task.Delay(15, token);
+                    }
+                }
+            }, token);
+
+            if (token.IsCancellationRequested)
+            {
+                if (!this.IsDisposed && this.IsHandleCreated)
+                    this.BeginInvoke(() => _graphGenerating = false);
+                return;
+            }
+
+            if (!this.IsDisposed && this.IsHandleCreated)
+            {
+                this.BeginInvoke(() =>
+                {
+                    _graphGenerating = false;
+                    int n = _graphHumanAngles.Count;
+                    if (n >= 2 && _graphDrawPanel != null)
+                    {
+                        int gw = _graphDrawPanel.Width - 62;
+                        int totalW = (int)(gw * _graphZoom);
+                        float px = (float)_currentIndex / Math.Max(n - 1, 1) * totalW;
+                        if (px - _graphScrollX < 0 || px - _graphScrollX > gw)
+                            _graphScrollX = Math.Max(0, Math.Min((int)(px - gw / 2), GetGraphMaxScrollX()));
+                    }
+                    _graphDrawPanel?.Invalidate();
+                });
+            }
         }
     }
 }
